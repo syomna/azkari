@@ -1,0 +1,40 @@
+buildscript {
+    ext.kotlin_version = '1.7.10'
+    // ext {
+    //     compileSdkVersion   = 34                // or higher / as desired
+    //     targetSdkVersion    = 33                // or higher / as desired
+    //     appCompatVersion    = "1.4.2"           // or higher / as desired
+    //  }
+    repositories {
+        google()
+        mavenCentral()
+        
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.3.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        // [required] background_fetch
+    //    maven { url "${project(':background_fetch').projectDir}/libs" }
+    }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
