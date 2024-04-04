@@ -1,4 +1,5 @@
 import 'package:azkar_app/models/azkar_model.dart';
+import 'package:azkar_app/utils/helpers.dart';
 import 'package:azkar_app/utils/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -45,13 +46,17 @@ class DisplayAzkar extends StatelessWidget {
                     border: Border.all(color: mainColor),
                     borderRadius: BorderRadius.circular(8.r)),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-                  child: Text(
-                    '${listOfAzkar?[index].zekr}',
-                    style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold
-                        ),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                  child: GestureDetector(
+                    onLongPress: () {
+                      Helpers.copyText('${listOfAzkar?[index].zekr}');
+                    },
+                    child: Text(
+                      '${listOfAzkar?[index].zekr}',
+                      style: TextStyle(
+                          fontSize: 16.sp, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 )),
             if (listOfAzkar![index].count.isNotEmpty)
@@ -68,12 +73,11 @@ class DisplayAzkar extends StatelessWidget {
                         child: Text(
                       '${listOfAzkar?[index].count}',
                       style: TextStyle(
-                          fontSize:
-                              18.sp,
+                          fontSize: 18.sp,
                           fontWeight: FontWeight.bold,
                           color: Colors.white),
                     )),
-                  ))
+                  )),
           ],
         ),
       ],

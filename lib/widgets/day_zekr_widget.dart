@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:azkar_app/models/azkar_model.dart';
 import 'package:azkar_app/providers/azkar_provider.dart';
+import 'package:azkar_app/utils/helpers.dart';
 import 'package:azkar_app/widgets/card_widget.dart';
 import 'package:azkar_app/widgets/refresh_icon.dart';
 import 'package:flutter/material.dart';
@@ -29,41 +30,44 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
     String dateString = format.format(DateTime.now());
     String dateDay = formatDay.format(DateTime.now());
 
-    return CardWidget(
-        height: MediaQuery.of(context).size.height * 0.18,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '$dateDay ، $dateString',
-                    style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                      onPressed: () {
-                        setState(() {
-                          randomNumber = Random().nextInt(50);
-                        });
-                      },
-                      icon: const RefreshIcon())
-                ],
-              ),
-               SizedBox(
-                height: 10.h,
-              ),
-              Text(
-                allAzkar[randomNumber].zekr,
-                style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold),
-              )
-            ],
-          ),
-        ));
+    return GestureDetector(
+      onLongPress: () {
+        Helpers.copyText(allAzkar[randomNumber].zekr);
+      },
+      child: CardWidget(
+          height: MediaQuery.of(context).size.height * 0.18,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '$dateDay ، $dateString',
+                      style: TextStyle(
+                          fontSize: 16.sp, fontWeight: FontWeight.bold),
+                    ),
+                    IconButton(
+                        onPressed: () {
+                          setState(() {
+                            randomNumber = Random().nextInt(50);
+                          });
+                        },
+                        icon: const RefreshIcon())
+                  ],
+                ),
+                SizedBox(
+                  height: 10.h,
+                ),
+                Text(
+                  allAzkar[randomNumber].zekr,
+                  style:
+                      TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                )
+              ],
+            ),
+          )),
+    );
   }
 }

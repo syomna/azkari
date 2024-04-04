@@ -1,5 +1,6 @@
 import 'package:azkar_app/models/azkar_model.dart';
 import 'package:azkar_app/models/surah_model.dart';
+import 'package:azkar_app/utils/helpers.dart';
 import 'package:azkar_app/utils/theme.dart';
 import 'package:azkar_app/widgets/display_azkar.dart';
 import 'package:flutter/material.dart';
@@ -168,10 +169,15 @@ class _AzkarPageState extends State<AzkarPage> {
                             borderRadius: BorderRadius.circular(8.r)),
                         child: Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-                          child: Text(
-                            '${listOfSurah?[index].surah}',
-                            style: TextStyle(
-                                fontSize: 16.sp, fontWeight: FontWeight.bold),
+                          child: GestureDetector(
+                            onLongPress: () {
+                              Helpers.copyText('${listOfSurah?[index].surah}');
+                            },
+                            child: Text(
+                              '${listOfSurah?[index].surah}',
+                              style: TextStyle(
+                                  fontSize: 16.sp, fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ))
                   ],

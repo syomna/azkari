@@ -57,6 +57,11 @@ class NotificationService {
       isDay ? 5 : 17,
     );
 
+    scheduledDate = tz.TZDateTime.from(
+      scheduledDate.toUtc(),
+      tz.local,
+    );
+
     // Check if the scheduledDate is in the past
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));

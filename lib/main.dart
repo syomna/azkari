@@ -15,6 +15,7 @@ void main() async {
   NotificationService().initNotification();
   tz.initializeTimeZones();
   NotificationService().scheduleNotifications();
+  NotificationService().scheduleNotifications(isDay: true);
   NotificationService().periodicallyShowNotification();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 

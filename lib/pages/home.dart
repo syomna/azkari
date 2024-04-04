@@ -129,6 +129,8 @@ class _HomeState extends State<Home> {
                  SizedBox(
                   height: 10.h,
                 ),
+                
+  
                 const NamesOfAllahWidget(),
                  SizedBox(
                   height: 40.h,
