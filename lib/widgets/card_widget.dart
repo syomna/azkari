@@ -1,9 +1,9 @@
-import 'package:azkar_app/utils/theme.dart';
+import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CardWidget extends StatelessWidget {
-  const CardWidget({super.key, required this.child , this.height});
+  const CardWidget({super.key, required this.child, this.height});
 
   final Widget child;
   final double? height;
@@ -14,7 +14,7 @@ class CardWidget extends StatelessWidget {
       height: height ?? MediaQuery.of(context).size.height * 0.15,
       width: MediaQuery.of(context).size.width,
       decoration: BoxDecoration(
-          border: Border.all(color: mainColor),
+          border: Border.all(color: AppPalette.mainColor),
           borderRadius: BorderRadius.circular(8.r)),
       child: Padding(
         padding: const EdgeInsets.all(10),

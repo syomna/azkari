@@ -7,6 +7,7 @@ class WelcomingWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
           height: MediaQuery.of(context).size.height * 0.15,
@@ -15,25 +16,28 @@ class WelcomingWidget extends StatelessWidget {
               image:
                   DecorationImage(image: AssetImage('assets/images/pray.png'))),
         ),
-         SizedBox(
+        SizedBox(
           width: 10.w,
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  'مرحبا بك',
-                  style:
-                      TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            Text('لا تنسى قراءة وردك اليومي  🌟',
-                style: TextStyle(
-                    fontSize: 14.sp))
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'مرحبا بك',
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+              Text(
+                'لا تنسى قراءة وردك اليومي  🌟',
+                style: TextStyle(fontSize: 14.sp),
+                softWrap: true,
+                overflow: TextOverflow.visible,
+              ),
+            ],
+          ),
         ),
       ],
     );

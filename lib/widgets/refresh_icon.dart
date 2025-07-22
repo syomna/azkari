@@ -1,4 +1,4 @@
-import 'package:azkar_app/utils/theme.dart';
+import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 
 class RefreshIcon extends StatelessWidget {
@@ -8,7 +8,7 @@ class RefreshIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
         decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(50), color: mainColor),
+            borderRadius: BorderRadius.circular(50), color: AppPalette.mainColor),
         child: const Icon(
           Icons.refresh,
           size: 30,

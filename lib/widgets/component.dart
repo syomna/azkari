@@ -22,13 +22,20 @@ class Component extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                text,
-                style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold),
+              Flexible(
+                child: Text(
+                  text,
+                  style:
+                      TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              Image(image: AssetImage('assets/images/$img.png'), height: 30.h,)
+              SizedBox(
+                  width: 30.w,
+                  child: Image(
+                    image: AssetImage('assets/images/$img.png'),
+                    height: 30.h,
+                  ))
             ],
           )),
     );
