@@ -1,6 +1,7 @@
 import 'package:azkar_app/core/enums/app_loading_status.dart';
 import 'package:azkar_app/features/azkar/domain/entities/zikr_entity.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart';
+import 'package:azkar_app/features/azkar/utils/azkar_category_filter.dart';
 import 'package:flutter/material.dart';
 
 class AzkarProvider extends ChangeNotifier {
@@ -14,26 +15,15 @@ class AzkarProvider extends ChangeNotifier {
   AppLoadingStatus get azkarStatus => _azkarStatus;
   String? get azkarErrorMessage => _azkarErrorMessage;
 
-  List<ZekrEntity> get morningAzkar =>
-      _azkarList.where((e) => e.category == 'أذكار الصباح').toList();
+  List<ZekrEntity> get morningAzkar => _azkarList.getMorningAzkar();
 
-  List<ZekrEntity> get eveningAzkar =>
-      _azkarList.where((e) => e.category == 'أذكار المساء').toList();
+  List<ZekrEntity> get eveningAzkar => _azkarList.getEveningAzkar();
 
-  List<ZekrEntity> get wakingUpAzkar => _azkarList
-      .where((e) => e.category == 'أذكار الاستيقاظ من النوم')
-      .toList();
+  List<ZekrEntity> get wakingUpAzkar => _azkarList.getWakingUpAzkar();
 
-  List<ZekrEntity> get prayerAzkar =>
-      _azkarList.where((e) => e.category == 'أذكار الآذان').toList();
+  List<ZekrEntity> get prayerAzkar => _azkarList.getPrayerAzkar();
 
-  List<ZekrEntity> get variousDuaa => _azkarList
-      .where((e) =>
-          e.category != 'أذكار الصباح' &&
-          e.category != 'أذكار المساء' &&
-          e.category != 'أذكار الاستيقاظ من النوم' &&
-          e.category != 'أذكار الآذان')
-      .toList();
+  List<ZekrEntity> get variousDuaa => _azkarList.getVariousDuaa();
 
   Future<void> loadAzkar() async {
     if (_azkarStatus == AppLoadingStatus.loading) {
