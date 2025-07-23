@@ -50,7 +50,7 @@ workflows:
           # Build with a static build name (e.g., 1.0.0) and auto-incrementing build number
           # You will need to manually update --build-name (e.g., from 1.0.0 to 1.0.1) when releasing a new app version
           flutter build appbundle --release \
-            --build-name=1.0.0 \
+            --build-name=1.0.1 \
             --build-number=$BUILD_NUMBER
 
     artifacts:
@@ -128,7 +128,7 @@ workflows:
           # Build with a static build name (e.g., 1.0.0) and auto-incrementing build number
           # You will need to manually update --build-name (e.g., from 1.0.0 to 1.0.1) when releasing a new app version
           flutter build ipa --release \
-            --build-name=1.0.0 \
+            --build-name=1.0.1 \
             --build-number=$BUILD_NUMBER \
             --export-options-plist=/Users/builder/export_options.plist
 
