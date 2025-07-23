@@ -1,0 +1,150 @@
+workflows:
+  android-workflow:
+    name: Android Workflow
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+
+    environment:
+      # These variables must be configured securely in Codemagic UI (App settings > Environment variables)
+      # For Keystore: Upload your .jks file in App settings > Code signing. Codemagic will create CM_KEYSTORE_... vars.
+      # For Google Play: Upload your JSON service account key.
+      android_signing:
+        - keystore_reference
+      groups:
+        - google_play
+      vars:
+        PACKAGE_NAME: "com.yomna.azkar_app"
+        GOOGLE_PLAY_TRACK: "production"
+      flutter: stable
+
+    cache:
+      - $FLUTTER_ROOT
+      - $HOME/.gradle/caches
+      - $HOME/.gradle/wrapper
+
+    scripts:
+      - name: Set up local.properties (Optional - may not be needed for all projects)
+        script: |
+          # This step often isn't strictly necessary for modern Flutter projects,
+          # but is included from the example. Remove if you encounter issues.
+          echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
+
+      - name: Get Flutter packages
+        script: |
+          flutter pub get # Changed from 'flutter packages pub get'
+
+      - name: Flutter analyze
+        script: |
+          flutter analyze
+
+      - name: Flutter unit tests
+        script: |
+          flutter test
+          # Removed 'ignore_failure: true' - tests must pass for build to succeed
+
+      - name: Build AAB with Flutter
+        script: |
+          # Get the next build number from Google Play to ensure it's always incremental
+          BUILD_NUMBER=$(($(google-play get-latest-build-number --package-name "$PACKAGE_NAME" --tracks="$GOOGLE_PLAY_TRACK") + 1))
+          
+          # Build with a static build name (e.g., 1.0.0) and auto-incrementing build number
+          # You will need to manually update --build-name (e.g., from 1.0.0 to 1.0.1) when releasing a new app version
+          flutter build appbundle --release \
+            --build-name=1.0.0 \
+            --build-number=$BUILD_NUMBER
+
+    artifacts:
+      - build/**/outputs/**/*.aab
+      - build/**/outputs/**/mapping.txt
+      - flutter_drive.log # If you use flutter_driver tests
+
+    publishing:
+      email:
+        recipients:
+          - syomna444@gmail.com
+        notify:
+          success: true
+          failure: false
+
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: $GOOGLE_PLAY_TRACK
+        submit_as_draft: false
+
+  ios-workflow:
+    name: iOS Workflow
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+
+    integrations:
+      app_store_connect: codemagic
+
+    environment:
+      # These variables must be configured securely in Codemagic UI (App settings > Environment variables)
+      # For iOS Signing: Upload your .p12 certificate and provisioning profile in App settings > Code signing.
+      # For App Store Connect API Key: Upload your .p8 key and provide Key ID/Issuer ID.
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.yomna.azkarApp
+      vars:
+        APP_ID: 6479560831
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+
+    cache:
+      - $FLUTTER_ROOT
+      - $HOME/.gradle/caches
+      - $HOME/.gradle/wrapper
+      - $HOME/Library/Caches/CocoaPods
+
+    scripts:
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
+
+      - name: Get Flutter packages
+        script: |
+          flutter pub get # Changed from 'flutter packages pub get'
+
+      - name: Install pods
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+
+      - name: Flutter analyze
+        script: |
+          flutter analyze
+
+      - name: Flutter unit tests
+        script: |
+          flutter test
+          # Removed 'ignore_failure: true' - tests must pass for build to succeed
+
+      - name: Flutter build ipa and automatic versioning
+        script: |
+          # Get the next build number from TestFlight to ensure it's always incremental
+          BUILD_NUMBER=$(($(app-store-connect get-latest-testflight-build-number --platform=IOS "$APP_ID") + 1))
+          
+          # Build with a static build name (e.g., 1.0.0) and auto-incrementing build number
+          # You will need to manually update --build-name (e.g., from 1.0.0 to 1.0.1) when releasing a new app version
+          flutter build ipa --release \
+            --build-name=1.0.0 \
+            --build-number=$BUILD_NUMBER \
+            --export-options-plist=/Users/builder/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log # If you use flutter_driver tests
+
+    publishing:
+      email:
+        recipients:
+          - syomna444@gmail.com
+        notify:
+          success: true
+          failure: false
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: true
