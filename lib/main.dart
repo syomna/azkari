@@ -51,12 +51,14 @@ void main() async {
             getSurahUseCase: sl<GetSurahUseCase>(),
           ),
         ),
-        ChangeNotifierProvider(create: (_) => TasbehProvider(
-          sharedPreferences: sl<SharedPreferences>(),
-        )),
+        ChangeNotifierProvider(
+            create: (_) => TasbehProvider(
+                  sharedPreferences: sl<SharedPreferences>(),
+                )),
         ChangeNotifierProvider(
             create: (_) => NotificationProvider(
-                notificationService: sl<NotificationService>())),
+                notificationService: sl<NotificationService>(),
+                sharedPreferences: sl<SharedPreferences>())),
       ],
       child: const MyApp(),
     ),
