@@ -36,7 +36,12 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             // signingConfig = signingConfigs.getByName("debug")
-            signingConfig signingConfigs.release
+            if (System.env.CM_KEYSTORE_PATH != null) { // Check if CM vars are available
+                storeFile file(System.env.CM_KEYSTORE_PATH)
+                storePassword System.env.CM_KEYSTORE_PASSWORD
+                keyAlias System.env.CM_KEY_ALIAS
+                keyPassword System.env.CM_KEY_PASSWORD
+            }
         }
     }
 }
