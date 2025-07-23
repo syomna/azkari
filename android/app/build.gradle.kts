@@ -1,3 +1,12 @@
+import java.io.File
+import java.util.*
+
+val keystoreProperties =
+    Properties().apply {
+        var file = File("key.properties")
+        if (file.exists()) load(file.reader())
+    }
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -20,6 +29,8 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
+    val appVersionCode = (System.getenv()["NEW_BUILD_NUMBER"] ?: "1")?.toInt()
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.yomna.azkar_app"
@@ -27,7 +38,7 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
+        versionCode = appVersionCode
         versionName = flutter.versionName
     }
 
