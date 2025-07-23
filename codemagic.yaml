@@ -54,7 +54,7 @@ workflows:
             --build-number=$BUILD_NUMBER
 
     artifacts:
-      - build/app/outputs/bundle/release/*.aab
+      - build/**/outputs/**/*.aab
       - build/**/outputs/**/mapping.txt
       - flutter_drive.log
 
