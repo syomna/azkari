@@ -60,7 +60,6 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
-            shrinkResources = true
             signingConfig = signingConfigs.getByName("release")
         }
     }
