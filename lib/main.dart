@@ -16,6 +16,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'di/injection_container.dart' as di;
 
@@ -50,7 +51,9 @@ void main() async {
             getSurahUseCase: sl<GetSurahUseCase>(),
           ),
         ),
-        ChangeNotifierProvider(create: (_) => TasbehProvider()),
+        ChangeNotifierProvider(create: (_) => TasbehProvider(
+          sharedPreferences: sl<SharedPreferences>(),
+        )),
         ChangeNotifierProvider(
             create: (_) => NotificationProvider(
                 notificationService: sl<NotificationService>())),

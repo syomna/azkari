@@ -14,11 +14,19 @@ import 'package:azkar_app/features/surah/data/datasources/surah_local_data_sourc
 import 'package:azkar_app/features/surah/data/repositories/surah_repositoy_impl.dart';
 import 'package:azkar_app/features/surah/domain/repositories/surah_repository.dart';
 import 'package:azkar_app/features/surah/domain/usecases/get_surah_usecase.dart';
+import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
 import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
+  sl.registerSingletonAsync<SharedPreferences>(
+    () async => await SharedPreferences.getInstance(),
+  );
+
+  // Make sure to await its initialization before other dependencies that depend on it
+  await sl.allReady(); 
   sl.registerLazySingleton<NotificationService>(() => NotificationService());
   // Azkar
   sl.registerLazySingleton<AzkarLocalDataSource>(
@@ -41,4 +49,6 @@ Future<void> init() async {
   sl.registerLazySingleton<SurahRepository>(
       () => SurahRepositoyImpl(surahLocalDataSource: sl()));
   sl.registerLazySingleton(() => GetSurahUseCase(surahRepository: sl()));
+    sl.registerFactory(() => TasbehProvider(sharedPreferences: sl()));
+
 }
