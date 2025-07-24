@@ -29,7 +29,7 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
-    val appVersionCode = (System.getenv()["NEW_BUILD_NUMBER"] ?: "1")?.toInt()
+    val appVersionCode = (System.getenv()["BUILD_NUMBER"] ?: "1")?.toInt()
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
