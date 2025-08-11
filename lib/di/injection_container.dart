@@ -9,6 +9,16 @@ import 'package:azkar_app/features/names_of_allah/data/datasources/names_of_alla
 import 'package:azkar_app/features/names_of_allah/data/repositories/names_of_allah_repositoy_impl.dart';
 import 'package:azkar_app/features/names_of_allah/domain/repositories/names_of_allah_repository.dart';
 import 'package:azkar_app/features/names_of_allah/domain/usecases/get_names_of_allah_usecase.dart';
+import 'package:azkar_app/features/quran/data/datasources/quran_local_data_source.dart';
+import 'package:azkar_app/features/quran/data/datasources/quran_local_data_source_impl.dart';
+import 'package:azkar_app/features/quran/data/repositories/quran_repository_impl.dart';
+import 'package:azkar_app/features/quran/domain/repositories/quran_repository.dart';
+import 'package:azkar_app/features/quran/domain/usecases/clear_all_saved_quran_values_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/clear_quran_position_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/get_latest_quran_surah_number_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/get_saved_quran_position_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/save_latest_quran_surah_number_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/save_quran_position_usecase.dart';
 import 'package:azkar_app/features/surah/data/datasources/surah_local_data_source.dart';
 import 'package:azkar_app/features/surah/data/datasources/surah_local_data_source_impl.dart';
 import 'package:azkar_app/features/surah/data/repositories/surah_repositoy_impl.dart';
@@ -26,7 +36,7 @@ Future<void> init() async {
   );
 
   // Make sure to await its initialization before other dependencies that depend on it
-  await sl.allReady(); 
+  await sl.allReady();
   sl.registerLazySingleton<NotificationService>(() => NotificationService());
   // Azkar
   sl.registerLazySingleton<AzkarLocalDataSource>(
@@ -49,6 +59,24 @@ Future<void> init() async {
   sl.registerLazySingleton<SurahRepository>(
       () => SurahRepositoyImpl(surahLocalDataSource: sl()));
   sl.registerLazySingleton(() => GetSurahUseCase(surahRepository: sl()));
-    sl.registerFactory(() => TasbehProvider(sharedPreferences: sl()));
+  sl.registerFactory(() => TasbehProvider(sharedPreferences: sl()));
 
+  // Quran
+  sl.registerLazySingleton<QuranLocalDataSource>(() => QuranLocalDataSourceImpl(
+        sharedPreferences: sl(),
+      ));
+  sl.registerLazySingleton<QuranRepository>(
+      () => QuranRepositoryImpl(quranLocalDataSource: sl()));
+  sl.registerLazySingleton(
+      () => SaveQuranPositionUseCase(quranRepository: sl()));
+  sl.registerLazySingleton(
+      () => GetSavedQuranPositionUseCase(quranRepository: sl()));
+  sl.registerLazySingleton(
+      () => GetLatestQuranSurahNumberUseCase(quranRepository: sl()));
+  sl.registerLazySingleton(
+      () => SaveLatestQuranSurahNumberUseCase(quranRepository: sl()));
+  sl.registerLazySingleton(
+      () => ClearQuranPositionUseCase(quranRepository: sl()));
+  sl.registerLazySingleton(
+      () => ClearAllSavedQuranValuesUseCase(quranRepository: sl()));
 }

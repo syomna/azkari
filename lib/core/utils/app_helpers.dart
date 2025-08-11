@@ -12,13 +12,13 @@ class AppHelpers {
     });
   }
 
-  static void showToast(String msg, {bool isError = false}) {
+  static void showToast(String msg, {bool isError = false, Color? color}) {
     Fluttertoast.showToast(
         msg: msg,
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
         timeInSecForIosWeb: 1,
-        backgroundColor: isError ? Colors.red : Colors.green,
+        backgroundColor: isError ? Colors.red : color ?? Colors.green,
         textColor: Colors.white,
         fontSize: 16.sp);
   }

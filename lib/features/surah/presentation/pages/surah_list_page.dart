@@ -185,6 +185,10 @@ class _SurahListPageState extends State<SurahListPage> {
                       ),
                     )
                   : Scrollbar(
+                      thickness: 6.w,
+                      radius: Radius.circular(8.r),
+                      trackVisibility: true,
+                      thumbVisibility: true,
                       child: ListView.separated(
                           itemCount: _currentDisplayedSurahs.length,
                           separatorBuilder: (context, index) => SizedBox(

@@ -2,6 +2,7 @@ import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/core/enums/app_loading_status.dart';
 import 'package:azkar_app/features/azkar/presentation/pages/azkar_category_page.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
+import 'package:azkar_app/features/quran/presentation/pages/quran_details_page.dart';
 import 'package:azkar_app/features/tasbeh/presentation/pages/tasbeh_page.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/pages/settings_page.dart';
@@ -14,7 +15,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -77,56 +78,108 @@ class _HomePageState extends State<HomePage> {
                 SizedBox(
                   height: 10.h,
                 ),
-                Row(
-                  children: [
-                    const Expanded(
-                        child: Component(
+                GridView(
+                  shrinkWrap: true, // Prevents infinite height error
+                  physics:
+                      const NeverScrollableScrollPhysics(), // Disables scrolling
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 1,
+                  ),
+                  children: const [
+                    Component(
+                      text: AppConstants.holyQuran,
+                      img: 'quran',
+                      page: QuranDetailPage(),
+                      isColumn: true,
+                    ),
+                    Component(
                       text: AppConstants.morningAzkarCategory,
                       img: 'sun',
                       page: AzkarCategoryPage(
                         title: AppConstants.morningAzkarCategory,
                         categoryName: AppConstants.morningAzkarCategory,
                       ),
-                    )),
-                    SizedBox(
-                      width: 10.w,
+                      isColumn: true,
                     ),
-                    const Expanded(
-                        child: Component(
+                    Component(
                       text: AppConstants.eveningAzkarCategory,
                       img: 'night',
                       page: AzkarCategoryPage(
                         title: AppConstants.eveningAzkarCategory,
                         categoryName: AppConstants.eveningAzkarCategory,
                       ),
-                    ))
-                  ],
-                ),
-                SizedBox(
-                  height: 10.h,
-                ),
-                Row(
-                  children: [
-                    const Expanded(
-                        child: Component(
+                      isColumn: true,
+                    ),
+                    Component(
+                      text: AppConstants.tasbeh,
+                      img: 'tasbih',
+                      page: TasbehPage(),
+                      isColumn: true,
+                    ),
+                    Component(
                       text: AppConstants.variousDuaaCategory,
                       img: 'duaa',
                       page: AzkarCategoryPage(
                         title: AppConstants.variousDuaaCategory,
                         categoryName: AppConstants.variousDuaaCategory,
                       ),
-                    )),
-                    SizedBox(
-                      width: 10.w,
+                      isColumn: true,
                     ),
-                    const Expanded(
-                        child: Component(
-                      text: AppConstants.tasbeh,
-                      img: 'tasbih',
-                      page: TasbehPage(),
-                    ))
                   ],
                 ),
+                // Row(
+                //   children: [
+                //     const Expanded(
+                //         child: Component(
+                //       text: AppConstants.morningAzkarCategory,
+                //       img: 'sun',
+                //       page: AzkarCategoryPage(
+                //         title: AppConstants.morningAzkarCategory,
+                //         categoryName: AppConstants.morningAzkarCategory,
+                //       ),
+                //     )),
+                //     SizedBox(
+                //       width: 10.w,
+                //     ),
+                //     const Expanded(
+                //         child: Component(
+                //       text: AppConstants.eveningAzkarCategory,
+                //       img: 'night',
+                //       page: AzkarCategoryPage(
+                //         title: AppConstants.eveningAzkarCategory,
+                //         categoryName: AppConstants.eveningAzkarCategory,
+                //       ),
+                //     ))
+                //   ],
+                // ),
+                // SizedBox(
+                //   height: 10.h,
+                // ),
+                // Row(
+                //   children: [
+                //     const Expanded(
+                //         child: Component(
+                //       text: AppConstants.variousDuaaCategory,
+                //       img: 'duaa',
+                //       page: AzkarCategoryPage(
+                //         title: AppConstants.variousDuaaCategory,
+                //         categoryName: AppConstants.variousDuaaCategory,
+                //       ),
+                //     )),
+                //     SizedBox(
+                //       width: 10.w,
+                //     ),
+                //     const Expanded(
+                //         child: Component(
+                //       text: AppConstants.tasbeh,
+                //       img: 'tasbih',
+                //       page: TasbehPage(),
+                //     ))
+                //   ],
+                // ),
                 SizedBox(
                   height: 20.h,
                 ),

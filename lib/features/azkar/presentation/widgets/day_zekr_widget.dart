@@ -91,32 +91,38 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
       },
       child: CardWidget(
           height: MediaQuery.of(context).size.height * 0.18,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '$dateDay ، $dateString',
-                      style: TextStyle(
-                          fontSize: 16.sp, fontWeight: FontWeight.bold),
-                    ),
-                    IconButton(
-                        onPressed: () => _refreshZekr(azkarProvider.azkarList),
-                        icon: const RefreshIcon())
-                  ],
-                ),
-                SizedBox(
-                  height: 10.h,
-                ),
-                Text(
-                  currentZekr.zekr,
-                  style:
-                      TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
-                )
-              ],
+          child: Scrollbar(
+            thickness: 6.w,
+            radius: Radius.circular(8.r),
+            trackVisibility: true,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '$dateDay ، $dateString',
+                        style: TextStyle(
+                            fontSize: 16.sp, fontWeight: FontWeight.bold),
+                      ),
+                      IconButton(
+                          onPressed: () =>
+                              _refreshZekr(azkarProvider.azkarList),
+                          icon: const RefreshIcon())
+                    ],
+                  ),
+                  SizedBox(
+                    height: 10.h,
+                  ),
+                  Text(
+                    currentZekr.zekr,
+                    style:
+                        TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                  )
+                ],
+              ),
             ),
           )),
     );

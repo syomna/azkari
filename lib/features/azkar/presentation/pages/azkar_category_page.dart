@@ -201,6 +201,10 @@ class _AzkarCategoryPageState extends State<AzkarCategoryPage> {
                       ),
                     )
                   : Scrollbar(
+                      thickness: 6.w,
+                      radius: Radius.circular(8.r),
+                      trackVisibility: true,
+                      thumbVisibility: true,
                       child: ListView.separated(
                           itemCount: _currentDisplayedAzkar.length,
                           separatorBuilder: (context, index) => SizedBox(

@@ -7,6 +7,7 @@ class AppConstants {
   static const String prayerAzkarCategory = 'أذكار الآذان';
   static const String variousDuaaCategory = 'أدعية';
   static const String variousDuaaTitle = 'أدعية متنوعة';
+  static const String holyQuran = 'القرآن الكريم';
 
   static const String shortSurahsTitle = 'سور قصيرة للصلاة';
   static const String allAzkarPageTitle = 'أذكار و أدعية';

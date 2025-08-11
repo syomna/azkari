@@ -7,11 +7,14 @@ class NotificationProvider extends ChangeNotifier {
   static const String _morningAzkarNotificationKey = 'morningAzkarNotification';
   static const String _eveningAzkarNotificationKey = 'eveningAzkarNotification';
   static const String _periodicNotificationKey = 'periodicNotification';
+  static const String _periodicReminderNotificationKey =
+      'periodicRemiderNotification';
 
   bool _areNotificationsEnabled = true;
   bool _isMorningAzkarNotificationEnabled = true;
   bool _isEveningAzkarNotificationEnabled = true;
   bool _isPeriodicNotificationEnabled = true;
+  bool _isPeriodicReminderNotificationEnabled = true;
 
   bool get areNotificationsEnabled => _areNotificationsEnabled;
   bool get isMorningAzkarNotificationEnabled =>
@@ -19,6 +22,8 @@ class NotificationProvider extends ChangeNotifier {
   bool get isEveningAzkarNotificationEnabled =>
       _isEveningAzkarNotificationEnabled;
   bool get isPeriodicNotificationEnabled => _isPeriodicNotificationEnabled;
+  bool get isPeriodicReminderNotificationEnabled =>
+      _isPeriodicReminderNotificationEnabled;
 
   final NotificationService _notificationService;
   final SharedPreferences _prefs;
@@ -39,6 +44,8 @@ class NotificationProvider extends ChangeNotifier {
         _prefs.getBool(_eveningAzkarNotificationKey) ?? true;
     _isPeriodicNotificationEnabled =
         _prefs.getBool(_periodicNotificationKey) ?? true;
+    _isPeriodicReminderNotificationEnabled =
+        _prefs.getBool(_periodicReminderNotificationKey) ?? true;
 
     _applyNotificationStates();
   }
@@ -56,6 +63,9 @@ class NotificationProvider extends ChangeNotifier {
       if (_isPeriodicNotificationEnabled) {
         _notificationService.periodicallyShowNotification();
       }
+      if (_isPeriodicReminderNotificationEnabled) {
+        _notificationService.periodicallyShowDailyReminder();
+      }
     }
   }
 
@@ -67,6 +77,8 @@ class NotificationProvider extends ChangeNotifier {
         _eveningAzkarNotificationKey, _isEveningAzkarNotificationEnabled);
     await _prefs.setBool(
         _periodicNotificationKey, _isPeriodicNotificationEnabled);
+    await _prefs.setBool(_periodicReminderNotificationKey,
+        _isPeriodicReminderNotificationEnabled);
   }
 
   void toggleAllNotifications(bool newValue) {
@@ -75,6 +87,7 @@ class NotificationProvider extends ChangeNotifier {
       _isMorningAzkarNotificationEnabled = newValue;
       _isEveningAzkarNotificationEnabled = newValue;
       _isPeriodicNotificationEnabled = newValue;
+      _isPeriodicReminderNotificationEnabled = newValue;
 
       _applyNotificationStates();
 
@@ -104,13 +117,10 @@ class NotificationProvider extends ChangeNotifier {
   void togglePeriodicNotification(bool newValue) {
     if (_isPeriodicNotificationEnabled != newValue) {
       _isPeriodicNotificationEnabled = newValue;
+      _isPeriodicReminderNotificationEnabled = newValue;
       _applyNotificationStates();
       _saveNotificationPreferences();
       notifyListeners();
     }
-  }
-
-  void clearTasbehCount() {
-    // This method is in TasbehProvider, not NotificationProvider
   }
 }

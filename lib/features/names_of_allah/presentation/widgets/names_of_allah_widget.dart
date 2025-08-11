@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class NamesOfAllahWidget extends StatefulWidget {
-  const NamesOfAllahWidget({Key? key}) : super(key: key);
+  const NamesOfAllahWidget({super.key});
 
   @override
   State<NamesOfAllahWidget> createState() => _NamesOfAllahWidgetState();

@@ -83,6 +83,12 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
   }
 
+  periodicallyShowDailyReminder() async {
+    await flutterLocalNotificationsPlugin.periodicallyShow(30, 'تذكير يومي',
+        'لا تنسى وردك اليومي', RepeatInterval.daily, notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
+  }
+
   NotificationDetails notificationDetails = const NotificationDetails(
       android: AndroidNotificationDetails('0', 'Yomna', playSound: false),
       iOS: DarwinNotificationDetails(sound: null, presentSound: false));

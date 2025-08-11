@@ -4,6 +4,7 @@ import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/core/presentation/providers/theme_provider.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
+import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -24,9 +25,10 @@ class SettingsPage extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: Consumer3<ThemeProvider, NotificationProvider, TasbehProvider>(
+      body: Consumer4<ThemeProvider, NotificationProvider, TasbehProvider,
+          QuranProvider>(
         builder: (context, themeProvider, notificationProvider, tasbehProvider,
-            child) {
+            quranProvider, child) {
           return Padding(
             padding: EdgeInsets.all(16.w),
             child: SingleChildScrollView(
@@ -139,6 +141,15 @@ class SettingsPage extends StatelessWidget {
                     onTap: () {
                       tasbehProvider.resetAll();
                       AppHelpers.showToast('تم مسح عداد التسبيح بنجاح!');
+                    },
+                  ),
+                  ListTile(
+                    title: Text('مسح تقدمك في القرآن',
+                        style: TextStyle(fontSize: 16.sp)),
+                    trailing: const Icon(Icons.refresh),
+                    onTap: () {
+                      quranProvider.clearAllSavedQuranValues();
+                      AppHelpers.showToast('تم مسح تقدمك بنجاح!');
                     },
                   ),
                   ListTile(
