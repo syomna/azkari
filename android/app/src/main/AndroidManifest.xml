@@ -6,6 +6,11 @@
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+        <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+<uses-feature android:name="android.hardware.sensor.compass" android:required="false"/>
+<uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false"/>
+
     <application
         android:label="أذكاري"
         android:name="${applicationName}"
@@ -17,6 +22,8 @@
         <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
         <action android:name="android.intent.action.QUICKBOOT_POWERON" />
         <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+
+
     </intent-filter>
 </receiver>
         <activity

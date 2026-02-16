@@ -9,6 +9,10 @@ import 'package:azkar_app/features/names_of_allah/data/datasources/names_of_alla
 import 'package:azkar_app/features/names_of_allah/data/repositories/names_of_allah_repositoy_impl.dart';
 import 'package:azkar_app/features/names_of_allah/domain/repositories/names_of_allah_repository.dart';
 import 'package:azkar_app/features/names_of_allah/domain/usecases/get_names_of_allah_usecase.dart';
+import 'package:azkar_app/features/qibla/data/repositories/qibla_repository_impl.dart';
+import 'package:azkar_app/features/qibla/domain/repositories/qibla_repository.dart';
+import 'package:azkar_app/features/qibla/domain/usecases/get_qibla_direction_usecase.dart';
+import 'package:azkar_app/features/qibla/presentation/providers/qibla_provider.dart';
 import 'package:azkar_app/features/quran/data/datasources/quran_local_data_source.dart';
 import 'package:azkar_app/features/quran/data/datasources/quran_local_data_source_impl.dart';
 import 'package:azkar_app/features/quran/data/repositories/quran_repository_impl.dart';
@@ -79,4 +83,12 @@ Future<void> init() async {
       () => ClearQuranPositionUseCase(quranRepository: sl()));
   sl.registerLazySingleton(
       () => ClearAllSavedQuranValuesUseCase(quranRepository: sl()));
+
+  sl.registerLazySingleton<QiblaRepository>(() => QiblaRepositoryImpl());
+
+  // 2. Use Cases
+  sl.registerLazySingleton(() => GetQiblaDirectionUseCase(sl()));
+
+  // 3. Provider (Factory because we want a fresh state when opening the screen)
+  sl.registerFactory(() => QiblaProvider(getQiblaDirectionUseCase: sl()));
 }

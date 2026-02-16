@@ -30,8 +30,8 @@ class QuranProvider with ChangeNotifier {
     return getSavedPositionUseCase(surahNumber);
   }
 
-  Future<void> saveQuranPosition(int surahNumber, double currentOffset) async {
-    await savePositionUseCase(surahNumber, currentOffset);
+  Future<void> saveQuranPosition(int surahNumber, int ayahNumber) async {
+    await savePositionUseCase(surahNumber, ayahNumber);
     notifyListeners();
   }
 

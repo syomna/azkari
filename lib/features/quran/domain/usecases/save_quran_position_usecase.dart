@@ -6,10 +6,10 @@ class SaveQuranPositionUseCase {
 
   SaveQuranPositionUseCase({required this.quranRepository});
 
-  Future<void> call(int surahNumber, double currentOffset) async {
+  Future<void> call(int surahNumber, int ayahNumber) async {
     final position = QuranPositionEntity(
       surahNumber: surahNumber,
-      scrollOffset: currentOffset,
+      ayahNumber: ayahNumber,
     );
     await quranRepository.saveQuranPosition(position);
   }

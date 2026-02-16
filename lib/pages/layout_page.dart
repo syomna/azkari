@@ -1,10 +1,11 @@
 import 'dart:io';
 
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
-import 'package:azkar_app/features/azkar/presentation/pages/all_azkar_page.dart';
-import 'package:azkar_app/pages/home_page.dart';
 import 'package:azkar_app/core/presentation/providers/theme_provider.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
+import 'package:azkar_app/features/azkar/presentation/pages/all_azkar_page.dart';
+import 'package:azkar_app/pages/home_page.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -30,15 +31,15 @@ class _LayoutPageState extends State<LayoutPage> {
         },
         backgroundColor: AppPalette.mainColor,
         child: Icon(
-          !themeProvider.isLight ? Icons.light_mode : Icons.nightlight,
+          !themeProvider.isLight ? CupertinoIcons.sun_max : CupertinoIcons.moon,
           color: Colors.white,
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: AnimatedBottomNavigationBar(
         icons: const [
-          Icons.home_outlined,
-          Icons.book_outlined,
+          CupertinoIcons.home,
+          CupertinoIcons.book,
         ],
         height: Platform.isAndroid
             ? MediaQuery.of(context).size.height * 0.09

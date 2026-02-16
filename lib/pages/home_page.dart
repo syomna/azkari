@@ -1,15 +1,17 @@
 import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/core/enums/app_loading_status.dart';
+import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/presentation/pages/azkar_category_page.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
-import 'package:azkar_app/features/quran/presentation/pages/quran_details_page.dart';
-import 'package:azkar_app/features/tasbeh/presentation/pages/tasbeh_page.dart';
-import 'package:azkar_app/core/theme/app_palette.dart';
-import 'package:azkar_app/pages/settings_page.dart';
-import 'package:azkar_app/widgets/component.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/day_zekr_widget.dart';
 import 'package:azkar_app/features/names_of_allah/presentation/widgets/names_of_allah_widget.dart';
+import 'package:azkar_app/features/qibla/presentation/pages/qibla_screen.dart';
+import 'package:azkar_app/features/quran/presentation/pages/quran_details_page.dart';
+import 'package:azkar_app/features/tasbeh/presentation/pages/tasbeh_page.dart';
+import 'package:azkar_app/pages/settings_page.dart';
+import 'package:azkar_app/widgets/component.dart';
 import 'package:azkar_app/widgets/welcoming_widget.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -58,7 +60,7 @@ class _HomePageState extends State<HomePage> {
                         );
                       },
                       child: Icon(
-                        Icons.settings,
+                        CupertinoIcons.settings,
                         size: 22.h,
                       )),
                 ),
@@ -126,6 +128,12 @@ class _HomePageState extends State<HomePage> {
                         title: AppConstants.variousDuaaCategory,
                         categoryName: AppConstants.variousDuaaCategory,
                       ),
+                      isColumn: true,
+                    ),
+                    Component(
+                      text: AppConstants.qibla,
+                      img: 'qibla',
+                      page: QiblaScreen(),
                       isColumn: true,
                     ),
                   ],

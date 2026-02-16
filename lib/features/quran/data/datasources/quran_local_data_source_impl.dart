@@ -9,7 +9,7 @@ class QuranLocalDataSourceImpl implements QuranLocalDataSource {
 
   QuranLocalDataSourceImpl({required this.sharedPreferences});
 
-  static const String _kSavedQuranPositionsKey = 'quran_positions_key';
+  static const String _kSavedAyahNumberKey = 'latest_ayah_Number_key';
   static const String _kSavedLatestQuranSurahNumberKey =
       'latest_quran_surah_number_key';
 
@@ -17,7 +17,7 @@ class QuranLocalDataSourceImpl implements QuranLocalDataSource {
 
   void _loadPositionsFromPrefs() {
     final List<String>? jsonList =
-        sharedPreferences.getStringList(_kSavedQuranPositionsKey);
+        sharedPreferences.getStringList(_kSavedAyahNumberKey);
     if (jsonList != null) {
       _savedQuranPositions = jsonList
           .map((jsonString) =>
@@ -55,7 +55,7 @@ class QuranLocalDataSourceImpl implements QuranLocalDataSource {
         .map((position) => jsonEncode(position.toJson()))
         .toList();
 
-    await sharedPreferences.setStringList(_kSavedQuranPositionsKey, jsonList);
+    await sharedPreferences.setStringList(_kSavedAyahNumberKey, jsonList);
   }
 
   @override
@@ -65,7 +65,7 @@ class QuranLocalDataSourceImpl implements QuranLocalDataSource {
     final position = _savedQuranPositions.firstWhere(
       (position) => position.surahNumber == surahNumber,
       orElse: () =>
-          QuranPositionModel(surahNumber: surahNumber, scrollOffset: 0.0),
+          QuranPositionModel(surahNumber: surahNumber, ayahNumber: 1),
     );
     return position;
   }
@@ -80,12 +80,12 @@ class QuranLocalDataSourceImpl implements QuranLocalDataSource {
         .map((position) => jsonEncode(position.toJson()))
         .toList();
 
-    await sharedPreferences.setStringList(_kSavedQuranPositionsKey, jsonList);
+    await sharedPreferences.setStringList(_kSavedAyahNumberKey, jsonList);
   }
 
   @override
   Future<void> clearAllSavedQuranValues() async {
-    await sharedPreferences.remove(_kSavedQuranPositionsKey);
+    await sharedPreferences.remove(_kSavedAyahNumberKey);
     await sharedPreferences.remove(_kSavedLatestQuranSurahNumberKey);
     _savedQuranPositions = [];
   }

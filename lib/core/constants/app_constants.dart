@@ -14,6 +14,7 @@ class AppConstants {
   static const String dayOfZikr = 'ذكر اليوم';
   static const String tasbeh = 'تسبيح';
   static const String namesOfAllah = 'أسماء الله الحسنى';
+  static const String qibla = 'القبلة';
 
   // Links
   static const String playStoreURL =

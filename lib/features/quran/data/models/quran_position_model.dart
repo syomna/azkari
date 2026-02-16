@@ -1,23 +1,23 @@
 class QuranPositionModel {
   final int surahNumber;
-  final double scrollOffset;
+  final int ayahNumber;
 
   QuranPositionModel({
     required this.surahNumber,
-    required this.scrollOffset,
+    required this.ayahNumber,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'surahNumber': surahNumber,
-      'scrollOffset': scrollOffset,
+      'ayahNumber': ayahNumber,
     };
   }
 
   factory QuranPositionModel.fromJson(Map<String, dynamic> json) {
     return QuranPositionModel(
       surahNumber: json['surahNumber'] as int,
-      scrollOffset: json['scrollOffset'] as double,
+      ayahNumber: json['ayahNumber'] as int,
     );
   }
 }

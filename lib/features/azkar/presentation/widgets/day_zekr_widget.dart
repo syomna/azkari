@@ -1,4 +1,5 @@
 import 'dart:math';
+
 import 'package:azkar_app/core/enums/app_loading_status.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';

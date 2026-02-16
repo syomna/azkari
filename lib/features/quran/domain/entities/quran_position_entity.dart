@@ -1,9 +1,9 @@
 class QuranPositionEntity {
   final int surahNumber;
-  final double scrollOffset;
+  final int ayahNumber;
 
   QuranPositionEntity({
     required this.surahNumber,
-    required this.scrollOffset,
+    required this.ayahNumber,
   });
 }

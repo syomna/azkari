@@ -1,4 +1,7 @@
 import 'package:azkar_app/core/presentation/providers/notification_provider.dart';
+import 'package:azkar_app/core/presentation/providers/theme_provider.dart';
+import 'package:azkar_app/core/services/notifications_service.dart';
+import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:azkar_app/features/names_of_allah/domain/usecases/get_names_of_allah_usecase.dart';
@@ -14,17 +17,15 @@ import 'package:azkar_app/features/surah/domain/usecases/get_surah_usecase.dart'
 import 'package:azkar_app/features/surah/presentation/providers/surah_provider.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
 import 'package:azkar_app/pages/splash_page.dart';
-import 'package:azkar_app/core/presentation/providers/theme_provider.dart';
-import 'package:azkar_app/core/services/notifications_service.dart';
-import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
+
 import 'di/injection_container.dart' as di;
 
 final sl = GetIt.instance;
@@ -71,7 +72,8 @@ void main() async {
                   getLatestSurahNumberUseCase:
                       sl<GetLatestQuranSurahNumberUseCase>(),
                   clearPositionUseCase: sl<ClearQuranPositionUseCase>(),
-                  clearAllSavedQuranValuesUsecase: sl<ClearAllSavedQuranValuesUseCase>(),
+                  clearAllSavedQuranValuesUsecase:
+                      sl<ClearAllSavedQuranValuesUseCase>(),
                 )),
         ChangeNotifierProvider(
             create: (_) => NotificationProvider(

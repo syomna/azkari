@@ -14,6 +14,10 @@ class AppPalette {
 
   static final ThemeData lightTheme = ThemeData.light()
       .copyWith(
+        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+        ),
         primaryColor: mainColor,
         textTheme: Typography.englishLike2018
             .apply(fontSizeFactor: 1.sp)

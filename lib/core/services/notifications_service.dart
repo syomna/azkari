@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:azkar_app/core/constants/duaa_notifications.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -51,7 +52,7 @@ class NotificationService {
       now.year,
       now.month,
       now.day,
-      isDay ? 5 : 17,
+      isDay ? 4 : 16,
     );
 
     scheduledDate = tz.TZDateTime.from(
@@ -73,15 +74,48 @@ class NotificationService {
     );
   }
 
-  periodicallyShowNotification() async {
-    await flutterLocalNotificationsPlugin.periodicallyShow(
-        20,
+  Future<void> periodicallyShowNotification() async {
+    List<String> adhkarPool = DuaaNotifications.adhkarPool;
+    // 1. Define your 4 time slots (Hours: 8am, 12pm, 4pm, 8pm)
+    List<int> hours = [8, 12, 16, 20];
+
+    for (int i = 0; i < hours.length; i++) {
+      tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+      tz.TZDateTime scheduledDate = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month,
+        now.day,
+        hours[i],
+      );
+
+      // If the time has already passed today, move to tomorrow
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
+
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        20 + i, // Unique ID for each of the 4 slots (20, 21, 22, 23)
         'أذكاري',
-        'اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْماً نَافِعاً، وَرِزْقاً طَيِّباً، وَعَمَلاً مُتَقَبَّلاً',
-        RepeatInterval.daily,
+        // This picks a different Adhkar based on the time slot index
+        adhkarPool[i % adhkarPool.length],
+        scheduledDate,
         notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+    }
   }
+
+  // periodicallyShowNotification() async {
+  //   await flutterLocalNotificationsPlugin.periodicallyShow(
+  //       20,
+  //       'أذكاري',
+  //       'اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْماً نَافِعاً، وَرِزْقاً طَيِّباً، وَعَمَلاً مُتَقَبَّلاً',
+  //       RepeatInterval.daily,
+  //       notificationDetails,
+  //       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
+  // }
 
   periodicallyShowDailyReminder() async {
     await flutterLocalNotificationsPlugin.periodicallyShow(30, 'تذكير يومي',

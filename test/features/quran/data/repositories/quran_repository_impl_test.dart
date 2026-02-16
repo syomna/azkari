@@ -21,10 +21,10 @@ void main() {
     test('should return a QuranPositionEntity when getSavedPosition is called',
         () {
       final tSurahNumber = 1;
-      final tScrollOffset = 50.0;
+      final tAyahNumber = 50;
       final tQuranPositionModel = QuranPositionModel(
         surahNumber: tSurahNumber,
-        scrollOffset: tScrollOffset,
+        ayahNumber: tAyahNumber,
       );
 
       when(mockLocalDataSource.getSavedPosition(tSurahNumber))
@@ -36,7 +36,7 @@ void main() {
       // Assert
       expect(result, isA<QuranPositionEntity>());
       expect(result.surahNumber, tSurahNumber);
-      expect(result.scrollOffset, tScrollOffset);
+      expect(result.ayahNumber, tAyahNumber);
       verify(mockLocalDataSource.getSavedPosition(tSurahNumber)).called(1);
       verifyNoMoreInteractions(mockLocalDataSource);
     });
@@ -45,14 +45,14 @@ void main() {
         () async {
       // Arrange
       final tSurahNumber = 2;
-      final tScrollOffset = 100.0;
+      final tAyahNumber = 100;
       final tQuranPositionEntity = QuranPositionEntity(
         surahNumber: tSurahNumber,
-        scrollOffset: tScrollOffset,
+        ayahNumber: tAyahNumber,
       );
       final tQuranPositionModel = QuranPositionModel(
         surahNumber: tSurahNumber,
-        scrollOffset: tScrollOffset,
+        ayahNumber: tAyahNumber,
       );
       when(mockLocalDataSource.saveQuranPosition(tQuranPositionModel))
           .thenAnswer((_) async => {});
@@ -64,8 +64,7 @@ void main() {
       verify(mockLocalDataSource.saveQuranPosition(argThat(
         isA<QuranPositionModel>()
             .having((model) => model.surahNumber, 'surahNumber', tSurahNumber)
-            .having(
-                (model) => model.scrollOffset, 'scrollOffset', tScrollOffset),
+            .having((model) => model.ayahNumber, 'ayahNumber', tAyahNumber),
       ))).called(1);
       verifyNoMoreInteractions(mockLocalDataSource);
     });

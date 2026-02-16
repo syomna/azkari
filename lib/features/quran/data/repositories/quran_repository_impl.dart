@@ -22,7 +22,7 @@ class QuranRepositoryImpl implements QuranRepository {
   Future<void> saveQuranPosition(QuranPositionEntity position) async {
     final quranPositionModel = QuranPositionModel(
       surahNumber: position.surahNumber,
-      scrollOffset: position.scrollOffset,
+      ayahNumber: position.ayahNumber,
     );
     await quranLocalDataSource.saveQuranPosition(quranPositionModel);
   }
@@ -32,7 +32,7 @@ class QuranRepositoryImpl implements QuranRepository {
     final model = quranLocalDataSource.getSavedPosition(surahNumber);
     return QuranPositionEntity(
       surahNumber: model.surahNumber,
-      scrollOffset: model.scrollOffset,
+      ayahNumber: model.ayahNumber,
     );
   }
 

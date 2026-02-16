@@ -7,11 +7,13 @@ class Component extends StatelessWidget {
       {super.key,
       required this.text,
       required this.img,
+      this.extension,
       required this.page,
       this.isColumn = false});
 
   final String text;
   final String img;
+  final String? extension;
   final Widget page;
   final bool isColumn;
 
@@ -30,7 +32,8 @@ class Component extends StatelessWidget {
                 SizedBox(
                     width: 30.w,
                     child: Image(
-                      image: AssetImage('assets/images/$img.png'),
+                      image: AssetImage(
+                          'assets/images/$img.${extension ?? 'png'}'),
                       height: 30.h,
                     )),
                 SizedBox(

@@ -1,16 +1,17 @@
 import 'dart:io';
 
 import 'package:azkar_app/core/constants/app_constants.dart';
+import 'package:azkar_app/core/presentation/providers/notification_provider.dart';
 import 'package:azkar_app/core/presentation/providers/theme_provider.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
+import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
+import 'package:azkar_app/widgets/switch_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
-import 'package:azkar_app/core/presentation/providers/notification_provider.dart';
-import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -35,12 +36,8 @@ class SettingsPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SwitchListTile(
-                    title: Text(
-                      'الوضع المظلم',
-                      style: TextStyle(fontSize: 16.sp),
-                    ),
-                    activeColor: AppPalette.mainColor,
+                  SwitchTile(
+                    title: 'الوضع المظلم',
                     value: themeProvider.isLight == false,
                     onChanged: (bool value) {
                       themeProvider.toggleTheme();
@@ -80,23 +77,15 @@ class SettingsPage extends StatelessWidget {
                     style:
                         TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
                   ),
-                  SwitchListTile(
-                    title: Text(
-                      'تفعيل الإشعارات',
-                      style: TextStyle(fontSize: 16.sp),
-                    ),
-                    activeColor: AppPalette.mainColor,
+                  SwitchTile(
+                    title: 'تفعيل الإشعارات',
                     value: notificationProvider.areNotificationsEnabled,
                     onChanged: (bool value) {
                       notificationProvider.toggleAllNotifications(value);
                     },
                   ),
-                  SwitchListTile(
-                    title: Text(
-                      'إشعارات أذكار الصباح',
-                      style: TextStyle(fontSize: 16.sp),
-                    ),
-                    activeColor: AppPalette.mainColor,
+                  SwitchTile(
+                    title: 'إشعارات أذكار الصباح',
                     value:
                         notificationProvider.isMorningAzkarNotificationEnabled,
                     onChanged: (bool value) {
@@ -104,12 +93,8 @@ class SettingsPage extends StatelessWidget {
                           .toggleMorningAzkarNotification(value);
                     },
                   ),
-                  SwitchListTile(
-                    title: Text(
-                      'إشعارات أذكار المساء',
-                      style: TextStyle(fontSize: 16.sp),
-                    ),
-                    activeColor: AppPalette.mainColor,
+                  SwitchTile(
+                    title: 'إشعارات أذكار المساء',
                     value:
                         notificationProvider.isEveningAzkarNotificationEnabled,
                     onChanged: (bool value) {
@@ -117,12 +102,8 @@ class SettingsPage extends StatelessWidget {
                           .toggleEveningAzkarNotification(value);
                     },
                   ),
-                  SwitchListTile(
-                    title: Text(
-                      'إشعارات تذكير دوري',
-                      style: TextStyle(fontSize: 16.sp),
-                    ),
-                    activeColor: AppPalette.mainColor,
+                  SwitchTile(
+                    title: 'إشعارات تذكير دوري',
                     value: notificationProvider.isPeriodicNotificationEnabled,
                     onChanged: (bool value) {
                       notificationProvider.togglePeriodicNotification(value);
