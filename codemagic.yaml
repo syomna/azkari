@@ -122,13 +122,21 @@ workflows:
 
       - name: Flutter build ipa and automatic versioning
         script: |
-          # Get the next build number from TestFlight to ensure it's always incremental
-          BUILD_NUMBER=$(($(app-store-connect get-latest-testflight-build-number --platform=IOS "$APP_ID") + 1))
+          # 1. Fetch latest from Apple
+          LATEST_BUILD=$(app-store-connect get-latest-testflight-build-number --platform=IOS "$APP_ID")
           
-          # Build with a static build name (e.g., 1.0.0) and auto-incrementing build number
-          # You will need to manually update --build-name (e.g., from 1.0.0 to 1.0.1) when releasing a new app version
+          # 2. Logic: If Apple says 16, we use 17. If Apple says nothing, we use 28 (to match your pubspec).
+          # This ensures we are always strictly increasing.
+          if [ -z "$LATEST_BUILD" ]; then
+            BUILD_NUMBER=28
+          else
+            BUILD_NUMBER=$(( LATEST_BUILD > 28 ? LATEST_BUILD + 1 : 29 ))
+          fi
+          
+          echo "Codemagic will now force Build Number: $BUILD_NUMBER"
+
           flutter build ipa --release \
-            --build-name=1.0.0 \
+            --build-name=2.2.11 \
             --build-number=$BUILD_NUMBER \
             --export-options-plist=/Users/builder/export_options.plist
 
