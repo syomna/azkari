@@ -11,6 +11,13 @@
 <uses-feature android:name="android.hardware.sensor.compass" android:required="false"/>
 <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false"/>
 
+<queries>
+    <intent>
+        <action android:name="android.intent.action.SENDTO" />
+        <data android:scheme="mailto" />
+    </intent>
+</queries>
+
     <application
         android:label="أذكاري"
         android:name="${applicationName}"
@@ -46,6 +53,7 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            
             
         </activity>
         <!-- Don't delete the meta-data below.

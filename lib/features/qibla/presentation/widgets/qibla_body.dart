@@ -23,10 +23,10 @@ class QiblaBody extends StatelessWidget {
         // 1. Heading Degree
         Column(
           children: [
-            Text('${heading.toInt()}°', 
-              style: TextStyle(fontSize: 48.sp, fontWeight: FontWeight.bold)),
-            Text('الدرجة الحالية', 
-              style: TextStyle(fontSize: 16.sp, color: Colors.grey)),
+            Text('${heading.toInt()}°',
+                style: TextStyle(fontSize: 48.sp, fontWeight: FontWeight.bold)),
+            Text('الدرجة الحالية',
+                style: TextStyle(fontSize: 16.sp, color: Colors.grey)),
           ],
         ),
 
@@ -36,13 +36,15 @@ class QiblaBody extends StatelessWidget {
             duration: const Duration(milliseconds: 300),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              boxShadow: isAligned ? [
-                BoxShadow(
-                  color: Colors.green.withValues(alpha: 0.5),
-                  blurRadius: 40,
-                  spreadRadius: 15,
-                )
-              ] : [],
+              boxShadow: isAligned
+                  ? [
+                      BoxShadow(
+                        color: Colors.green.withValues(alpha: 0.5),
+                        blurRadius: 40,
+                        spreadRadius: 15,
+                      )
+                    ]
+                  : [],
             ),
             child: Transform.rotate(
               angle: (difference * pi / 180),
@@ -60,7 +62,7 @@ class QiblaBody extends StatelessWidget {
           style: TextStyle(
             fontSize: 22.sp,
             fontWeight: FontWeight.bold,
-            color: isAligned ? Colors.green : Colors.black87,
+            color: isAligned ? Colors.green : null,
           ),
         ),
       ],

@@ -7,6 +7,9 @@ class AppPalette {
 
   static final ThemeData darkTheme = ThemeData.dark().copyWith(
     primaryColor: mainColor,
+    appBarTheme: const AppBarTheme(
+      surfaceTintColor: Colors.transparent,
+    ),
     textTheme: Typography.englishLike2018
         .apply(fontSizeFactor: 1.sp)
         .apply(fontFamily: fontFamily, bodyColor: Colors.white),
@@ -17,6 +20,7 @@ class AppPalette {
         scaffoldBackgroundColor: Colors.white,
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
         ),
         primaryColor: mainColor,
         textTheme: Typography.englishLike2018

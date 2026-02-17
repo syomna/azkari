@@ -8,6 +8,7 @@ import 'package:azkar_app/features/names_of_allah/presentation/widgets/names_of_
 import 'package:azkar_app/features/qibla/presentation/pages/qibla_screen.dart';
 import 'package:azkar_app/features/quran/presentation/pages/quran_details_page.dart';
 import 'package:azkar_app/features/tasbeh/presentation/pages/tasbeh_page.dart';
+import 'package:azkar_app/pages/contact_us_page.dart';
 import 'package:azkar_app/pages/settings_page.dart';
 import 'package:azkar_app/widgets/component.dart';
 import 'package:azkar_app/widgets/welcoming_widget.dart';
@@ -50,19 +51,38 @@ class _HomePageState extends State<HomePage> {
               children: [
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SettingsPage(),
-                          ),
-                        );
-                      },
-                      child: Icon(
-                        CupertinoIcons.settings,
-                        size: 22.h,
-                      )),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    spacing: 20.w,
+                    children: [
+                      InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ContactUsPage(),
+                              ),
+                            );
+                          },
+                          child: Icon(
+                            CupertinoIcons.bubble_left_bubble_right,
+                            size: 22.h,
+                          )),
+                      InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SettingsPage(),
+                              ),
+                            );
+                          },
+                          child: Icon(
+                            CupertinoIcons.settings,
+                            size: 22.h,
+                          )),
+                    ],
+                  ),
                 ),
                 const WelcomingWidget(),
                 SizedBox(
