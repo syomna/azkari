@@ -145,7 +145,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
 
             SizedBox(height: 40.h),
             Text(
-              'الإصدار 2.2.11',
+              'الإصدار 3.2.11',
               style: TextStyle(color: Colors.grey, fontSize: 12.sp),
             ),
             SizedBox(height: 20.h),
