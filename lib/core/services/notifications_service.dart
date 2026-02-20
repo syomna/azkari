@@ -45,20 +45,21 @@ class NotificationService {
     }
   }
 
-  scheduleNotifications({bool isDay = false}) async {
+  Future<void> scheduleNotifications({bool isDay = false}) async {
     tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    int targetHour = isDay ? 5 : 17;
     tz.TZDateTime scheduledDate = tz.TZDateTime(
       tz.local,
       now.year,
       now.month,
       now.day,
-      isDay ? 4 : 16,
+      targetHour,
     );
 
-    scheduledDate = tz.TZDateTime.from(
-      scheduledDate.toUtc(),
-      tz.local,
-    );
+    // scheduledDate = tz.TZDateTime.from(
+    //   scheduledDate.toUtc(),
+    //   tz.local,
+    // );
 
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
@@ -117,7 +118,7 @@ class NotificationService {
   //       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
   // }
 
-  periodicallyShowDailyReminder() async {
+  Future<void> periodicallyShowDailyReminder() async {
     await flutterLocalNotificationsPlugin.periodicallyShow(30, 'تذكير يومي',
         'لا تنسى وردك اليومي', RepeatInterval.daily, notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
@@ -134,4 +135,29 @@ class NotificationService {
   Future<void> cancelNotificationById(int id) async {
     await flutterLocalNotificationsPlugin.cancel(id);
   }
+
+//   Future<void> requestNotificationPermission() async {
+//     await flutterLocalNotificationsPlugin
+//         .resolvePlatformSpecificImplementation<
+//             AndroidFlutterLocalNotificationsPlugin>()
+//         ?.requestNotificationsPermission();
+//   }
+
+//   Future<bool> isNotificationPermissionGranted() async {
+//     if (Platform.isAndroid) {
+//       // For Android 13+ (API 33+)
+//       final bool? granted = await flutterLocalNotificationsPlugin
+//           .resolvePlatformSpecificImplementation<
+//               AndroidFlutterLocalNotificationsPlugin>()
+//           ?.areNotificationsEnabled();
+//       return granted ?? false;
+//     } else if (Platform.isIOS) {
+//       final bool? granted = await flutterLocalNotificationsPlugin
+//           .resolvePlatformSpecificImplementation<
+//               IOSFlutterLocalNotificationsPlugin>()
+//           ?.requestPermissions(alert: true, badge: true, sound: true);
+//       return granted ?? false;
+//     }
+//     return false;
+//   }
 }

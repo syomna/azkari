@@ -6,35 +6,65 @@ class PageNumberCard extends StatelessWidget {
   const PageNumberCard({
     super.key,
     required this.pageNumber,
+    required this.juz,
   });
 
   final int pageNumber;
-
+  final int juz;
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: Alignment.bottomLeft,
+      alignment:
+          Alignment.bottomCenter, // Changed to bottomCenter for a footer look
       child: Container(
         margin: EdgeInsets.symmetric(vertical: 10.h),
-        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 5.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
         decoration: BoxDecoration(
-          color: AppPalette.mainColor,
-          borderRadius: BorderRadius.circular(8.r),
+          color: AppPalette.mainColor.withValues(alpha: 0.8),
+          borderRadius: BorderRadius.circular(12.r),
         ),
-        child: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'الصفحة ',
-                style: TextStyle(fontSize: 16.sp, color: Colors.white),
+        child: Row(
+          children: [
+            // 1. Left side: Juz info
+            Expanded(
+              flex: 1,
+              child: Text(
+                'الجزء $juz',
+                style: TextStyle(fontSize: 12.sp, color: Colors.white70),
+                textAlign: TextAlign.right, // Since it's Arabic
               ),
-              Text(
-                pageNumber.toString(),
-                style: TextStyle(fontSize: 16.sp, color: Colors.white),
+            ),
+
+            // 2. Middle: Page number (Perfectly Centered)
+            Expanded(
+              flex: 2,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'الصفحة ',
+                    style: TextStyle(
+                        fontSize: 16.sp,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    pageNumber.toString(),
+                    style: TextStyle(
+                        fontSize: 16.sp,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+
+            // 3. Right side: Empty spacer to balance the Row
+            const Expanded(
+              flex: 1,
+              child: SizedBox(),
+            ),
+          ],
         ),
       ),
     );

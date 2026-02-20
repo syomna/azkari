@@ -57,6 +57,8 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
           .where((pos) => pos.itemLeadingEdge >= 0)
           .reduce((a, b) => a.itemLeadingEdge < b.itemLeadingEdge ? a : b)
           .index;
+      Provider.of<QuranProvider>(context, listen: false)
+          .saveLatestQuranSurahNumber(_surahNumber);
 
       Provider.of<QuranProvider>(context, listen: false).saveQuranPosition(
         _surahNumber,
@@ -136,14 +138,14 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
                   provider.savedLatestQuranSurahNumber == _surahNumber
                       ? CupertinoIcons.bookmark_fill
                       : CupertinoIcons.bookmark,
-                  size: 22.h,
-                  color: AppPalette.mainColor,
+                  size: 20.h,
+                  color: AppPalette.mainColor.withValues(alpha: 0.8),
                 ),
               );
             },
           ),
           IconButton(
-            icon: Icon(CupertinoIcons.list_bullet, size: 25.h),
+            icon: Icon(CupertinoIcons.list_bullet, size: 20.h),
             onPressed: () {
               showDialog(
                 context: context,
@@ -187,12 +189,14 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
                         : 0;
 
                     final isNewPage = currentPageNumber != previousPageNumber;
+                    int juz = quran.getJuzNumber(_surahNumber, index + 1);
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (isNewPage)
-                          PageNumberCard(pageNumber: currentPageNumber),
+                          PageNumberCard(
+                              pageNumber: currentPageNumber, juz: juz),
                         QuranSurah(
                           surahNumber: _surahNumber,
                           index: index,
@@ -214,7 +218,7 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
                         vertical: 10.h,
                       ),
                       decoration: BoxDecoration(
-                        color: AppPalette.mainColor.withValues(alpha: 0.4),
+                        color: AppPalette.mainColor.withValues(alpha: 0.8),
                         borderRadius: BorderRadius.circular(12.r),
                       ),
                       child: Row(
@@ -225,9 +229,12 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
                           Text(
                             quran.getSurahNameArabic(_surahNumber + 1),
                             style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16.sp),
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: 16.sp),
                           ),
-                          Icon(Icons.arrow_forward_ios, size: 16.h),
+                          Icon(Icons.arrow_forward_ios,
+                              color: Colors.white, size: 16.h),
                         ],
                       ),
                     ),

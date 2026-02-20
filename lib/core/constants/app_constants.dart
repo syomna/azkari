@@ -4,9 +4,13 @@ class AppConstants {
   static const String morningAzkarCategory = 'أذكار الصباح';
   static const String eveningAzkarCategory = 'أذكار المساء';
   static const String wakingUpAzkarCategory = 'أذكار الاستيقاظ من النوم';
+  static const String sleepingAzkarCategory = 'أذكار النوم';
   static const String prayerAzkarCategory = 'أذكار الآذان';
   static const String variousDuaaCategory = 'أدعية';
   static const String variousDuaaTitle = 'أدعية متنوعة';
+  static const String mosqueAzkarCategory = 'أذكار المسجد';
+  static const String enterMosqueCategory = 'دعاء دخول المسجد';
+  static const String leaveMosqueCategory = 'دعاء الخروج من المسجد';
   static const String holyQuran = 'القرآن الكريم';
 
   static const String shortSurahsTitle = 'سور قصيرة للصلاة';

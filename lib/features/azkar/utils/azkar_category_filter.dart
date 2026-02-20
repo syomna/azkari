@@ -8,16 +8,25 @@ extension AzkarCategoryFilter on List<ZekrEntity> {
   List<ZekrEntity> getEveningAzkar() =>
       where((e) => e.category == AppConstants.eveningAzkarCategory).toList();
 
-      List<ZekrEntity> getWakingUpAzkar() =>
+  List<ZekrEntity> getWakingUpAzkar() =>
       where((e) => e.category == AppConstants.wakingUpAzkarCategory).toList();
 
-      List<ZekrEntity> getPrayerAzkar() =>
+  List<ZekrEntity> getSleepingAzkar() =>
+      where((e) => e.category == AppConstants.sleepingAzkarCategory).toList();
+
+  List<ZekrEntity> getPrayerAzkar() =>
       where((e) => e.category == AppConstants.prayerAzkarCategory).toList();
 
-      List<ZekrEntity> getVariousDuaa() =>
-      where((e) => e.category != AppConstants.morningAzkarCategory &&
-          e.category != AppConstants.eveningAzkarCategory &&
-          e.category != AppConstants.wakingUpAzkarCategory &&
-          e.category != AppConstants.prayerAzkarCategory).toList();
+  List<ZekrEntity> getMosqueAzkar() => where((e) =>
+      e.category == AppConstants.enterMosqueCategory ||
+      e.category == AppConstants.leaveMosqueCategory).toList();
 
+  List<ZekrEntity> getVariousDuaa() => where((e) =>
+      e.category != AppConstants.morningAzkarCategory &&
+      e.category != AppConstants.eveningAzkarCategory &&
+      e.category != AppConstants.wakingUpAzkarCategory &&
+      e.category != AppConstants.prayerAzkarCategory &&
+      e.category != AppConstants.enterMosqueCategory &&
+      e.category != AppConstants.leaveMosqueCategory &&
+      e.category != AppConstants.sleepingAzkarCategory).toList();
 }

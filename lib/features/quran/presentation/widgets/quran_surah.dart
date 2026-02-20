@@ -53,7 +53,7 @@ class _QuranSurahState extends State<QuranSurah> {
           ),
         Text(
           quran.getVerse(widget.surahNumber, verseNumber, verseEndSymbol: true),
-          style: GoogleFonts.amiriQuran(fontSize: 20.sp),
+          style: GoogleFonts.amiri(fontSize: 20.sp, height: 2.5),
         )
       ],
     );

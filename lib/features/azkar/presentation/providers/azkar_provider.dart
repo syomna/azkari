@@ -21,9 +21,13 @@ class AzkarProvider extends ChangeNotifier {
 
   List<ZekrEntity> get wakingUpAzkar => _azkarList.getWakingUpAzkar();
 
+  List<ZekrEntity> get sleepingAzkar => _azkarList.getSleepingAzkar();
+
   List<ZekrEntity> get prayerAzkar => _azkarList.getPrayerAzkar();
 
   List<ZekrEntity> get variousDuaa => _azkarList.getVariousDuaa();
+
+  List<ZekrEntity> get mosqueAzkar => _azkarList.getMosqueAzkar();
 
   Future<void> loadAzkar() async {
     if (_azkarStatus == AppLoadingStatus.loading) {

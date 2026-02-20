@@ -1,8 +1,8 @@
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:quran/quran.dart' as quran;
 import 'package:google_fonts/google_fonts.dart';
+import 'package:quran/quran.dart' as quran;
 
 class QuranList extends StatefulWidget {
   const QuranList(
@@ -77,6 +77,9 @@ class _QuranListState extends State<QuranList> {
           separatorBuilder: (context, index) => const Divider(),
           itemBuilder: (context, index) {
             final surahNumber = index + 1;
+            int startJuz = quran.getJuzNumber(surahNumber, 1);
+            int verseCount = quran.getVerseCount(surahNumber);
+            int endJuz = quran.getJuzNumber(surahNumber, verseCount);
             return ListTile(
               selected: surahNumber == widget.selectedSurahNumber,
               selectedTileColor: AppPalette.mainColor,
@@ -90,9 +93,22 @@ class _QuranListState extends State<QuranList> {
                 '${_getArabicPlaceOfRevelation(surahNumber)} - ${quran.getVerseCount(surahNumber)} آية',
                 textAlign: TextAlign.right,
               ),
-              trailing: Text(
-                '$surahNumber',
-                style: GoogleFonts.amiri(fontSize: 16.sp),
+              trailing: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$surahNumber',
+                    style: GoogleFonts.amiri(fontSize: 16.sp),
+                  ),
+                  Text(
+                    startJuz == endJuz
+                        ? 'الجزء $startJuz'
+                        : 'من الجزء $startJuz إلى $endJuz',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                    ),
+                  ),
+                ],
               ),
               onTap: () {
                 widget.onSurahSelected(surahNumber);

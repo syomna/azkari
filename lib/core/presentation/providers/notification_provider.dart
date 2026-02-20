@@ -1,6 +1,6 @@
+import 'package:azkar_app/core/services/notifications_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:azkar_app/core/services/notifications_service.dart';
 
 class NotificationProvider extends ChangeNotifier {
   static const String _notificationsEnabledKey = 'notificationsEnabled';
@@ -10,11 +10,11 @@ class NotificationProvider extends ChangeNotifier {
   static const String _periodicReminderNotificationKey =
       'periodicRemiderNotification';
 
-  bool _areNotificationsEnabled = true;
-  bool _isMorningAzkarNotificationEnabled = true;
-  bool _isEveningAzkarNotificationEnabled = true;
-  bool _isPeriodicNotificationEnabled = true;
-  bool _isPeriodicReminderNotificationEnabled = true;
+  bool _areNotificationsEnabled = false;
+  bool _isMorningAzkarNotificationEnabled = false;
+  bool _isEveningAzkarNotificationEnabled = false;
+  bool _isPeriodicNotificationEnabled = false;
+  bool _isPeriodicReminderNotificationEnabled = false;
 
   bool get areNotificationsEnabled => _areNotificationsEnabled;
   bool get isMorningAzkarNotificationEnabled =>
@@ -36,16 +36,18 @@ class NotificationProvider extends ChangeNotifier {
     _loadNotificationPreferencesAndSchedule();
   }
 
+  // Inside your NotificationService class
+
   Future<void> _loadNotificationPreferencesAndSchedule() async {
     _areNotificationsEnabled = _prefs.getBool(_notificationsEnabledKey) ?? true;
     _isMorningAzkarNotificationEnabled =
-        _prefs.getBool(_morningAzkarNotificationKey) ?? true;
+        _prefs.getBool(_morningAzkarNotificationKey) ?? false;
     _isEveningAzkarNotificationEnabled =
-        _prefs.getBool(_eveningAzkarNotificationKey) ?? true;
+        _prefs.getBool(_eveningAzkarNotificationKey) ?? false;
     _isPeriodicNotificationEnabled =
-        _prefs.getBool(_periodicNotificationKey) ?? true;
+        _prefs.getBool(_periodicNotificationKey) ?? false;
     _isPeriodicReminderNotificationEnabled =
-        _prefs.getBool(_periodicReminderNotificationKey) ?? true;
+        _prefs.getBool(_periodicReminderNotificationKey) ?? false;
 
     _applyNotificationStates();
   }

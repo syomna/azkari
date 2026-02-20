@@ -1,5 +1,4 @@
 import 'package:azkar_app/core/constants/app_constants.dart';
-import 'package:azkar_app/core/enums/app_loading_status.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/domain/entities/zikr_entity.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart'; // Import AzkarProvider
@@ -46,6 +45,14 @@ class _AzkarCategoryPageState extends State<AzkarCategoryPage> {
       baseList = azkarProvider.morningAzkar;
     } else if (widget.categoryName == AppConstants.eveningAzkarCategory) {
       baseList = azkarProvider.eveningAzkar;
+    } else if (widget.categoryName == AppConstants.wakingUpAzkarCategory) {
+      baseList = azkarProvider.wakingUpAzkar;
+    } else if (widget.categoryName == AppConstants.sleepingAzkarCategory) {
+      baseList = azkarProvider.sleepingAzkar;
+    } else if (widget.categoryName == AppConstants.prayerAzkarCategory) {
+      baseList = azkarProvider.prayerAzkar;
+    } else if (widget.categoryName == AppConstants.mosqueAzkarCategory) {
+      baseList = azkarProvider.mosqueAzkar;
     } else if (widget.categoryName == AppConstants.variousDuaaCategory) {
       baseList = azkarProvider.variousDuaa;
     } else {
@@ -72,48 +79,60 @@ class _AzkarCategoryPageState extends State<AzkarCategoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final azkarProvider = Provider.of<AzkarProvider>(context);
+    // final azkarProvider = Provider.of<AzkarProvider>(context);
 
-    // Handle loading/error states for the AzkarProvider
-    if (azkarProvider.azkarStatus == AppLoadingStatus.initial ||
-        azkarProvider.azkarStatus == AppLoadingStatus.loading) {
-      return Scaffold(
-        appBar: AppBar(title: Text(widget.title)),
-        body: const Center(
-          child: CircularProgressIndicator(color: AppPalette.mainColor),
-        ),
-      );
-    }
-    if (azkarProvider.azkarStatus == AppLoadingStatus.error) {
-      return Scaffold(
-        appBar: AppBar(title: Text(widget.title)),
-        body: Center(
-          child: Text(
-            'Error loading Azkar: ${azkarProvider.azkarErrorMessage ?? "Unknown error"}',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.red),
-          ),
-        ),
-      );
-    }
+    // // Handle loading/error states for the AzkarProvider
+    // if (azkarProvider.azkarStatus == AppLoadingStatus.initial ||
+    //     azkarProvider.azkarStatus == AppLoadingStatus.loading) {
+    //   return Scaffold(
+    //     appBar: AppBar(
+    //       title: Text(widget.title),
+    //       centerTitle: true,
+    //     ),
+    //     body: const Center(
+    //       child: CircularProgressIndicator(color: AppPalette.mainColor),
+    //     ),
+    //   );
+    // }
+    // if (azkarProvider.azkarStatus == AppLoadingStatus.error) {
+    //   return Scaffold(
+    //     appBar: AppBar(
+    //       title: Text(widget.title),
+    //       centerTitle: true,
+    //     ),
+    //     body: Center(
+    //       child: Text(
+    //         'Error loading Azkar: ${azkarProvider.azkarErrorMessage ?? "Unknown error"}',
+    //         textAlign: TextAlign.center,
+    //         style: const TextStyle(color: Colors.red),
+    //       ),
+    //     ),
+    //   );
+    // }
 
-    if (_currentDisplayedAzkar.isEmpty && azkarProvider.azkarList.isNotEmpty) {
-      if (_searchController.text.isEmpty) {
-        return Scaffold(
-            appBar: AppBar(title: Text(widget.title)),
-            body: Center(
-                child: Text('لا توجد أذكار في هذا القسم.',
-                    style: TextStyle(
-                        fontSize: 18.sp, fontWeight: FontWeight.bold))));
-      } else {
-        return Scaffold(
-            appBar: AppBar(title: Text(widget.title)),
-            body: Center(
-                child: Text('غير موجود',
-                    style: TextStyle(
-                        fontSize: 18.sp, fontWeight: FontWeight.bold))));
-      }
-    }
+    // if (_currentDisplayedAzkar.isEmpty && azkarProvider.azkarList.isNotEmpty) {
+    //   if (_searchController.text.isEmpty) {
+    //     return Scaffold(
+    //         appBar: AppBar(
+    //           title: Text(widget.title),
+    //           centerTitle: true,
+    //         ),
+    //         body: Center(
+    //             child: Text('لا توجد أذكار في هذا القسم.',
+    //                 style: TextStyle(
+    //                     fontSize: 18.sp, fontWeight: FontWeight.bold))));
+    //   } else {
+    //     return Scaffold(
+    //         appBar: AppBar(
+    //           title: Text(widget.title),
+    //           centerTitle: true,
+    //         ),
+    //         body: Center(
+    //             child: Text('غير موجود',
+    //                 style: TextStyle(
+    //                     fontSize: 18.sp, fontWeight: FontWeight.bold))));
+    //   }
+    // }
 
     return Scaffold(
       appBar: AppBar(
@@ -121,6 +140,7 @@ class _AzkarCategoryPageState extends State<AzkarCategoryPage> {
           widget.title,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
+        centerTitle: true,
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -131,39 +151,48 @@ class _AzkarCategoryPageState extends State<AzkarCategoryPage> {
             if (widget.categoryName == AppConstants.variousDuaaCategory)
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.6,
-                        child: TextFormField(
-                          controller: _searchController,
-                          onChanged: (v) {
-                            _filterAzkar(v);
-                          },
-                          cursorColor: AppPalette.mainColor,
-                          decoration: const InputDecoration(
-                              focusedBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                color: AppPalette.mainColor,
-                              )),
-                              hintText: 'ابحث عن ذكر أو دعاء'),
-                        )),
-                    MaterialButton(
-                      onPressed: () {
-                        _filterAzkar(_searchController.text);
-                      },
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.r)),
-                      padding: const EdgeInsets.all(10),
-                      color: AppPalette.mainColor,
-                      child: const Text(
-                        'بحث',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                    )
-                  ],
+                child: SizedBox(
+                  height: 35.h,
+                  child: TextFormField(
+                    style: TextStyle(fontSize: 14.sp),
+                    controller: _searchController,
+                    onChanged: (v) {
+                      _filterAzkar(v);
+                    },
+                    cursorColor: AppPalette.mainColor,
+                    decoration: InputDecoration(
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: AppPalette.mainColor,
+                        ),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(
+                                  Icons.clear,
+                                  color: AppPalette.mainColor,
+                                ),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _filterAzkar('');
+                                },
+                              )
+                            : null,
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(8.r)),
+                            borderSide: BorderSide(
+                              color:
+                                  AppPalette.mainColor.withValues(alpha: 0.5),
+                            )),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(8.r)),
+                            borderSide: BorderSide(
+                              color:
+                                  AppPalette.mainColor.withValues(alpha: 0.2),
+                            )),
+                        hintText: 'ابحث عن ذكر أو دعاء'),
+                  ),
                 ),
               ),
             SizedBox(
@@ -214,11 +243,13 @@ class _AzkarCategoryPageState extends State<AzkarCategoryPage> {
                             final zikr = _currentDisplayedAzkar[index];
                             bool showHeader = false;
                             if (widget.categoryName ==
-                                    AppConstants.variousDuaaCategory &&
-                                (index == 0 ||
-                                    zikr.category !=
-                                        _currentDisplayedAzkar[index - 1]
-                                            .category)) {
+                                        AppConstants.variousDuaaCategory &&
+                                    (index == 0 ||
+                                        zikr.category !=
+                                            _currentDisplayedAzkar[index - 1]
+                                                .category) ||
+                                widget.categoryName ==
+                                    AppConstants.mosqueAzkarCategory) {
                               showHeader = true;
                             }
                             return Padding(

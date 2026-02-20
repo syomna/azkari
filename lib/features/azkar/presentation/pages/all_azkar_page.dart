@@ -10,77 +10,100 @@ class AllAzkarPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final List<AzkarCategoryModel> categories = [
+      AzkarCategoryModel(
+        title: AppConstants.morningAzkarCategory,
+        image: 'sun',
+        page: const AzkarCategoryPage(
+          title: AppConstants.morningAzkarCategory,
+          categoryName: AppConstants.morningAzkarCategory,
+        ),
+      ),
+      AzkarCategoryModel(
+        title: AppConstants.eveningAzkarCategory,
+        image: 'night',
+        page: const AzkarCategoryPage(
+          title: AppConstants.eveningAzkarCategory,
+          categoryName: AppConstants.eveningAzkarCategory,
+        ),
+      ),
+      AzkarCategoryModel(
+        title: AppConstants.sleepingAzkarCategory,
+        image: 'sleep',
+        page: const AzkarCategoryPage(
+          title: AppConstants.sleepingAzkarCategory,
+          categoryName: AppConstants.sleepingAzkarCategory,
+        ),
+      ),
+      AzkarCategoryModel(
+        title: AppConstants.wakingUpAzkarCategory,
+        image: 'get-up',
+        page: const AzkarCategoryPage(
+          title: AppConstants.wakingUpAzkarCategory,
+          categoryName: AppConstants.wakingUpAzkarCategory,
+        ),
+      ),
+      AzkarCategoryModel(
+        title: AppConstants.prayerAzkarCategory,
+        image: 'azan',
+        page: const AzkarCategoryPage(
+          title: AppConstants.prayerAzkarCategory,
+          categoryName: AppConstants.prayerAzkarCategory,
+        ),
+      ),
+      AzkarCategoryModel(
+        title: AppConstants.mosqueAzkarCategory,
+        image: 'temple',
+        page: const AzkarCategoryPage(
+          title: AppConstants.mosqueAzkarCategory,
+          categoryName: AppConstants.mosqueAzkarCategory,
+        ),
+      ),
+      AzkarCategoryModel(
+        title: AppConstants.shortSurahsTitle,
+        image: 'mat',
+        page: const SurahListPage(),
+      ),
+      AzkarCategoryModel(
+        title: AppConstants.variousDuaaTitle,
+        image: 'duaa',
+        page: const AzkarCategoryPage(
+          title: AppConstants.variousDuaaTitle,
+          categoryName: AppConstants.variousDuaaCategory,
+        ),
+      ),
+    ];
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           AppConstants.allAzkarPageTitle,
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        centerTitle: true,
       ),
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-        child: Column(
-          children: [
-            SizedBox(
-              height: 20.h,
-            ),
-            const Component(
-                text: AppConstants.morningAzkarCategory,
-                img: 'sun',
-                page: AzkarCategoryPage(
-                  title: AppConstants.morningAzkarCategory,
-                  categoryName: AppConstants.morningAzkarCategory,
-                )),
-            SizedBox(
-              height: 20.h,
-            ),
-            const Component(
-                text: AppConstants.eveningAzkarCategory,
-                img: 'night',
-                page: AzkarCategoryPage(
-                  title: AppConstants.eveningAzkarCategory,
-                  categoryName: AppConstants.eveningAzkarCategory,
-                )),
-            SizedBox(
-              height: 20.h,
-            ),
-            const Component(
-                text: AppConstants.wakingUpAzkarCategory,
-                img: 'get-up',
-                page: AzkarCategoryPage(
-                  title: AppConstants.wakingUpAzkarCategory,
-                  categoryName: AppConstants.wakingUpAzkarCategory,
-                )),
-            SizedBox(
-              height: 20.h,
-            ),
-            const Component(
-                text: AppConstants.prayerAzkarCategory,
-                img: 'temple',
-                page: AzkarCategoryPage(
-                  title: AppConstants.prayerAzkarCategory,
-                  categoryName: AppConstants.prayerAzkarCategory,
-                )),
-            SizedBox(
-              height: 20.h,
-            ),
-            const Component(
-                text: AppConstants.shortSurahsTitle,
-                img: 'mat',
-                page: SurahListPage()),
-            SizedBox(
-              height: 20.h,
-            ),
-            const Component(
-                text: AppConstants.variousDuaaTitle,
-                img: 'duaa',
-                page: AzkarCategoryPage(
-                  title: AppConstants.variousDuaaTitle,
-                  categoryName: AppConstants.variousDuaaCategory,
-                )),
-          ],
-        ),
+      // 2. Use ListView.separated for better performance
+      body: ListView.separated(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+        itemCount: categories.length,
+        separatorBuilder: (context, index) => SizedBox(height: 10.h),
+        itemBuilder: (context, index) {
+          final item = categories[index];
+          return Component(
+            text: item.title,
+            img: item.image,
+            page: item.page,
+          );
+        },
       ),
     );
   }
+}
+
+class AzkarCategoryModel {
+  final String title;
+  final String image;
+  final Widget page;
+
+  AzkarCategoryModel(
+      {required this.title, required this.image, required this.page});
 }

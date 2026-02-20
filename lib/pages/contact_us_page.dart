@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:azkar_app/widgets/custom_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ContactUsPage extends StatefulWidget {
@@ -14,25 +15,38 @@ class ContactUsPage extends StatefulWidget {
 
 class _ContactUsPageState extends State<ContactUsPage> {
   // Controllers to capture user input
-  final TextEditingController _emailController = TextEditingController();
+  // final TextEditingController _emailController = TextEditingController();
   final TextEditingController _subjectController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
+  PackageInfo? packageInfo;
+  @override
+  initState() {
+    super.initState();
+    _getAppInfo();
+  }
+
+  Future<void> _getAppInfo() async {
+    packageInfo = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   void dispose() {
-    _emailController.dispose();
+    // _emailController.dispose();
     _subjectController.dispose();
     _messageController.dispose();
     super.dispose();
   }
 
   Future<void> _sendEmail() async {
-    final String userEmail = _emailController.text.trim();
+    // final String userEmail = _emailController.text.trim();
     final String subject = _subjectController.text.trim();
     final String message = _messageController.text.trim();
 
     // Basic Validation
-    if (userEmail.isEmpty || subject.isEmpty || message.isEmpty) {
+    if (subject.isEmpty || message.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('يرجى ملء جميع الحقول')),
       );
@@ -92,14 +106,14 @@ class _ContactUsPageState extends State<ContactUsPage> {
             SizedBox(height: 25.h),
 
             // User Email Field
-            CustomTextField(
-              controller: _emailController,
-              label: 'بريدك الإلكتروني',
-              hint: 'مثال: user@email.com',
-              icon: Icons.alternate_email,
-              keyboardType: TextInputType.emailAddress,
-            ),
-            SizedBox(height: 15.h),
+            // CustomTextField(
+            //   controller: _emailController,
+            //   label: 'بريدك الإلكتروني',
+            //   hint: 'مثال: user@email.com',
+            //   icon: Icons.alternate_email,
+            //   keyboardType: TextInputType.emailAddress,
+            // ),
+            // SizedBox(height: 15.h),
 
             // Subject Field
             CustomTextField(
@@ -145,7 +159,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
 
             SizedBox(height: 40.h),
             Text(
-              'الإصدار 3.2.11',
+              'الإصدار ${packageInfo?.version ?? ''} | جميع الحقوق محفوظة © ${DateTime.now().year}',
               style: TextStyle(color: Colors.grey, fontSize: 12.sp),
             ),
             SizedBox(height: 20.h),
