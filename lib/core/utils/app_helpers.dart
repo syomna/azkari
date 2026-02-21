@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
+enum ToastStatus { success, warning, error }
+
 class AppHelpers {
   static void copyText(String text) {
     FlutterClipboard.copy(text).then((value) {
@@ -14,13 +16,27 @@ class AppHelpers {
     });
   }
 
-  static void showToast(String msg, {bool isError = false, Color? color}) {
+  static void showToast(String msg,
+      {ToastStatus status = ToastStatus.success}) {
+    Color? color;
+
+    switch (status) {
+      case ToastStatus.success:
+        color = Colors.green;
+        break;
+      case ToastStatus.warning:
+        color = Colors.orange;
+        break;
+      case ToastStatus.error:
+        color = Colors.red;
+        break;
+    }
     Fluttertoast.showToast(
         msg: msg,
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
         timeInSecForIosWeb: 1,
-        backgroundColor: isError ? Colors.red : color ?? Colors.green,
+        backgroundColor: color,
         textColor: Colors.white,
         fontSize: 16.sp);
   }

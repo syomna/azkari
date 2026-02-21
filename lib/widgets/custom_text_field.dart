@@ -1,3 +1,4 @@
+import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -25,7 +26,7 @@ class CustomTextField extends StatelessWidget {
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
-      textAlign: TextAlign.right, // Set text alignment for Arabic
+      textAlign: TextAlign.right,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
@@ -37,6 +38,10 @@ class CustomTextField extends StatelessWidget {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
           borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.r),
+          borderSide: const BorderSide(color: AppPalette.mainColor),
         ),
       ),
     );

@@ -1,8 +1,8 @@
-import 'package:azkar_app/core/enums/app_loading_status.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart'; // For copyText
 import 'package:azkar_app/features/surah/domain/entities/surah_entity.dart';
 import 'package:azkar_app/features/surah/presentation/providers/surah_provider.dart'; // Import SurahProvider
+import 'package:azkar_app/widgets/search_bar_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -57,45 +57,45 @@ class _SurahListPageState extends State<SurahListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final surahProvider = Provider.of<SurahProvider>(context);
+    // final surahProvider = Provider.of<SurahProvider>(context);
 
     // Handle loading/error states for the SurahProvider
-    if (surahProvider.surahStatus == AppLoadingStatus.initial ||
-        surahProvider.surahStatus == AppLoadingStatus.loading) {
-      return Scaffold(
-        appBar: AppBar(
-            title: const Text('السور',
-                style: TextStyle(fontWeight: FontWeight.bold))),
-        body: const Center(
-          child: CircularProgressIndicator(color: AppPalette.mainColor),
-        ),
-      );
-    }
-    if (surahProvider.surahStatus == AppLoadingStatus.error) {
-      return Scaffold(
-        appBar: AppBar(
-            title: const Text('السور',
-                style: TextStyle(fontWeight: FontWeight.bold))),
-        body: Center(
-          child: Text(
-            'Error loading Surahs: ${surahProvider.surahErrorMessage ?? "Unknown error"}',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.red),
-          ),
-        ),
-      );
-    }
-    // Handle case where list might be empty after loading
-    if (_currentDisplayedSurahs.isEmpty && _searchController.text.isEmpty) {
-      return Scaffold(
-          appBar: AppBar(
-              title: const Text('السور',
-                  style: TextStyle(fontWeight: FontWeight.bold))),
-          body: Center(
-              child: Text('لا توجد سور متاحة.',
-                  style: TextStyle(
-                      fontSize: 18.sp, fontWeight: FontWeight.bold))));
-    }
+    // if (surahProvider.surahStatus == AppLoadingStatus.initial ||
+    //     surahProvider.surahStatus == AppLoadingStatus.loading) {
+    //   return Scaffold(
+    //     appBar: AppBar(
+    //         title: const Text('السور',
+    //             style: TextStyle(fontWeight: FontWeight.bold))),
+    //     body: const Center(
+    //       child: CircularProgressIndicator(color: AppPalette.mainColor),
+    //     ),
+    //   );
+    // }
+    // if (surahProvider.surahStatus == AppLoadingStatus.error) {
+    //   return Scaffold(
+    //     appBar: AppBar(
+    //         title: const Text('السور',
+    //             style: TextStyle(fontWeight: FontWeight.bold))),
+    //     body: Center(
+    //       child: Text(
+    //         'Error loading Surahs: ${surahProvider.surahErrorMessage ?? "Unknown error"}',
+    //         textAlign: TextAlign.center,
+    //         style: const TextStyle(color: Colors.red),
+    //       ),
+    //     ),
+    //   );
+    // }
+    // // Handle case where list might be empty after loading
+    // if (_currentDisplayedSurahs.isEmpty && _searchController.text.isEmpty) {
+    //   return Scaffold(
+    //       appBar: AppBar(
+    //           title: const Text('السور',
+    //               style: TextStyle(fontWeight: FontWeight.bold))),
+    //       body: Center(
+    //           child: Text('لا توجد سور متاحة.',
+    //               style: TextStyle(
+    //                   fontSize: 18.sp, fontWeight: FontWeight.bold))));
+    // }
 
     return Scaffold(
       appBar: AppBar(
@@ -112,45 +112,16 @@ class _SurahListPageState extends State<SurahListPage> {
         child: Column(
           children: [
             // Search bar for Surah filtering
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.6,
-                      child: TextFormField(
-                        controller: _searchController,
-                        onChanged: (v) {
-                          _filterSurahs(v); // Trigger filtering on change
-                        },
-                        cursorColor: AppPalette.mainColor,
-                        decoration: const InputDecoration(
-                            focusedBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(
-                              color: AppPalette.mainColor,
-                            )),
-                            hintText:
-                                'ابحث عن سورة'), // Specific hint for Surah
-                      )),
-                  MaterialButton(
-                    onPressed: () {
-                      _filterSurahs(_searchController
-                          .text); // Trigger filtering on button press
-                    },
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.r)),
-                    padding: const EdgeInsets.all(10),
-                    color: AppPalette.mainColor,
-                    child: const Text(
-                      'بحث',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                  )
-                ],
-              ),
-            ),
+            SearchBarWidget(
+                onChanged: (v) {
+                  _filterSurahs(v);
+                },
+                onClear: () {
+                  _searchController.clear();
+                  _filterSurahs('');
+                },
+                searchController: _searchController,
+                hint: 'ابحث عن سورة'),
             SizedBox(
               height: 10.h,
             ),

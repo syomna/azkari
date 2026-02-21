@@ -1,8 +1,8 @@
 import 'package:azkar_app/core/constants/app_constants.dart';
-import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/domain/entities/zikr_entity.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart'; // Import AzkarProvider
 import 'package:azkar_app/features/azkar/presentation/widgets/display_azkar.dart'; // Assuming DisplayAzkar is generic
+import 'package:azkar_app/widgets/search_bar_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -149,52 +149,16 @@ class _AzkarCategoryPageState extends State<AzkarCategoryPage> {
         child: Column(
           children: [
             if (widget.categoryName == AppConstants.variousDuaaCategory)
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: SizedBox(
-                  height: 35.h,
-                  child: TextFormField(
-                    style: TextStyle(fontSize: 14.sp),
-                    controller: _searchController,
-                    onChanged: (v) {
-                      _filterAzkar(v);
-                    },
-                    cursorColor: AppPalette.mainColor,
-                    decoration: InputDecoration(
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: AppPalette.mainColor,
-                        ),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(
-                                  Icons.clear,
-                                  color: AppPalette.mainColor,
-                                ),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  _filterAzkar('');
-                                },
-                              )
-                            : null,
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(8.r)),
-                            borderSide: BorderSide(
-                              color:
-                                  AppPalette.mainColor.withValues(alpha: 0.5),
-                            )),
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(8.r)),
-                            borderSide: BorderSide(
-                              color:
-                                  AppPalette.mainColor.withValues(alpha: 0.2),
-                            )),
-                        hintText: 'ابحث عن ذكر أو دعاء'),
-                  ),
-                ),
-              ),
+              SearchBarWidget(
+                  onChanged: (v) {
+                    _filterAzkar(v);
+                  },
+                  onClear: () {
+                    _searchController.clear();
+                    _filterAzkar('');
+                  },
+                  searchController: _searchController,
+                  hint: 'ابحث عن ذكر أو دعاء'),
             SizedBox(
               height: 10.h,
             ),

@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/widgets/custom_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -47,9 +48,8 @@ class _ContactUsPageState extends State<ContactUsPage> {
 
     // Basic Validation
     if (subject.isEmpty || message.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى ملء جميع الحقول')),
-      );
+      AppHelpers.showToast('يرجى ملء جميع الحقول', status: ToastStatus.warning);
+
       return;
     }
 
@@ -71,9 +71,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
     } catch (e) {
       log(e.toString());
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر فتح تطبيق البريد الإلكتروني')),
-        );
+        AppHelpers.showToast('تعذر فتح تطبيق البريد الإلكتروني', status: ToastStatus.error);
       }
     }
   }
@@ -104,16 +102,6 @@ class _ContactUsPageState extends State<ContactUsPage> {
               style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 25.h),
-
-            // User Email Field
-            // CustomTextField(
-            //   controller: _emailController,
-            //   label: 'بريدك الإلكتروني',
-            //   hint: 'مثال: user@email.com',
-            //   icon: Icons.alternate_email,
-            //   keyboardType: TextInputType.emailAddress,
-            // ),
-            // SizedBox(height: 15.h),
 
             // Subject Field
             CustomTextField(
