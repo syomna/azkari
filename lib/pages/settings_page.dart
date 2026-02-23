@@ -91,6 +91,8 @@ class SettingsPage extends StatelessWidget {
                     onChanged: (bool value) {
                       notificationProvider
                           .toggleMorningAzkarNotification(value);
+                      _resetAllNotifications(
+                          notificationProvider: notificationProvider);
                     },
                   ),
                   SwitchTile(
@@ -100,6 +102,8 @@ class SettingsPage extends StatelessWidget {
                     onChanged: (bool value) {
                       notificationProvider
                           .toggleEveningAzkarNotification(value);
+                      _resetAllNotifications(
+                          notificationProvider: notificationProvider);
                     },
                   ),
                   SwitchTile(
@@ -107,6 +111,8 @@ class SettingsPage extends StatelessWidget {
                     value: notificationProvider.isPeriodicNotificationEnabled,
                     onChanged: (bool value) {
                       notificationProvider.togglePeriodicNotification(value);
+                      _resetAllNotifications(
+                          notificationProvider: notificationProvider);
                     },
                   ),
                   SizedBox(height: 30.h),
@@ -169,6 +175,17 @@ class SettingsPage extends StatelessWidget {
         },
       ),
     );
+  }
+
+  void _resetAllNotifications({
+    required NotificationProvider notificationProvider,
+  }) {
+    if (!notificationProvider.isMorningAzkarNotificationEnabled &&
+        !notificationProvider.isEveningAzkarNotificationEnabled &&
+        !notificationProvider.isPeriodicNotificationEnabled &&
+        !notificationProvider.isPeriodicReminderNotificationEnabled) {
+      notificationProvider.toggleAllNotifications(false);
+    }
   }
 
   void _showAboutAppDialog(BuildContext context) async {

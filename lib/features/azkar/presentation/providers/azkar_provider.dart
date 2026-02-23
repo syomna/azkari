@@ -21,6 +21,8 @@ class AzkarProvider extends ChangeNotifier {
 
   List<ZekrEntity> get wakingUpAzkar => _azkarList.getWakingUpAzkar();
 
+  List<ZekrEntity> get exitHomeAzkar => _azkarList.getExitHomeAzkar();
+
   List<ZekrEntity> get sleepingAzkar => _azkarList.getSleepingAzkar();
 
   List<ZekrEntity> get prayerAzkar => _azkarList.getPrayerAzkar();

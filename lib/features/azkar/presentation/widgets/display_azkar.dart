@@ -1,5 +1,5 @@
-import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/azkar/domain/entities/zikr_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -88,7 +88,8 @@ class _DisplayAzkarState extends State<DisplayAzkar> {
                         color: mainColor), // Using kMainColor
                     child: Center(
                         child: Text(
-                      '$zekrCount', // Display directly from zikrEntity
+                      AppHelpers.getArabicNumber(
+                          zekrCount), // Display directly from zikrEntity
                       style: TextStyle(
                           fontSize: 18.sp,
                           fontWeight: FontWeight.bold,

@@ -1,4 +1,5 @@
 import 'package:azkar_app/core/theme/app_palette.dart';
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -29,7 +30,7 @@ class PageNumberCard extends StatelessWidget {
             Expanded(
               flex: 1,
               child: Text(
-                'الجزء $juz',
+                'الجزء ${AppHelpers.getArabicNumber(juz)}',
                 style: TextStyle(fontSize: 12.sp, color: Colors.white70),
                 textAlign: TextAlign.right, // Since it's Arabic
               ),
@@ -49,7 +50,7 @@ class PageNumberCard extends StatelessWidget {
                         fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    pageNumber.toString(),
+                    AppHelpers.getArabicNumber(pageNumber),
                     style: TextStyle(
                         fontSize: 16.sp,
                         color: Colors.white,

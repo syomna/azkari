@@ -11,6 +11,9 @@ extension AzkarCategoryFilter on List<ZekrEntity> {
   List<ZekrEntity> getWakingUpAzkar() =>
       where((e) => e.category == AppConstants.wakingUpAzkarCategory).toList();
 
+      List<ZekrEntity> getExitHomeAzkar() =>
+      where((e) => e.category == AppConstants.exitHome).toList();
+
   List<ZekrEntity> getSleepingAzkar() =>
       where((e) => e.category == AppConstants.sleepingAzkarCategory).toList();
 
@@ -25,6 +28,7 @@ extension AzkarCategoryFilter on List<ZekrEntity> {
       e.category != AppConstants.morningAzkarCategory &&
       e.category != AppConstants.eveningAzkarCategory &&
       e.category != AppConstants.wakingUpAzkarCategory &&
+      e.category != AppConstants.exitHome &&
       e.category != AppConstants.prayerAzkarCategory &&
       e.category != AppConstants.enterMosqueCategory &&
       e.category != AppConstants.leaveMosqueCategory &&

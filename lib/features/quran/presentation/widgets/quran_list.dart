@@ -1,4 +1,5 @@
 import 'package:azkar_app/core/theme/app_palette.dart';
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -90,20 +91,20 @@ class _QuranListState extends State<QuranList> {
                 style: TextStyle(fontSize: 18.sp),
               ),
               subtitle: Text(
-                '${_getArabicPlaceOfRevelation(surahNumber)} - ${quran.getVerseCount(surahNumber)} آية',
+                '${_getArabicPlaceOfRevelation(surahNumber)} - ${AppHelpers.getArabicNumber(quran.getVerseCount(surahNumber))} آية',
                 textAlign: TextAlign.right,
               ),
               trailing: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '$surahNumber',
+                    AppHelpers.getArabicNumber(surahNumber),
                     style: GoogleFonts.amiri(fontSize: 16.sp),
                   ),
                   Text(
                     startJuz == endJuz
-                        ? 'الجزء $startJuz'
-                        : 'من الجزء $startJuz إلى $endJuz',
+                        ? 'الجزء ${AppHelpers.getArabicNumber(startJuz)}'
+                        : 'من الجزء ${AppHelpers.getArabicNumber(startJuz)} إلى ${AppHelpers.getArabicNumber(endJuz)}',
                     style: TextStyle(
                       fontSize: 11.sp,
                     ),

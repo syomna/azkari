@@ -49,6 +49,8 @@ class _AzkarCategoryPageState extends State<AzkarCategoryPage> {
       baseList = azkarProvider.wakingUpAzkar;
     } else if (widget.categoryName == AppConstants.sleepingAzkarCategory) {
       baseList = azkarProvider.sleepingAzkar;
+    } else if (widget.categoryName == AppConstants.exitHomeCategory) {
+      baseList = azkarProvider.exitHomeAzkar;
     } else if (widget.categoryName == AppConstants.prayerAzkarCategory) {
       baseList = azkarProvider.prayerAzkar;
     } else if (widget.categoryName == AppConstants.mosqueAzkarCategory) {

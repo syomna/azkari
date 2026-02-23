@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -23,7 +24,7 @@ class QiblaBody extends StatelessWidget {
         // 1. Heading Degree
         Column(
           children: [
-            Text('${heading.toInt()}°',
+            Text('${AppHelpers.getArabicNumber(heading.toInt())}°',
                 style: TextStyle(fontSize: 48.sp, fontWeight: FontWeight.bold)),
             Text('الدرجة الحالية',
                 style: TextStyle(fontSize: 16.sp, color: Colors.grey)),

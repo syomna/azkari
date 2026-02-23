@@ -1,3 +1,4 @@
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -42,7 +43,7 @@ class _MesbahaImageState extends State<MesbahaImage> {
             top: MediaQuery.of(context).size.height * 0.14,
             right: MediaQuery.of(context).size.width * 0.18,
             child: Text(
-              '${tasbehProvider.count}',
+              AppHelpers.getArabicNumber(tasbehProvider.count),
               style: TextStyle(
                   fontSize: 35.sp,
                   fontWeight: FontWeight.bold,

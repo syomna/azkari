@@ -1,4 +1,5 @@
 import 'package:azkar_app/core/theme/app_palette.dart';
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
 import 'package:azkar_app/features/tasbeh/presentation/widgets/mesbaha_image.dart';
 import 'package:flutter/material.dart';
@@ -43,7 +44,7 @@ class _TasbehPageState extends State<TasbehPage> {
                   width: 10.w,
                 ),
                 Text(
-                  '${tasbehProvider.savedCount}',
+                  AppHelpers.getArabicNumber(tasbehProvider.savedCount),
                   style: TextStyle(
                       fontSize: 24.sp,
                       fontWeight: FontWeight.bold,

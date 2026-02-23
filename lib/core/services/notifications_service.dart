@@ -47,19 +47,9 @@ class NotificationService {
 
   Future<void> scheduleNotifications({bool isDay = false}) async {
     tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-    int targetHour = isDay ? 5 : 17;
-    tz.TZDateTime scheduledDate = tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      targetHour,
-    );
-
-    // scheduledDate = tz.TZDateTime.from(
-    //   scheduledDate.toUtc(),
-    //   tz.local,
-    // );
+    int targetHour = isDay ? 3 : 15;
+    tz.TZDateTime scheduledDate =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, targetHour, 30);
 
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
@@ -72,6 +62,7 @@ class NotificationService {
       scheduledDate,
       notificationDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
     );
   }
 

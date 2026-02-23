@@ -44,6 +44,14 @@ class AllAzkarPage extends StatelessWidget {
         ),
       ),
       AzkarCategoryModel(
+        title: AppConstants.exitHomeCategory,
+        image: 'door',
+        page: const AzkarCategoryPage(
+          title: AppConstants.exitHomeCategory,
+          categoryName: AppConstants.exitHomeCategory,
+        ),
+      ),
+      AzkarCategoryModel(
         title: AppConstants.prayerAzkarCategory,
         image: 'azan',
         page: const AzkarCategoryPage(
