@@ -7,4 +7,6 @@ abstract class QuranLocalDataSource {
   QuranPositionModel getSavedPosition(int surahNumber);
   Future<void> clearSavedPosition(int surahNumber);
   Future<void> clearAllSavedQuranValues();
+  Future<String> getSurahPath(int surahNumber);
+  Future<bool> isDownloaded(int surahNumber);
 }

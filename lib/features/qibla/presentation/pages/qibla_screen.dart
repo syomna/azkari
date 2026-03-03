@@ -1,3 +1,4 @@
+import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/di/injection_container.dart';
 import 'package:azkar_app/features/qibla/presentation/providers/qibla_provider.dart';
 import 'package:azkar_app/features/qibla/presentation/widgets/qibla_body.dart';
@@ -17,8 +18,7 @@ class QiblaScreen extends StatelessWidget {
       create: (context) => sl<QiblaProvider>()..init(),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('القبلة',
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text(AppConstants.qibla),
           centerTitle: true,
         ),
         body: Consumer<QiblaProvider>(

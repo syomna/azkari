@@ -1,12 +1,22 @@
+import 'package:adhan/adhan.dart';
 import 'package:azkar_app/core/enums/app_loading_status.dart';
+import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:azkar_app/features/azkar/domain/entities/zikr_entity.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/utils/azkar_category_filter.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AzkarProvider extends ChangeNotifier {
   final GetAzkarUseCase getAzkarUseCase;
-  AzkarProvider({required this.getAzkarUseCase});
+  final PrayerTimeService prayerTimeService;
+  final SharedPreferences sharedPreferences;
+  AzkarProvider(
+      {required this.getAzkarUseCase,
+      required this.prayerTimeService,
+      required this.sharedPreferences}) {
+    loadPrayerTimes();
+  }
   // Azkar
   List<ZekrEntity> _azkarList = [];
   AppLoadingStatus _azkarStatus = AppLoadingStatus.initial;
@@ -30,6 +40,27 @@ class AzkarProvider extends ChangeNotifier {
   List<ZekrEntity> get variousDuaa => _azkarList.getVariousDuaa();
 
   List<ZekrEntity> get mosqueAzkar => _azkarList.getMosqueAzkar();
+  PrayerTimes? _prayerTimes;
+
+  PrayerTimes? get prayerTimes => _prayerTimes;
+  Future<void> loadPrayerTimes() async {
+    double? lat = sharedPreferences.getDouble('lat');
+    double? lng = sharedPreferences.getDouble('lng');
+    if (lat == null && lng == null) {
+      final position = await prayerTimeService.getCurrentLocation();
+      lat = position?.latitude;
+      lng = position?.longitude;
+      if (lat != null && lng != null) {
+        await sharedPreferences.setDouble('lat', lat);
+        await sharedPreferences.setDouble('lng', lng);
+      }
+    }
+
+    if (lat != null && lng != null) {
+      _prayerTimes = prayerTimeService.getTimes(lat, lng);
+      notifyListeners();
+    }
+  }
 
   Future<void> loadAzkar() async {
     if (_azkarStatus == AppLoadingStatus.loading) {

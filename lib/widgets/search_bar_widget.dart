@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class SearchBarWidget extends StatelessWidget {
-  const SearchBarWidget(
-      {super.key,
-      required this.onChanged,
-      required this.onClear,
-      required this.searchController,
-      required this.hint});
+  const SearchBarWidget({
+    super.key,
+    required this.onChanged,
+    required this.onClear,
+    required this.searchController,
+    required this.hint,
+  });
 
   final TextEditingController searchController;
   final String hint;
@@ -17,40 +18,66 @@ class SearchBarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: SizedBox(
-        height: 45.h,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      height: 50.h, // Slightly taller for better touch targets
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+        borderRadius:
+            BorderRadius.circular(15.r), // Softer, more modern corners
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : AppPalette.mainColor.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Center(
         child: TextFormField(
-          style: TextStyle(fontSize: 14.sp),
+          textAlignVertical: TextAlignVertical.center,
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w500,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
           controller: searchController,
           onChanged: onChanged,
           cursorColor: AppPalette.mainColor,
           decoration: InputDecoration(
-              prefixIcon: const Icon(
-                Icons.search,
-                color: AppPalette.mainColor,
-              ),
-              suffixIcon: searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(
-                        Icons.clear,
-                        color: AppPalette.mainColor,
-                      ),
-                      onPressed: onClear,
-                    )
-                  : null,
-              focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8.r)),
-                  borderSide: BorderSide(
-                    color: AppPalette.mainColor.withValues(alpha: 0.5),
-                  )),
-              enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8.r)),
-                  borderSide: BorderSide(
-                    color: AppPalette.mainColor.withValues(alpha: 0.2),
-                  )),
-              hintText: hint),
+            contentPadding: EdgeInsets.zero,
+            isDense: true,
+            prefixIcon: Icon(
+              Icons.search_rounded,
+              color: AppPalette.mainColor,
+              size: 22.h,
+            ),
+            suffixIcon: searchController.text.isNotEmpty
+                ? IconButton(
+                    icon: Icon(
+                      Icons.cancel_rounded, // Softer circle icon
+                      color: Colors.grey.withValues(alpha: 0.5),
+                      size: 20.h,
+                    ),
+                    onPressed: () {
+                      searchController.clear();
+                      onClear();
+                    },
+                  )
+                : null,
+            border: InputBorder.none, // Hide the default underline/border
+            hintText: hint,
+            hintStyle: TextStyle(
+              fontSize: 14.sp,
+              color: isDark ? Colors.white38 : Colors.grey[400],
+            ),
+          ),
         ),
       ),
     );

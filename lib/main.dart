@@ -1,15 +1,18 @@
 import 'package:azkar_app/core/presentation/providers/notification_provider.dart';
 import 'package:azkar_app/core/presentation/providers/theme_provider.dart';
 import 'package:azkar_app/core/services/notifications_service.dart';
+import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:azkar_app/features/names_of_allah/domain/usecases/get_names_of_allah_usecase.dart';
 import 'package:azkar_app/features/names_of_allah/presentation/providers/names_of_allah_provider.dart';
+import 'package:azkar_app/features/quran/domain/usecases/check_surah_downloaded_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/clear_all_saved_quran_values_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/clear_quran_position_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_latest_quran_surah_number_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_saved_quran_position_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/get_surah_audio_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/save_latest_quran_surah_number_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/save_quran_position_usecase.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
@@ -32,9 +35,9 @@ final sl = GetIt.instance;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  tz.initializeTimeZones();
   await di.init();
   await ScreenUtil.ensureScreenSize();
-  tz.initializeTimeZones();
   final notificationService = sl<NotificationService>();
   await notificationService.initNotification();
 
@@ -47,6 +50,8 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => AzkarProvider(
             getAzkarUseCase: sl<GetAzkarUseCase>(),
+            prayerTimeService: sl<PrayerTimeService>(),
+            sharedPreferences: sl<SharedPreferences>(),
           ),
         ),
         ChangeNotifierProvider(
@@ -74,10 +79,14 @@ void main() async {
                   clearPositionUseCase: sl<ClearQuranPositionUseCase>(),
                   clearAllSavedQuranValuesUsecase:
                       sl<ClearAllSavedQuranValuesUseCase>(),
+                  getSurahAudioUseCase: sl<GetSurahAudioUseCase>(),
+                  checkSurahDownloadedUseCase:
+                      sl<CheckSurahDownloadedUseCase>(),
                 )),
         ChangeNotifierProvider(
             create: (_) => NotificationProvider(
                 notificationService: sl<NotificationService>(),
+                prayerTimeService: sl<PrayerTimeService>(),
                 sharedPreferences: sl<SharedPreferences>())),
       ],
       child: const MyApp(),
@@ -101,8 +110,8 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer2<ThemeProvider, NotificationProvider>(
+      builder: (context, themeProvider, notificationProvider, child) {
         return ScreenUtilInit(
           designSize: const Size(430, 932),
           minTextAdapt: true,
@@ -114,7 +123,7 @@ class _MyAppState extends State<MyApp> {
                 textScaler: TextScaler.linear(themeProvider.textScaleFactor),
               ),
               child: MaterialApp(
-                title: 'أذكــــاري | Azkari',
+                title: 'أذكاري | Azkari',
                 supportedLocales: const [Locale('ar')],
                 locale: const Locale('ar'),
                 localizationsDelegates: const [

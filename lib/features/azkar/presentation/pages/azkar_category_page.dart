@@ -1,7 +1,8 @@
 import 'package:azkar_app/core/constants/app_constants.dart';
+import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/domain/entities/zikr_entity.dart';
-import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart'; // Import AzkarProvider
-import 'package:azkar_app/features/azkar/presentation/widgets/display_azkar.dart'; // Assuming DisplayAzkar is generic
+import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
+import 'package:azkar_app/features/azkar/presentation/widgets/display_azkar.dart';
 import 'package:azkar_app/widgets/search_bar_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -15,7 +16,7 @@ class AzkarCategoryPage extends StatefulWidget {
   });
 
   final String title;
-  final String categoryName; // The category to filter by
+  final String categoryName;
 
   @override
   State<AzkarCategoryPage> createState() => _AzkarCategoryPageState();
@@ -67,13 +68,8 @@ class _AzkarCategoryPageState extends State<AzkarCategoryPage> {
       } else {
         _currentDisplayedAzkar = baseList
             .where((zekr) =>
-                    zekr.category
-                        .toLowerCase()
-                        .contains(query.toLowerCase()) || // Search by category
-                    zekr.zekr
-                        .toLowerCase()
-                        .contains(query.toLowerCase()) // Or search by zikr text
-                )
+                zekr.category.toLowerCase().contains(query.toLowerCase()) ||
+                zekr.zekr.toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
     });
@@ -81,155 +77,121 @@ class _AzkarCategoryPageState extends State<AzkarCategoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    // final azkarProvider = Provider.of<AzkarProvider>(context);
-
-    // // Handle loading/error states for the AzkarProvider
-    // if (azkarProvider.azkarStatus == AppLoadingStatus.initial ||
-    //     azkarProvider.azkarStatus == AppLoadingStatus.loading) {
-    //   return Scaffold(
-    //     appBar: AppBar(
-    //       title: Text(widget.title),
-    //       centerTitle: true,
-    //     ),
-    //     body: const Center(
-    //       child: CircularProgressIndicator(color: AppPalette.mainColor),
-    //     ),
-    //   );
-    // }
-    // if (azkarProvider.azkarStatus == AppLoadingStatus.error) {
-    //   return Scaffold(
-    //     appBar: AppBar(
-    //       title: Text(widget.title),
-    //       centerTitle: true,
-    //     ),
-    //     body: Center(
-    //       child: Text(
-    //         'Error loading Azkar: ${azkarProvider.azkarErrorMessage ?? "Unknown error"}',
-    //         textAlign: TextAlign.center,
-    //         style: const TextStyle(color: Colors.red),
-    //       ),
-    //     ),
-    //   );
-    // }
-
-    // if (_currentDisplayedAzkar.isEmpty && azkarProvider.azkarList.isNotEmpty) {
-    //   if (_searchController.text.isEmpty) {
-    //     return Scaffold(
-    //         appBar: AppBar(
-    //           title: Text(widget.title),
-    //           centerTitle: true,
-    //         ),
-    //         body: Center(
-    //             child: Text('لا توجد أذكار في هذا القسم.',
-    //                 style: TextStyle(
-    //                     fontSize: 18.sp, fontWeight: FontWeight.bold))));
-    //   } else {
-    //     return Scaffold(
-    //         appBar: AppBar(
-    //           title: Text(widget.title),
-    //           centerTitle: true,
-    //         ),
-    //         body: Center(
-    //             child: Text('غير موجود',
-    //                 style: TextStyle(
-    //                     fontSize: 18.sp, fontWeight: FontWeight.bold))));
-    //   }
-    // }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
+        elevation: 0,
         title: Text(
           widget.title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-            image: DecorationImage(
-                image: AssetImage('assets/images/duaa.png'), opacity: 0.08)),
-        child: Column(
-          children: [
-            if (widget.categoryName == AppConstants.variousDuaaCategory)
-              SearchBarWidget(
-                  onChanged: (v) {
-                    _filterAzkar(v);
-                  },
-                  onClear: () {
-                    _searchController.clear();
-                    _filterAzkar('');
-                  },
-                  searchController: _searchController,
-                  hint: 'ابحث عن ذكر أو دعاء'),
-            SizedBox(
-              height: 10.h,
-            ),
-            Text(
-              widget.categoryName == AppConstants.variousDuaaCategory
-                  ? 'لنسخ أي ذكر او دعاء، قم بالضغط المطول عليه.'
-                  : 'لنسخ أي ذكر، قم بالضغط المطول عليه. لإنقاص عداد الذكر، اضغط على الذكر.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: Theme.of(context)
-                    .textTheme
-                    .bodyLarge
-                    ?.color
-                    ?.withValues(alpha: 0.7),
-                fontStyle: FontStyle.italic,
+      body: Column(
+        children: [
+          if (widget.categoryName == AppConstants.variousDuaaCategory)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+              child: SearchBarWidget(
+                onChanged: _filterAzkar,
+                onClear: () {
+                  _searchController.clear();
+                  _filterAzkar('');
+                },
+                searchController: _searchController,
+                hint: 'ابحث عن ذكر أو دعاء',
               ),
             ),
-            SizedBox(
-              height: 10.h,
-            ),
-            Expanded(
-              child: _currentDisplayedAzkar.isEmpty &&
-                      _searchController.text.isNotEmpty
-                  ? Center(
-                      child: Text(
-                        'غير موجود',
-                        style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.bold,
-                            color:
-                                Theme.of(context).textTheme.bodyLarge?.color),
+
+          // Enhanced Instruction Box
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+            child: Container(
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: AppPalette.mainColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(15.r),
+                border: Border.all(
+                    color: AppPalette.mainColor.withValues(alpha: 0.1)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.touch_app_outlined,
+                      color: AppPalette.mainColor, size: 20.h),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Text(
+                      widget.categoryName == AppConstants.variousDuaaCategory
+                          ? 'اضغط مطولاً للنسخ.'
+                          : 'اضغط للعد، ومطولاً للنسخ.',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white70 : Colors.black54,
                       ),
-                    )
-                  : Scrollbar(
-                      thickness: 6.w,
-                      radius: Radius.circular(8.r),
-                      trackVisibility: true,
-                      thumbVisibility: true,
-                      child: ListView.separated(
-                          itemCount: _currentDisplayedAzkar.length,
-                          separatorBuilder: (context, index) => SizedBox(
-                                height: 20.h,
-                              ),
-                          itemBuilder: (context, index) {
-                            final zikr = _currentDisplayedAzkar[index];
-                            bool showHeader = false;
-                            if (widget.categoryName ==
-                                        AppConstants.variousDuaaCategory &&
-                                    (index == 0 ||
-                                        zikr.category !=
-                                            _currentDisplayedAzkar[index - 1]
-                                                .category) ||
-                                widget.categoryName ==
-                                    AppConstants.mosqueAzkarCategory) {
-                              showHeader = true;
-                            }
-                            return Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16.w),
-                              child: DisplayAzkar(
-                                zikrEntity: zikr,
-                                showCategoryHeader: showHeader,
-                              ),
-                            );
-                          }),
                     ),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+
+          Expanded(
+            child: _currentDisplayedAzkar.isEmpty
+                ? _buildEmptyState()
+                : Scrollbar(
+                    thickness: 4.w,
+                    radius: Radius.circular(10.r),
+                    child: ListView.separated(
+                      padding: EdgeInsets.only(bottom: 24.h),
+                      itemCount: _currentDisplayedAzkar.length,
+                      separatorBuilder: (context, index) =>
+                          SizedBox(height: 16.h),
+                      itemBuilder: (context, index) {
+                        final zikr = _currentDisplayedAzkar[index];
+                        bool showHeader = false;
+                        if (widget.categoryName ==
+                                    AppConstants.variousDuaaCategory &&
+                                (index == 0 ||
+                                    zikr.category !=
+                                        _currentDisplayedAzkar[index - 1]
+                                            .category) ||
+                            widget.categoryName ==
+                                AppConstants.mosqueAzkarCategory) {
+                          showHeader = true;
+                        }
+
+                        return Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          child: DisplayAzkar(
+                            zikrEntity: zikr,
+                            showCategoryHeader: showHeader,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off_rounded, size: 60.h, color: Colors.grey),
+          SizedBox(height: 10.h),
+          Text(
+            'غير موجود',
+            style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey),
+          ),
+        ],
       ),
     );
   }

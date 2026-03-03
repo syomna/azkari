@@ -1,128 +1,94 @@
 import 'package:azkar_app/core/services/notifications_service.dart';
+import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationProvider extends ChangeNotifier {
   static const String _notificationsEnabledKey = 'notificationsEnabled';
-  static const String _morningAzkarNotificationKey = 'morningAzkarNotification';
-  static const String _eveningAzkarNotificationKey = 'eveningAzkarNotification';
-  static const String _periodicNotificationKey = 'periodicNotification';
-  static const String _periodicReminderNotificationKey =
-      'periodicRemiderNotification';
 
-  bool _areNotificationsEnabled = false;
-  bool _isMorningAzkarNotificationEnabled = false;
-  bool _isEveningAzkarNotificationEnabled = false;
-  bool _isPeriodicNotificationEnabled = false;
-  bool _isPeriodicReminderNotificationEnabled = false;
-
+  // We only need one piece of state now
+  bool _areNotificationsEnabled = true;
   bool get areNotificationsEnabled => _areNotificationsEnabled;
-  bool get isMorningAzkarNotificationEnabled =>
-      _isMorningAzkarNotificationEnabled;
-  bool get isEveningAzkarNotificationEnabled =>
-      _isEveningAzkarNotificationEnabled;
-  bool get isPeriodicNotificationEnabled => _isPeriodicNotificationEnabled;
-  bool get isPeriodicReminderNotificationEnabled =>
-      _isPeriodicReminderNotificationEnabled;
 
   final NotificationService _notificationService;
+  final PrayerTimeService _prayerTimeService;
   final SharedPreferences _prefs;
 
   NotificationProvider({
     required NotificationService notificationService,
+    required PrayerTimeService prayerTimeService,
     required SharedPreferences sharedPreferences,
   })  : _notificationService = notificationService,
+        _prayerTimeService = prayerTimeService,
         _prefs = sharedPreferences {
-    _loadNotificationPreferencesAndSchedule();
+    _loadNotificationPreferences();
   }
 
-  // Inside your NotificationService class
-
-  Future<void> _loadNotificationPreferencesAndSchedule() async {
-    _areNotificationsEnabled = _prefs.getBool(_notificationsEnabledKey) ?? true;
-    _isMorningAzkarNotificationEnabled =
-        _prefs.getBool(_morningAzkarNotificationKey) ?? false;
-    _isEveningAzkarNotificationEnabled =
-        _prefs.getBool(_eveningAzkarNotificationKey) ?? false;
-    _isPeriodicNotificationEnabled =
-        _prefs.getBool(_periodicNotificationKey) ?? false;
-    _isPeriodicReminderNotificationEnabled =
-        _prefs.getBool(_periodicReminderNotificationKey) ?? false;
-
+  /// Loads the single preference and applies the state
+  void _loadNotificationPreferences() async {
+    bool isGranted =
+        await _notificationService.isNotificationPermissionGranted();
+    if (isGranted) {
+      _areNotificationsEnabled =
+          _prefs.getBool(_notificationsEnabledKey) ?? true;
+    }
     _applyNotificationStates();
   }
 
-  void _applyNotificationStates() {
+  /// Handles the actual scheduling/canceling logic
+  void _applyNotificationStates() async {
+    // Always start fresh by canceling
     _notificationService.cancelAllNotifications();
 
+    // If the master switch is ON, enable all types of reminders
     if (_areNotificationsEnabled) {
-      if (_isMorningAzkarNotificationEnabled) {
-        _notificationService.scheduleNotifications();
+      double? lat = _prefs.getDouble('lat');
+      double? lng = _prefs.getDouble('lng');
+      if (lat == null && lng == null) {
+        final position = await _prayerTimeService.getCurrentLocation();
+        lat = position?.latitude;
+        lng = position?.longitude;
+        if (lat != null && lng != null) {
+          await _prefs.setDouble('lat', lat);
+          await _prefs.setDouble('lng', lng);
+        }
       }
-      if (_isEveningAzkarNotificationEnabled) {
-        _notificationService.scheduleNotifications(isDay: true);
+
+      if (lat != null && lng != null) {
+        await _notificationService.schedulePrayerNotifications(lat, lng);
+        _notificationService.scheduleNotifications(lat, lng); // Morning
+        _notificationService.scheduleNotifications(lat, lng,
+            isDay: true); // Evening
       }
-      if (_isPeriodicNotificationEnabled) {
-        _notificationService.periodicallyShowNotification();
+
+      _notificationService.periodicallyShowNotification(); // Periodic
+      _notificationService.periodicallyShowDailyReminder(); // Daily
+    }
+  }
+
+  /// The simplified toggle that handles UI and Logic
+  Future<void> toggleAllNotifications(bool newValue) async {
+    if (newValue == true) {
+      // 1. Check if the OS actually allows notifications
+      bool isGranted =
+          await _notificationService.isNotificationPermissionGranted();
+
+      if (!isGranted) {
+        // 2. If not granted, try to request them now
+        isGranted = await _notificationService.requestNotificationPermission();
       }
-      if (_isPeriodicReminderNotificationEnabled) {
-        _notificationService.periodicallyShowDailyReminder();
+
+      // 3. If still not granted, the user must go to System Settings
+      if (!isGranted) {
+        _areNotificationsEnabled = false;
+        notifyListeners();
       }
     }
-  }
 
-  Future<void> _saveNotificationPreferences() async {
-    await _prefs.setBool(_notificationsEnabledKey, _areNotificationsEnabled);
-    await _prefs.setBool(
-        _morningAzkarNotificationKey, _isMorningAzkarNotificationEnabled);
-    await _prefs.setBool(
-        _eveningAzkarNotificationKey, _isEveningAzkarNotificationEnabled);
-    await _prefs.setBool(
-        _periodicNotificationKey, _isPeriodicNotificationEnabled);
-    await _prefs.setBool(_periodicReminderNotificationKey,
-        _isPeriodicReminderNotificationEnabled);
-  }
-
-  void toggleAllNotifications(bool newValue) {
-    if (_areNotificationsEnabled != newValue) {
-      _areNotificationsEnabled = newValue;
-      _isMorningAzkarNotificationEnabled = newValue;
-      _isEveningAzkarNotificationEnabled = newValue;
-      _isPeriodicNotificationEnabled = newValue;
-      _isPeriodicReminderNotificationEnabled = newValue;
-
-      _applyNotificationStates();
-
-      _saveNotificationPreferences();
-      notifyListeners();
-    }
-  }
-
-  void toggleMorningAzkarNotification(bool newValue) {
-    if (_isMorningAzkarNotificationEnabled != newValue) {
-      _isMorningAzkarNotificationEnabled = newValue;
-      _applyNotificationStates();
-      _saveNotificationPreferences();
-      notifyListeners();
-    }
-  }
-
-  void toggleEveningAzkarNotification(bool newValue) {
-    if (_isEveningAzkarNotificationEnabled != newValue) {
-      _isEveningAzkarNotificationEnabled = newValue;
-      _applyNotificationStates();
-      _saveNotificationPreferences();
-      notifyListeners();
-    }
-  }
-
-  void togglePeriodicNotification(bool newValue) {
-    if (_isPeriodicNotificationEnabled != newValue) {
-      _isPeriodicNotificationEnabled = newValue;
-      _isPeriodicReminderNotificationEnabled = newValue;
-      _applyNotificationStates();
-      _saveNotificationPreferences();
-      notifyListeners();
-    }
+    // 4. If we reach here, it's either turning OFF or permissions are fine
+    _areNotificationsEnabled = newValue;
+    _applyNotificationStates();
+    _prefs.setBool(_notificationsEnabledKey, _areNotificationsEnabled);
+    notifyListeners();
   }
 }

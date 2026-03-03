@@ -1,20 +1,27 @@
 // test/data/repositories/quran_repository_impl_test.dart
 
+import 'package:azkar_app/features/quran/data/datasources/quran_local_data_source.dart';
 import 'package:azkar_app/features/quran/data/models/quran_position_model.dart';
 import 'package:azkar_app/features/quran/data/repositories/quran_repository_impl.dart';
 import 'package:azkar_app/features/quran/domain/entities/quran_position_entity.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import 'quran_repository_impl_test.mocks.mocks.dart';
+import 'quran_repository_impl_test.mocks.dart';
 
+@GenerateMocks([QuranLocalDataSource, Dio])
 void main() {
   late QuranRepositoryImpl repository;
   late MockQuranLocalDataSource mockLocalDataSource;
+  late MockDio mockDio;
 
   setUp(() {
     mockLocalDataSource = MockQuranLocalDataSource();
-    repository = QuranRepositoryImpl(quranLocalDataSource: mockLocalDataSource);
+    mockDio = MockDio();
+    repository = QuranRepositoryImpl(
+        quranLocalDataSource: mockLocalDataSource, dio: mockDio);
   });
 
   group('QuranRepositoryImpl', () {

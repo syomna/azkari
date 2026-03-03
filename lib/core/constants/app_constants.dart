@@ -16,9 +16,12 @@ class AppConstants {
   static const String holyQuran = 'القرآن الكريم';
 
   static const String shortSurahsTitle = 'سور قصيرة للصلاة';
+  static const String surahs = 'السور الكريمة';
+
   static const String allAzkarPageTitle = 'أذكار و أدعية';
   static const String dayOfZikr = 'ذكر اليوم';
   static const String tasbeh = 'تسبيح';
+  static const String mesbaha = 'المسبحة الإلكترونية';
   static const String namesOfAllah = 'أسماء الله الحسنى';
   static const String qibla = 'القبلة';
 

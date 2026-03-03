@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/widgets/custom_text_field.dart';
 import 'package:flutter/material.dart';
@@ -15,52 +16,43 @@ class ContactUsPage extends StatefulWidget {
 }
 
 class _ContactUsPageState extends State<ContactUsPage> {
-  // Controllers to capture user input
-  // final TextEditingController _emailController = TextEditingController();
   final TextEditingController _subjectController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
   PackageInfo? packageInfo;
+
   @override
-  initState() {
+  void initState() {
     super.initState();
     _getAppInfo();
   }
 
   Future<void> _getAppInfo() async {
     packageInfo = await PackageInfo.fromPlatform();
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    // _emailController.dispose();
     _subjectController.dispose();
     _messageController.dispose();
     super.dispose();
   }
 
   Future<void> _sendEmail() async {
-    // final String userEmail = _emailController.text.trim();
     final String subject = _subjectController.text.trim();
     final String message = _messageController.text.trim();
 
-    // Basic Validation
     if (subject.isEmpty || message.isEmpty) {
       AppHelpers.showToast('يرجى ملء جميع الحقول', status: ToastStatus.warning);
-
       return;
     }
 
     final Uri emailUri = Uri(
       scheme: 'mailto',
-      path: 'syomna444@gmail.com', // Your destination email
+      path: 'syomna444@gmail.com',
       query:
           'subject=${Uri.encodeComponent(subject)}&body=${Uri.encodeComponent(message)}',
     );
-
-    // Navigator.pop(context);
 
     try {
       if (await canLaunchUrl(emailUri)) {
@@ -71,84 +63,157 @@ class _ContactUsPageState extends State<ContactUsPage> {
     } catch (e) {
       log(e.toString());
       if (mounted) {
-        AppHelpers.showToast('تعذر فتح تطبيق البريد الإلكتروني', status: ToastStatus.error);
+        AppHelpers.showToast('تعذر فتح تطبيق البريد الإلكتروني',
+            status: ToastStatus.error);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'للشكاوى والاقتراحات',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        elevation: 0,
+        title: Text(
+          'تواصل معنا',
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22.sp),
         ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
         child: Column(
           children: [
+            // 1. Decorative Header Icon
+            Container(
+              padding: EdgeInsets.all(20.w),
+              decoration: BoxDecoration(
+                color: AppPalette.mainColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.alternate_email_rounded,
+                size: 50.sp,
+                color: AppPalette.mainColor,
+              ),
+            ),
             SizedBox(height: 20.h),
-            Icon(
-              Icons.contact_support_rounded,
-              size: 80.sp,
-              color: Theme.of(context).primaryColor,
+            Text(
+              'يسعدنا سماع اقتراحاتكم',
+              style: TextStyle(
+                fontSize: 22.sp,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : AppPalette.mainColor,
+              ),
             ),
             SizedBox(height: 10.h),
             Text(
-              'نحن نسعد بتواصلكم معنا',
-              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+              'سوف نقوم بالرد عليكم في أقرب وقت ممكن',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: Colors.grey,
+              ),
             ),
-            SizedBox(height: 25.h),
+            SizedBox(height: 35.h),
 
-            // Subject Field
-            CustomTextField(
-              controller: _subjectController,
-              label: 'موضوع الرسالة',
-              hint: 'اقتراح، شكوى، استفسار...',
-              icon: Icons.subject,
-            ),
-            SizedBox(height: 15.h),
-
-            // Message Field
-            CustomTextField(
-              controller: _messageController,
-              label: 'تفاصيل الرسالة',
-              hint: 'اكتب رسالتك هنا...',
-              icon: Icons.edit_note,
-              maxLines: 5,
-            ),
-            SizedBox(height: 30.h),
-
-            // Submit Button
-            SizedBox(
-              width: double.infinity,
-              height: 45.h,
-              child: ElevatedButton.icon(
-                onPressed: _sendEmail,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  elevation: 0,
+            // 2. Form Container (Card Style)
+            Container(
+              padding: EdgeInsets.all(20.w),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(25.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  )
+                ],
+                border: Border.all(
+                  color: AppPalette.mainColor.withValues(alpha: 0.1),
                 ),
-                icon: const Icon(Icons.send_rounded),
-                label: Text(
-                  'إرسال الآن',
-                  style:
-                      TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+              ),
+              child: Column(
+                children: [
+                  CustomTextField(
+                    controller: _subjectController,
+                    label: 'موضوع الرسالة',
+                    hint: 'اقتراح، شكوى، استفسار...',
+                    icon: Icons.subject_rounded,
+                  ),
+                  SizedBox(height: 20.h),
+                  CustomTextField(
+                    controller: _messageController,
+                    label: 'تفاصيل الرسالة',
+                    hint: 'اكتب رسالتك هنا...',
+                    icon: Icons.chat_bubble_outline_rounded,
+                    maxLines: 6,
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 35.h),
+
+            // 3. Submit Button (Gradient Style)
+            GestureDetector(
+              onTap: _sendEmail,
+              child: Container(
+                width: double.infinity,
+                height: 55.h,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15.r),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppPalette.mainColor,
+                      AppPalette.mainColor.withValues(alpha: 0.8),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppPalette.mainColor.withValues(alpha: 0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    )
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.send_rounded, color: Colors.white),
+                    SizedBox(width: 12.w),
+                    Text(
+                      'إرسال الآن',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
 
-            SizedBox(height: 40.h),
+            SizedBox(height: 50.h),
+
+            // 4. Footer Info
             Text(
-              'الإصدار ${packageInfo?.version ?? ''} | جميع الحقوق محفوظة © ${DateTime.now().year}',
-              style: TextStyle(color: Colors.grey, fontSize: 12.sp),
+              'الإصدار ${packageInfo?.version ?? ''}',
+              style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              'جميع الحقوق محفوظة لـ يمنى © ${DateTime.now().year}',
+              style: TextStyle(
+                  color: Colors.grey.withValues(alpha: 0.6), fontSize: 11.sp),
             ),
             SizedBox(height: 20.h),
           ],

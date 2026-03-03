@@ -1,7 +1,8 @@
+import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
-import 'package:azkar_app/core/utils/app_helpers.dart'; // For copyText
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/surah/domain/entities/surah_entity.dart';
-import 'package:azkar_app/features/surah/presentation/providers/surah_provider.dart'; // Import SurahProvider
+import 'package:azkar_app/features/surah/presentation/providers/surah_provider.dart';
 import 'package:azkar_app/widgets/search_bar_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -16,19 +17,11 @@ class SurahListPage extends StatefulWidget {
 
 class _SurahListPageState extends State<SurahListPage> {
   final TextEditingController _searchController = TextEditingController();
-  List<SurahEntity> _currentDisplayedSurahs =
-      []; // State to hold filtered results
-
-  @override
-  void initState() {
-    super.initState();
-    // Initial data filtering will happen in didChangeDependencies or build
-  }
+  List<SurahEntity> _currentDisplayedSurahs = [];
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Re-filter when dependencies change (e.g., provider updates)
     _filterSurahs(_searchController.text);
   }
 
@@ -40,8 +33,7 @@ class _SurahListPageState extends State<SurahListPage> {
 
   void _filterSurahs(String query) {
     final surahProvider = Provider.of<SurahProvider>(context, listen: false);
-    List<SurahEntity> baseList =
-        surahProvider.surahList; // Get the full list from the provider
+    List<SurahEntity> baseList = surahProvider.surahList;
 
     setState(() {
       if (query.isEmpty) {
@@ -57,170 +49,175 @@ class _SurahListPageState extends State<SurahListPage> {
 
   @override
   Widget build(BuildContext context) {
-    // final surahProvider = Provider.of<SurahProvider>(context);
-
-    // Handle loading/error states for the SurahProvider
-    // if (surahProvider.surahStatus == AppLoadingStatus.initial ||
-    //     surahProvider.surahStatus == AppLoadingStatus.loading) {
-    //   return Scaffold(
-    //     appBar: AppBar(
-    //         title: const Text('السور',
-    //             style: TextStyle(fontWeight: FontWeight.bold))),
-    //     body: const Center(
-    //       child: CircularProgressIndicator(color: AppPalette.mainColor),
-    //     ),
-    //   );
-    // }
-    // if (surahProvider.surahStatus == AppLoadingStatus.error) {
-    //   return Scaffold(
-    //     appBar: AppBar(
-    //         title: const Text('السور',
-    //             style: TextStyle(fontWeight: FontWeight.bold))),
-    //     body: Center(
-    //       child: Text(
-    //         'Error loading Surahs: ${surahProvider.surahErrorMessage ?? "Unknown error"}',
-    //         textAlign: TextAlign.center,
-    //         style: const TextStyle(color: Colors.red),
-    //       ),
-    //     ),
-    //   );
-    // }
-    // // Handle case where list might be empty after loading
-    // if (_currentDisplayedSurahs.isEmpty && _searchController.text.isEmpty) {
-    //   return Scaffold(
-    //       appBar: AppBar(
-    //           title: const Text('السور',
-    //               style: TextStyle(fontWeight: FontWeight.bold))),
-    //       body: Center(
-    //           child: Text('لا توجد سور متاحة.',
-    //               style: TextStyle(
-    //                   fontSize: 18.sp, fontWeight: FontWeight.bold))));
-    // }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
+        elevation: 0,
         title: const Text(
-          'السور', // Fixed title for Surah page
-          style: TextStyle(fontWeight: FontWeight.bold),
+          AppConstants.surahs,
         ),
+        centerTitle: true,
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-            image: DecorationImage(
-                image: AssetImage('assets/images/duaa.png'),
-                opacity: 0.08)), // Keep background consistent
-        child: Column(
-          children: [
-            // Search bar for Surah filtering
-            SearchBarWidget(
-                onChanged: (v) {
-                  _filterSurahs(v);
-                },
+      body: Column(
+        children: [
+          // 1. Search Bar
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            child: SearchBarWidget(
+                onChanged: _filterSurahs,
                 onClear: () {
                   _searchController.clear();
                   _filterSurahs('');
                 },
                 searchController: _searchController,
                 hint: 'ابحث عن سورة'),
-            SizedBox(
-              height: 10.h,
-            ),
-            Text(
-              'لنسخ أي سورة، قم بالضغط المطول عليها.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: Theme.of(context)
-                    .textTheme
-                    .bodyLarge
-                    ?.color
-                    ?.withValues(alpha: 0.7),
-                fontStyle: FontStyle.italic,
+          ),
+
+          // 2. Modern Instruction Card
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            child: Container(
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: AppPalette.mainColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(15.r),
+                border: Border.all(
+                    color: AppPalette.mainColor.withValues(alpha: 0.1)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.copy_rounded,
+                      color: AppPalette.mainColor, size: 20.h),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Text(
+                      'لنسخ أي سورة، قم بالضغط المطول عليها.',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(
-              height: 10.h,
+          ),
+
+          // 3. Surah List
+          Expanded(
+            child: _currentDisplayedSurahs.isEmpty
+                ? _buildEmptyState()
+                : Scrollbar(
+                    thickness: 4.w,
+                    radius: Radius.circular(10.r),
+                    child: ListView.separated(
+                        padding: EdgeInsets.only(bottom: 24.h, top: 10.h),
+                        itemCount: _currentDisplayedSurahs.length,
+                        separatorBuilder: (context, index) =>
+                            SizedBox(height: 16.h),
+                        itemBuilder: (context, index) {
+                          final surah = _currentDisplayedSurahs[index];
+                          return _buildSurahCard(surah, isDark);
+                        }),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSurahCard(SurahEntity surah, bool isDark) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Elegant Category Header (Surah Name)
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+            decoration: BoxDecoration(
+              color: AppPalette.mainColor,
+              borderRadius: BorderRadius.only(
+                topRight: Radius.circular(15.r),
+                topLeft: Radius.circular(15.r),
+                bottomLeft: Radius.circular(4.r),
+                bottomRight: Radius.circular(15.r),
+              ),
             ),
-            Expanded(
-              child: _currentDisplayedSurahs.isEmpty &&
-                      _searchController.text.isNotEmpty
-                  ? Center(
-                      // Show "Not Found" specifically for search results
-                      child: Text(
-                        'غير موجود',
-                        style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.bold,
-                            color:
-                                Theme.of(context).textTheme.bodyLarge?.color),
-                      ),
-                    )
-                  : Scrollbar(
-                      thickness: 6.w,
-                      radius: Radius.circular(8.r),
-                      trackVisibility: true,
-                      thumbVisibility: true,
-                      child: ListView.separated(
-                          itemCount: _currentDisplayedSurahs.length,
-                          separatorBuilder: (context, index) => SizedBox(
-                                height: 20.h,
-                              ),
-                          itemBuilder: (context, index) {
-                            final surah = _currentDisplayedSurahs[index];
-                            return Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16.w),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                        borderRadius:
-                                            BorderRadius.circular(8.r),
-                                        color: AppPalette.mainColor),
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 8.w, vertical: 8.h),
-                                      child: Text(
-                                        surah.name,
-                                        style: TextStyle(
-                                            fontSize: 18.sp,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: 10.h,
-                                  ),
-                                  Container(
-                                      width: MediaQuery.of(context).size.width,
-                                      decoration: BoxDecoration(
-                                          border: Border.all(
-                                              color: AppPalette.mainColor),
-                                          borderRadius:
-                                              BorderRadius.circular(8.r)),
-                                      child: Padding(
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 16.w, vertical: 16.h),
-                                          child: GestureDetector(
-                                            onLongPress: () {
-                                              AppHelpers.copyText(surah.surah);
-                                            },
-                                            child: Text(
-                                              surah.surah,
-                                              style: TextStyle(
-                                                  fontSize: 16.sp,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                          )))
-                                ],
-                              ),
-                            );
-                          }),
-                    ),
+            child: Text(
+              surah.name,
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
-          ],
-        ),
+          ),
+          // Surah Text Card
+          GestureDetector(
+            onLongPress: () => AppHelpers.copyText(surah.surah),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(20.w),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.white,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20.r),
+                  bottomRight: Radius.circular(20.r),
+                  topRight: Radius.circular(20.r),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.05),
+                ),
+              ),
+              child: Text(
+                surah.surah,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: AppPalette.amiriFontFamily,
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.bold,
+                  height: 1.8,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.9)
+                      : Colors.black87,
+                ),
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.auto_stories_outlined, size: 60.h, color: Colors.grey),
+          SizedBox(height: 10.h),
+          Text(
+            'غير موجود',
+            style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey),
+          ),
+        ],
       ),
     );
   }

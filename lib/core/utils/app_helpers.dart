@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -42,27 +43,31 @@ class AppHelpers {
 
   static void showToast(String msg,
       {ToastStatus status = ToastStatus.success}) {
-    Color? color;
+    Color backgroundColor;
 
+    // Use your AppPalette for a cohesive look
     switch (status) {
       case ToastStatus.success:
-        color = Colors.green;
+        backgroundColor = AppPalette.mainColor;
         break;
       case ToastStatus.warning:
-        color = Colors.orange;
+        backgroundColor = Colors.amber.shade700;
         break;
       case ToastStatus.error:
-        color = Colors.red;
+        backgroundColor = const Color(0xFFD32F2F); // A softer, premium red
         break;
     }
+
     Fluttertoast.showToast(
         msg: msg,
         toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: color,
+        gravity: ToastGravity
+            .SNACKBAR, // Slightly higher than BOTTOM to avoid the home indicator
+        timeInSecForIosWeb: 2,
+        backgroundColor: backgroundColor.withValues(
+            alpha: 0.9), // Subtle transparency feels more modern
         textColor: Colors.white,
-        fontSize: 16.sp);
+        fontSize: 14.sp); // Slightly smaller font is often more elegant
   }
 
   static double calculateQiblaDirection(

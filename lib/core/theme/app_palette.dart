@@ -3,29 +3,45 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AppPalette {
   static const Color mainColor = Color(0xFF22a351);
-  static const String fontFamily = 'Tajawal';
+  static const Color lightBackground = Color(0xFFF8FBF9);
+  static const Color darkBackground = Color(0xFF121212);
+  static const String tajawalFontFamily = 'Tajawal';
+  static const String amiriFontFamily = 'Amiri';
 
   static final ThemeData darkTheme = ThemeData.dark().copyWith(
+    scaffoldBackgroundColor: darkBackground,
     primaryColor: mainColor,
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       surfaceTintColor: Colors.transparent,
+      titleTextStyle: TextStyle(
+        fontFamily: tajawalFontFamily,
+        fontWeight: FontWeight.w900,
+        fontSize: 22.sp,
+        color: Colors.white,
+      ),
     ),
     textTheme: Typography.englishLike2018
         .apply(fontSizeFactor: 1.sp)
-        .apply(fontFamily: fontFamily, bodyColor: Colors.white),
+        .apply(fontFamily: tajawalFontFamily, bodyColor: Colors.white),
   );
 
   static final ThemeData lightTheme = ThemeData.light()
       .copyWith(
-        scaffoldBackgroundColor: Colors.white,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
+        scaffoldBackgroundColor: lightBackground,
+        appBarTheme: AppBarTheme(
+          backgroundColor: lightBackground,
           surfaceTintColor: Colors.transparent,
+          titleTextStyle: TextStyle(
+            fontFamily: tajawalFontFamily,
+            fontWeight: FontWeight.w900,
+            fontSize: 22.sp,
+            color: AppPalette.mainColor,
+          ),
         ),
         primaryColor: mainColor,
         textTheme: Typography.englishLike2018
             .apply(fontSizeFactor: 1.sp)
-            .apply(fontFamily: fontFamily, bodyColor: Colors.black),
+            .apply(fontFamily: tajawalFontFamily, bodyColor: Colors.black),
       )
       .copyWith(primaryColorDark: Colors.white);
 }

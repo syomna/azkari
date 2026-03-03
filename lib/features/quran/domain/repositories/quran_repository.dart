@@ -7,4 +7,7 @@ abstract class QuranRepository {
   QuranPositionEntity getSavedPosition(int surahNumber);
   Future<void> clearSavedPosition(int surahNumber);
   Future<void> clearAllSavedQuranValues();
+  Future<void> downloadSurah(String url, String savePath);
+  Future<String> getSurahPath(int surahNumber);
+Future<bool> isSurahDownloaded(int surahNumber);
 }

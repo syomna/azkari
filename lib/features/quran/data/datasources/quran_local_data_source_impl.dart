@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:azkar_app/features/quran/data/datasources/quran_local_data_source.dart';
 import 'package:azkar_app/features/quran/data/models/quran_position_model.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class QuranLocalDataSourceImpl implements QuranLocalDataSource {
@@ -88,5 +90,17 @@ class QuranLocalDataSourceImpl implements QuranLocalDataSource {
     await sharedPreferences.remove(_kSavedAyahNumberKey);
     await sharedPreferences.remove(_kSavedLatestQuranSurahNumberKey);
     _savedQuranPositions = [];
+  }
+
+  @override
+  Future<String> getSurahPath(int surahNumber) async {
+    final dir = await getApplicationDocumentsDirectory();
+    return '${dir.path}/surah_$surahNumber.mp3';
+  }
+
+  @override
+  Future<bool> isDownloaded(int surahNumber) async {
+    final path = await getSurahPath(surahNumber);
+    return File(path).exists();
   }
 }

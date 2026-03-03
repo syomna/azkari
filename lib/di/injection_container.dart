@@ -1,4 +1,5 @@
 import 'package:azkar_app/core/services/notifications_service.dart';
+import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:azkar_app/features/azkar/data/datasources/azkar_local_data_source.dart';
 import 'package:azkar_app/features/azkar/data/datasources/azkar_local_data_source_impl.dart';
 import 'package:azkar_app/features/azkar/data/repositories/azkar_repository_impl.dart';
@@ -17,10 +18,12 @@ import 'package:azkar_app/features/quran/data/datasources/quran_local_data_sourc
 import 'package:azkar_app/features/quran/data/datasources/quran_local_data_source_impl.dart';
 import 'package:azkar_app/features/quran/data/repositories/quran_repository_impl.dart';
 import 'package:azkar_app/features/quran/domain/repositories/quran_repository.dart';
+import 'package:azkar_app/features/quran/domain/usecases/check_surah_downloaded_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/clear_all_saved_quran_values_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/clear_quran_position_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_latest_quran_surah_number_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_saved_quran_position_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/get_surah_audio_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/save_latest_quran_surah_number_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/save_quran_position_usecase.dart';
 import 'package:azkar_app/features/surah/data/datasources/surah_local_data_source.dart';
@@ -29,6 +32,7 @@ import 'package:azkar_app/features/surah/data/repositories/surah_repositoy_impl.
 import 'package:azkar_app/features/surah/domain/repositories/surah_repository.dart';
 import 'package:azkar_app/features/surah/domain/usecases/get_surah_usecase.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
+import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -42,6 +46,7 @@ Future<void> init() async {
   // Make sure to await its initialization before other dependencies that depend on it
   await sl.allReady();
   sl.registerLazySingleton<NotificationService>(() => NotificationService());
+  sl.registerLazySingleton<PrayerTimeService>(() => PrayerTimeService());
   // Azkar
   sl.registerLazySingleton<AzkarLocalDataSource>(
       () => AzkarLocalDataSourceImpl());
@@ -64,13 +69,19 @@ Future<void> init() async {
       () => SurahRepositoyImpl(surahLocalDataSource: sl()));
   sl.registerLazySingleton(() => GetSurahUseCase(surahRepository: sl()));
   sl.registerFactory(() => TasbehProvider(sharedPreferences: sl()));
-
+// Register Dio as a Singleton here
+  sl.registerLazySingleton<Dio>(() => Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+      ));
   // Quran
   sl.registerLazySingleton<QuranLocalDataSource>(() => QuranLocalDataSourceImpl(
         sharedPreferences: sl(),
       ));
   sl.registerLazySingleton<QuranRepository>(
-      () => QuranRepositoryImpl(quranLocalDataSource: sl()));
+      () => QuranRepositoryImpl(quranLocalDataSource: sl(), dio: sl()));
   sl.registerLazySingleton(
       () => SaveQuranPositionUseCase(quranRepository: sl()));
   sl.registerLazySingleton(
@@ -83,6 +94,8 @@ Future<void> init() async {
       () => ClearQuranPositionUseCase(quranRepository: sl()));
   sl.registerLazySingleton(
       () => ClearAllSavedQuranValuesUseCase(quranRepository: sl()));
+  sl.registerLazySingleton(() => GetSurahAudioUseCase(sl()));
+  sl.registerLazySingleton(() => CheckSurahDownloadedUseCase(sl()));
 
   sl.registerLazySingleton<QiblaRepository>(() => QiblaRepositoryImpl());
 
