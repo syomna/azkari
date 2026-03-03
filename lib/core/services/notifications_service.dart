@@ -138,28 +138,28 @@ class NotificationService {
     }
   }
 
-  Future<void> testRepeatingZoned() async {
-    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+  // Future<void> testRepeatingZoned() async {
+  //   final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
 
-    // Start 5 seconds from now
-    final tz.TZDateTime firstTick = now.add(const Duration(minutes: 5));
+  //   // Start 5 seconds from now
+  //   final tz.TZDateTime firstTick = now.add(const Duration(minutes: 5));
 
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      123,
-      'تذكير الصلاة',
-      'هذا الإشعار سيتكرر كل دقيقة',
-      firstTick,
-      adhanDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+  //   await flutterLocalNotificationsPlugin.zonedSchedule(
+  //     123,
+  //     'تذكير الصلاة',
+  //     'هذا الإشعار سيتكرر كل دقيقة',
+  //     firstTick,
+  //     adhanDetails,
+  //     androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
 
-      // This tells the OS to repeat every time the "seconds" match
-      matchDateTimeComponents: DateTimeComponents.time,
-    );
-  }
+  //     // This tells the OS to repeat every time the "seconds" match
+  //     matchDateTimeComponents: DateTimeComponents.time,
+  //   );
+  // }
 
   Future<void> scheduleNotifications(double lat, double lng,
       {bool isDay = false}) async {
-    testRepeatingZoned();
+    // await testRepeatingZoned();
     final TimezoneInfo timeZoneInfo = await FlutterTimezone.getLocalTimezone();
     tz.setLocalLocation(tz.getLocation(timeZoneInfo.identifier));
     tz.TZDateTime now = tz.TZDateTime.now(tz.local);

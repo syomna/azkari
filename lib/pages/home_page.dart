@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/core/enums/app_loading_status.dart';
 import 'package:azkar_app/core/presentation/providers/theme_provider.dart';
@@ -163,6 +165,10 @@ class _HomePageState extends State<HomePage> {
                     ),
                     children: azkarList,
                   ),
+                  if (Platform.isAndroid)
+                    SizedBox(
+                      height: 10.h,
+                    ),
                   _buildTitle('أسماء الله الحسنى'),
                   SizedBox(
                     height: 10.h,
