@@ -34,8 +34,10 @@
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs access to location when open to get Qibla direction and Adhan.</string>
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>نحتاج إلى موقعك لتحديد مواقيت الصلاة بدقة بناءً على مدينتك.</string>
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>نحتاج إلى موقعك لتحديث مواقيت الصلاة والأذان تلقائياً.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>

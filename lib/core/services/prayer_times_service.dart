@@ -19,7 +19,11 @@ class PrayerTimeService {
 
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
+      try {
+        permission = await Geolocator.requestPermission();
+      } catch (e) {
+        return null;
+      }
       if (permission == LocationPermission.denied) return null;
     }
 

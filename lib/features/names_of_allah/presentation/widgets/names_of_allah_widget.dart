@@ -1,5 +1,6 @@
 import 'package:azkar_app/core/enums/app_loading_status.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/names_of_allah/presentation/providers/names_of_allah_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -93,7 +94,7 @@ class _NamesOfAllahWidgetState extends State<NamesOfAllahWidget> {
                   Align(
                     alignment: Alignment.topLeft,
                     child: Text(
-                      '${index + 1}',
+                      AppHelpers.getArabicNumber(index + 1),
                       style: TextStyle(
                         fontSize: 35.sp,
                         fontWeight: FontWeight.w900,

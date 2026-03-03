@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:adhan/adhan.dart';
@@ -25,35 +24,55 @@ class NotificationService {
   NotificationService._internal();
 
   Future<void> initNotification() async {
-    AndroidInitializationSettings initializationSettingsAndroid =
-        const AndroidInitializationSettings('@mipmap/ic_launcher');
+    // Android setup
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    DarwinInitializationSettings initializationSettingsIOS =
-        const DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+    // iOS setup - Modern Darwin settings
+    const DarwinInitializationSettings initializationSettingsIOS =
+        DarwinInitializationSettings(
+      requestAlertPermission: false, // Set to false to manual request later
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+      requestCriticalPermission: true, // IMPORTANT for Adhan on Mute/DND
     );
 
-    final InitializationSettings initializationSettings =
+    const InitializationSettings initializationSettings =
         InitializationSettings(
-            android: initializationSettingsAndroid,
-            iOS: initializationSettingsIOS);
-    tz.initializeTimeZones();
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
 
+    tz.initializeTimeZones();
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-    if (Platform.isAndroid) {
-      await flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()!
-          .requestNotificationsPermission();
+
+    // Platform-Specific Runtime Requests
+    if (Platform.isIOS) {
+      final iosPlugin =
+          flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>();
+
+      // Requesting with 'Critical' sounds for Adhan
+      await iosPlugin?.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+        critical: true, // This allows the Adhan to bypass the mute switch
+      );
+    } else if (Platform.isAndroid) {
+      final androidPlugin =
+          flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+
+      await androidPlugin?.requestNotificationsPermission();
+      await androidPlugin?.requestExactAlarmsPermission();
     }
   }
 
   // 1. For Azkar (Standard system sound)
   NotificationDetails azkarDetails = const NotificationDetails(
     android: AndroidNotificationDetails(
-      'azkar_channel',
+      'azkar_channel_v3',
       'الأذكار',
       importance: Importance.max,
       priority: Priority.high,
@@ -65,7 +84,7 @@ class NotificationService {
 // 2. For Prayer (Custom Adhan sound)
   NotificationDetails adhanDetails = const NotificationDetails(
     android: AndroidNotificationDetails(
-      'adhan_channel_v2',
+      'adhan_channel_v3',
       'الأذان',
       importance: Importance.max,
       priority: Priority.high,
@@ -119,8 +138,28 @@ class NotificationService {
     }
   }
 
+  Future<void> testRepeatingZoned() async {
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+
+    // Start 5 seconds from now
+    final tz.TZDateTime firstTick = now.add(const Duration(minutes: 5));
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      123,
+      'تذكير الصلاة',
+      'هذا الإشعار سيتكرر كل دقيقة',
+      firstTick,
+      adhanDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+
+      // This tells the OS to repeat every time the "seconds" match
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
+
   Future<void> scheduleNotifications(double lat, double lng,
       {bool isDay = false}) async {
+    testRepeatingZoned();
     final TimezoneInfo timeZoneInfo = await FlutterTimezone.getLocalTimezone();
     tz.setLocalLocation(tz.getLocation(timeZoneInfo.identifier));
     tz.TZDateTime now = tz.TZDateTime.now(tz.local);
@@ -131,8 +170,6 @@ class NotificationService {
 
 // 2. Add exactly 30 minutes
     DateTime notificationTime = basePrayerTime.add(const Duration(minutes: 30));
-
-    log('targetHour: ${notificationTime.hour}, targetMinutes: ${notificationTime.minute}');
     tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local, now.year, now.month,
         now.day, notificationTime.hour, notificationTime.minute);
 

@@ -52,15 +52,17 @@ class PrayerTimesCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildPrayerItem(
-                      'الفجر', times.fajr, nextPrayer == Prayer.fajr),
+                      'الفجر', times.fajr, nextPrayer == Prayer.fajr, isDark),
+                  _buildPrayerItem('الشروق', times.sunrise,
+                      nextPrayer == Prayer.sunrise, isDark),
                   _buildPrayerItem(
-                      'الظهر', times.dhuhr, nextPrayer == Prayer.dhuhr),
+                      'الظهر', times.dhuhr, nextPrayer == Prayer.dhuhr, isDark),
                   _buildPrayerItem(
-                      'العصر', times.asr, nextPrayer == Prayer.asr),
+                      'العصر', times.asr, nextPrayer == Prayer.asr, isDark),
+                  _buildPrayerItem('المغرب', times.maghrib,
+                      nextPrayer == Prayer.maghrib, isDark),
                   _buildPrayerItem(
-                      'المغرب', times.maghrib, nextPrayer == Prayer.maghrib),
-                  _buildPrayerItem(
-                      'العشاء', times.isha, nextPrayer == Prayer.isha),
+                      'العشاء', times.isha, nextPrayer == Prayer.isha, isDark),
                 ],
               ),
             ],
@@ -84,7 +86,8 @@ class PrayerTimesCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPrayerItem(String name, DateTime time, bool isActive) {
+  Widget _buildPrayerItem(
+      String name, DateTime time, bool isActive, bool isDark) {
     String formattedTime = DateFormat.jm('ar').format(time);
 
     return Expanded(
@@ -95,8 +98,12 @@ class PrayerTimesCard extends StatelessWidget {
           Text(name,
               maxLines: 1,
               style: TextStyle(
-                fontSize: 12.sp, // Reduced slightly for Arabic text width
-                color: isActive ? AppPalette.mainColor : Colors.black54,
+                fontSize: 11.sp, // Reduced slightly for Arabic text width
+                color: isActive
+                    ? AppPalette.mainColor
+                    : isDark
+                        ? Colors.white
+                        : Colors.black54,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
               )),
           SizedBox(height: 4.h),
@@ -111,7 +118,7 @@ class PrayerTimesCard extends StatelessWidget {
               ),
               child: Text(formattedTime,
                   style: TextStyle(
-                    fontSize: 12.sp,
+                    fontSize: 11.sp,
                     color: isActive ? Colors.white : null,
                     fontWeight: FontWeight.w600,
                   )),

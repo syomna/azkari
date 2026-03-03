@@ -102,22 +102,26 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   SizedBox(
-                    height: 5.h,
+                    height: 10.h,
                   ),
                   const WelcomingWidget(),
                   SizedBox(
                     height: 15.h,
                   ),
-                  if (context.read<AzkarProvider>().prayerTimes != null)
-                    PrayerTimesCard(
+                  Consumer<AzkarProvider>(builder: (context, provider, child) {
+                    if (provider.prayerTimes == null) {
+                      return const SizedBox.shrink();
+                    }
+                    return PrayerTimesCard(
                       times: context.read<AzkarProvider>().prayerTimes!,
-                    ),
+                    );
+                  }),
                   SizedBox(
-                    height: 10.h,
+                    height: 15.h,
                   ),
                   _buildTitle('ذكر اليوم'),
                   SizedBox(
-                    height: 10.h,
+                    height: 15.h,
                   ),
                   const DayZekrWidget(),
                   SizedBox(

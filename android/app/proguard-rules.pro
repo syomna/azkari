@@ -1,0 +1,3 @@
+-keep class com.dexterous.** { *; }
+-dontwarn com.dexterous.**
+-keep class com.dexterous.flutterlocalnotifications.** { *; }
