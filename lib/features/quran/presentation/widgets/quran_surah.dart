@@ -29,11 +29,12 @@ class _QuranSurahState extends State<QuranSurah> {
     // 2. Logic to check if we should show a custom Basmala header
     // (Not for Al-Fatiha [1] or At-Tawbah [9])
     bool isFirstVerse = verseNumber == 1;
-    bool shouldShowHeaderBasmala = isFirstVerse && widget.surahNumber != 1;
-    if (isFirstVerse && widget.surahNumber != 1) {
+    bool shouldShowHeaderBasmala = false;
+    if (isFirstVerse && widget.surahNumber != 1 && widget.surahNumber != 9) {
       final basmalaRegex = 'بِسْمِ اللَّهِ الرَّحْمَـٰنِ الرَّحِيمِ';
 
       if (ayah.contains(basmalaRegex)) {
+        shouldShowHeaderBasmala = true;
         ayah = ayah.replaceFirst(basmalaRegex, '').trim();
       } else {
         ayah = ayah.replaceFirst(quran.basmala, '').trim();

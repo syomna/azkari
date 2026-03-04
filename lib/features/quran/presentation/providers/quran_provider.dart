@@ -78,14 +78,27 @@ class QuranProvider with ChangeNotifier {
   int? _currentPlayingSurah;
   int? get currentPlayingSurah => _currentPlayingSurah;
 
+  String? _errorMessage;
+  String? get errorMessage => _errorMessage;
+
+  // Helper to clear error after showing toast
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
   Future<void> seek(Duration position) async {
     await _player.seek(position);
   }
 
   Future<void> toggleAudio(int surahNumber, String url) async {
+    _errorMessage = null; // Clear previous errors
     _currentPlayingSurah = surahNumber;
+
     // Check if we are interacting with the same surah already loaded
-    final bool isSameSurah = _player.audioSource != null;
+    // Note: Better to check if the path/surah matches specifically
+    final bool isSameSurah =
+        _player.audioSource != null && _currentPlayingSurah == surahNumber;
 
     if (isSameSurah && _player.playing) {
       await _player.pause();
@@ -102,15 +115,14 @@ class QuranProvider with ChangeNotifier {
     }
 
     try {
-      // If it's a new surah or nothing is loaded, check download
       final bool alreadyExists = await checkSurahDownloadedUseCase(surahNumber);
 
       if (!alreadyExists) {
         _isDownloading = true;
-        _progress = 0;
         notifyListeners();
       }
 
+      // getSurahAudioUseCase calls the Repository's downloadSurah internally
       final String path = await getSurahAudioUseCase(
         surahNumber: surahNumber,
         url: url,
@@ -118,25 +130,20 @@ class QuranProvider with ChangeNotifier {
 
       _isDownloading = false;
       await _player.setFilePath(path);
-      _player.play();
+      await _player.play();
 
-      // Global listener to ensure UI updates whenever player state changes internally
+      // Listeners remain the same...
       _player.playbackEventStream.listen((event) {
         notifyListeners();
       }, onError: (Object e, StackTrace st) {
         _isDownloading = false;
+        _errorMessage = 'حدث خطأ في مشغل الصوت';
         notifyListeners();
-      });
-
-      _player.playerStateStream.listen((state) {
-        if (state.processingState == ProcessingState.completed) {
-          _player.stop();
-          _player.seek(Duration.zero);
-          notifyListeners();
-        }
       });
     } catch (e) {
       _isDownloading = false;
+      // This catches the string thrown by your RepositoryImpl
+      _errorMessage = e.toString();
       notifyListeners();
     }
   }

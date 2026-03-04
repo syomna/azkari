@@ -38,8 +38,10 @@ void main() async {
   tz.initializeTimeZones();
   await di.init();
   await ScreenUtil.ensureScreenSize();
-  final notificationService = sl<NotificationService>();
-  await notificationService.initNotification();
+  await NotificationService.init(
+    prefs: sl<SharedPreferences>(),
+    prayerService: sl<PrayerTimeService>(),
+  );
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 

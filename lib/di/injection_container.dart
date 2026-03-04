@@ -45,7 +45,8 @@ Future<void> init() async {
 
   // Make sure to await its initialization before other dependencies that depend on it
   await sl.allReady();
-  sl.registerLazySingleton<NotificationService>(() => NotificationService());
+  sl.registerLazySingleton<NotificationService>(
+      () => NotificationService.instance);
   sl.registerLazySingleton<PrayerTimeService>(() => PrayerTimeService());
   // Azkar
   sl.registerLazySingleton<AzkarLocalDataSource>(

@@ -7,23 +7,49 @@ import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
-  static final NotificationService _notificationService =
-      NotificationService._internal();
-
-  factory NotificationService() {
-    return _notificationService;
-  }
+  final SharedPreferences prefs;
+  final PrayerTimeService prayerService;
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  NotificationService._internal();
+  // 1. Private Constructor with required dependencies
+  NotificationService._internal({
+    required this.prefs,
+    required this.prayerService,
+  });
 
-  Future<void> initNotification() async {
+  // 2. Static instance for Singleton pattern
+  static NotificationService? _instance;
+
+  static Future<NotificationService> init({
+    required SharedPreferences prefs,
+    required PrayerTimeService prayerService,
+  }) async {
+    if (_instance == null) {
+      _instance = NotificationService._internal(
+        prefs: prefs,
+        prayerService: prayerService,
+      );
+      await _instance!._initNotification();
+    }
+    return _instance!;
+  }
+
+  static NotificationService get instance {
+    if (_instance == null) {
+      throw Exception(
+          'NotificationService must be initialized with init() first');
+    }
+    return _instance!;
+  }
+
+  Future<void> _initNotification() async {
     // Android setup
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -100,61 +126,69 @@ class NotificationService {
     ),
   );
 
-  Future<void> schedulePrayerNotifications(double lat, double lng) async {
-    final prayerService = PrayerTimeService();
-    final times = prayerService.getTimes(lat, lng);
+  Future<void> schedulePrayerNotifications() async {
+    double? lat = prefs.getDouble('lat');
+    double? lng = prefs.getDouble('lng');
+    if (lat != null && lng != null) {
+      final times = prayerService.getTimes(lat, lng);
 
-    // // Map of prayer names for the notification body
-    Map<Prayer, String> prayerNames = {
-      Prayer.fajr: 'صلاة الفجر',
-      Prayer.dhuhr: 'صلاة الظهر',
-      Prayer.asr: 'صلاة العصر',
-      Prayer.maghrib: 'صلاة المغرب',
-      Prayer.isha: 'صلاة العشاء',
-    };
+      // // Map of prayer names for the notification body
+      Map<Prayer, String> prayerNames = {
+        Prayer.fajr: 'صلاة الفجر',
+        Prayer.dhuhr: 'صلاة الظهر',
+        Prayer.asr: 'صلاة العصر',
+        Prayer.maghrib: 'صلاة المغرب',
+        Prayer.isha: 'صلاة العشاء',
+      };
 
-    for (var prayer in prayerNames.keys) {
-      // 1. Get the specific time for this prayer
-      final DateTime prayerTime = times.timeForPrayer(prayer)!;
+      for (var prayer in prayerNames.keys) {
+        // 1. Get the specific time for this prayer
+        final DateTime prayerTime = times.timeForPrayer(prayer)!;
 
-      final TimezoneInfo timeZoneInfo =
-          await FlutterTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(timeZoneInfo.identifier));
-      // 2. Convert to TZDateTime for zonedSchedule
-      final tz.TZDateTime scheduledDate =
-          tz.TZDateTime.from(prayerTime, tz.local);
+        final TimezoneInfo timeZoneInfo =
+            await FlutterTimezone.getLocalTimezone();
+        tz.setLocalLocation(tz.getLocation(timeZoneInfo.identifier));
+        // 2. Convert to TZDateTime for zonedSchedule
+        final tz.TZDateTime scheduledDate =
+            tz.TZDateTime.from(prayerTime, tz.local);
 
-      // 3. Only schedule if it's in the future
-      if (scheduledDate.isAfter(tz.TZDateTime.now(tz.local))) {
-        await flutterLocalNotificationsPlugin.zonedSchedule(
-          100 + prayer.index, // Unique IDs 100-105
-          'حان وقت الصلاة',
-          'الله أكبر، حان وقت ${prayerNames[prayer]}',
-          scheduledDate,
-          adhanDetails,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        );
+        // 3. Only schedule if it's in the future
+        if (scheduledDate.isAfter(tz.TZDateTime.now(tz.local))) {
+          await flutterLocalNotificationsPlugin.zonedSchedule(
+            100 + prayer.index, // Unique IDs 100-105
+            'حان وقت الصلاة',
+            'الله أكبر، حان وقت ${prayerNames[prayer]}',
+            scheduledDate,
+            adhanDetails,
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          );
+        }
       }
     }
   }
 
   // Future<void> testRepeatingZoned() async {
-  //   final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+  //   double? lat = prefs.getDouble('lat');
+  //   double? lng = prefs.getDouble('lng');
 
-  //   // Start 5 seconds from now
-  //   final tz.TZDateTime firstTick = now.add(const Duration(minutes: 5));
+  //   if (lat != null && lng != null) {
+  //     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
 
-  //   await flutterLocalNotificationsPlugin.zonedSchedule(
-  //     123,
-  //     'تذكير الصلاة',
-  //     'هذا الإشعار سيتكرر كل دقيقة',
-  //     firstTick,
-  //     adhanDetails,
-  //     androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+  //     // Start 5 seconds from now
+  //     final tz.TZDateTime firstTick = now.add(const Duration(seconds: 5));
 
-  //     // This tells the OS to repeat every time the "seconds" match
-  //     matchDateTimeComponents: DateTimeComponents.time,
-  //   );
+  //     await flutterLocalNotificationsPlugin.zonedSchedule(
+  //       123,
+  //       'تذكير الصلاة',
+  //       'هذا الإشعار سيتكرر كل دقيقة',
+  //       firstTick,
+  //       adhanDetails,
+  //       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+
+  //       // This tells the OS to repeat every time the "seconds" match
+  //       matchDateTimeComponents: DateTimeComponents.time,
+  //     );
+  //   }
   // }
 
   Future<void> scheduleNotifications(double lat, double lng,

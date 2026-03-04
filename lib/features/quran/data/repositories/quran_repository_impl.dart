@@ -51,21 +51,27 @@ class QuranRepositoryImpl implements QuranRepository {
 
   @override
   Future<void> downloadSurah(String url, String savePath) async {
-    await _dio.download(
-      url,
-      savePath,
-      // onReceiveProgress: (received, total) {
-      //   log('received: $received, total: $total');
-      //   if (total > 0) {
-      //     final double progress = received / total;
-      //     onProgress(progress);
-      //   } else {
-      //     // If server doesn't provide total size,
-      //     // send a dummy "loading" value like 0.01
-      //     onProgress(0.01);
-      //   }
-      // },
-    );
+    try {
+      await _dio.download(
+        url,
+        savePath,
+        options: Options(
+          sendTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(minutes: 5),
+        ),
+      );
+    } on DioException catch (e) {
+      // Return a meaningful message based on the error type
+      String errorMessage = 'حدث خطأ أثناء التحميل';
+      if (e.type == DioExceptionType.connectionTimeout) {
+        errorMessage = 'انتهت مهلة الاتصال، تحقق من الشبكة';
+      } else if (e.type == DioExceptionType.badResponse) {
+        errorMessage = 'الملف غير موجود على الخادم';
+      }
+      throw errorMessage; // Throw the string to be caught by the Provider
+    } catch (e) {
+      throw 'فشل التحميل، تأكد من وجود مساحة كافية';
+    }
   }
 
   @override

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:azkar_app/core/theme/app_palette.dart';
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/infinate_download_icon.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/page_number_card.dart';
@@ -73,6 +74,14 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
   Widget build(BuildContext context) {
     final provider = Provider.of<QuranProvider>(context);
 
+    if (provider.errorMessage != null) {
+      Future.microtask(() {
+        AppHelpers.showToast(provider.errorMessage!, status: ToastStatus.error);
+        provider
+            .clearError(); // Clear it so it doesn't show again on next rebuild
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -111,55 +120,59 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              LinearProgressIndicator(
-                value: _surahNumber / 114,
-                backgroundColor: AppPalette.mainColor.withValues(alpha: 0.1),
-                color: AppPalette.mainColor,
-                minHeight: 2.h,
-              ),
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: 114,
-                  onPageChanged: (index) {
-                    provider.resetAudio();
-
-                    setState(() => _surahNumber = index + 1);
-                    context
-                        .read<QuranProvider>()
-                        .saveLatestQuranSurahNumber(_surahNumber);
-                    context
-                        .read<QuranProvider>()
-                        .saveQuranPosition(_surahNumber, 1);
-                  },
-                  itemBuilder: (context, index) =>
-                      _buildSurahPage(index + 1, provider),
+      body: InkWell(
+        onTap: () => setState(() => _isAudioVisible = !_isAudioVisible),
+        splashColor: Colors.transparent,
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                LinearProgressIndicator(
+                  value: _surahNumber / 114,
+                  backgroundColor: AppPalette.mainColor.withValues(alpha: 0.1),
+                  color: AppPalette.mainColor,
+                  minHeight: 2.h,
                 ),
-              ),
-            ],
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 500),
-              transitionBuilder: (child, animation) => SlideTransition(
-                position:
-                    Tween<Offset>(begin: const Offset(0, 1.2), end: Offset.zero)
-                        .animate(CurvedAnimation(
-                            parent: animation,
-                            curve: Curves.fastLinearToSlowEaseIn)),
-                child: child,
-              ),
-              child: _isAudioVisible
-                  ? _buildAudioPlayer(context, provider)
-                  : const SizedBox.shrink(),
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: 114,
+                    onPageChanged: (index) {
+                      provider.resetAudio();
+
+                      setState(() => _surahNumber = index + 1);
+                      context
+                          .read<QuranProvider>()
+                          .saveLatestQuranSurahNumber(_surahNumber);
+                      context
+                          .read<QuranProvider>()
+                          .saveQuranPosition(_surahNumber, 1);
+                    },
+                    itemBuilder: (context, index) =>
+                        _buildSurahPage(index + 1, provider),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 500),
+                transitionBuilder: (child, animation) => SlideTransition(
+                  position: Tween<Offset>(
+                          begin: const Offset(0, 1.2), end: Offset.zero)
+                      .animate(CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.fastLinearToSlowEaseIn)),
+                  child: child,
+                ),
+                child: _isAudioVisible
+                    ? _buildAudioPlayer(context, provider)
+                    : const SizedBox.shrink(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
