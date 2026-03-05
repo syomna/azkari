@@ -15,7 +15,14 @@ class PrayerTimeService {
 
     // 1. Check if location services are enabled
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return null;
+    if (!serviceEnabled) {
+      // This opens the system settings automatically
+      await Geolocator.openLocationSettings();
+
+      // Optional: Check again after they come back
+      serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return null;
+    }
 
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
