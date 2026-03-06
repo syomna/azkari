@@ -38,7 +38,7 @@ class _NamesOfAllahWidgetState extends State<NamesOfAllahWidget> {
     }
 
     return SizedBox(
-      height: 160.h, // Increased height to accommodate scaling and shadows
+      height: 250.h, // Increased height to accommodate scaling and shadows
       child: PageView.builder(
         controller: _controller,
         itemCount: provider.namesOfAllahList.length,
@@ -127,8 +127,8 @@ class _NamesOfAllahWidgetState extends State<NamesOfAllahWidget> {
                         Text(
                           item.text,
                           textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                          // maxLines: 2,
+                          // overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 13.sp,
                             height: 1.4, // Improved line spacing for Arabic
