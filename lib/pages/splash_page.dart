@@ -172,7 +172,7 @@ class _SplashPageState extends State<SplashPage> {
                     ),
                     SizedBox(height: 15.h),
                     Text(
-                      'بذكر الله تطمئن القلوب',
+                      'ألا بذكر الله تطمئن القلوب',
                       style: TextStyle(
                         fontSize: 12.sp,
                         color: isDark ? Colors.white38 : Colors.grey.shade400,

@@ -1,182 +1,171 @@
 import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/presentation/pages/azkar_category_page.dart';
+import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:azkar_app/features/surah/presentation/pages/surah_list_page.dart';
+import 'package:azkar_app/widgets/search_bar_widget.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
-class AllAzkarPage extends StatelessWidget {
+class AllAzkarPage extends StatefulWidget {
   const AllAzkarPage({super.key});
+
+  @override
+  State<AllAzkarPage> createState() => _AllAzkarPageState();
+}
+
+class _AllAzkarPageState extends State<AllAzkarPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  // دالة ذكية لاختيار أيقونة النظام بناءً على اسم القسم
+  IconData _getIconData(String title) {
+    if (title.contains('الصباح')) return Icons.wb_sunny_rounded;
+    if (title.contains('المساء')) return Icons.dark_mode_rounded;
+    if (title.contains('النوم')) return Icons.bedtime_rounded;
+    if (title.contains('الاستيقاظ')) return Icons.alarm_on_rounded;
+    if (title.contains('المنزل')) return Icons.home_rounded;
+    if (title.contains('الصلاة')) return Icons.mosque_rounded;
+    if (title.contains('المسجد')) return Icons.account_balance_rounded;
+    if (title.contains('تسابيح')) return Icons.all_inclusive_rounded;
+    if (title.contains('وضوء')) return Icons.waves_rounded;
+    if (title.contains('ثوب')) return Icons.checkroom_rounded;
+    if (title.contains('خلاء')) return Icons.clean_hands_rounded;
+    if (title.contains('السور')) return Icons.menu_book_rounded;
+    if (title.contains('دعاء') || title.contains('أدعية')) {
+      return Icons.auto_awesome_rounded;
+    }
+    return Icons.article_rounded; // أيقونة افتراضية للأقسام الأخرى
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final azkarProvider = Provider.of<AzkarProvider>(context);
 
-    final List<AzkarCategoryModel> categories = [
-      AzkarCategoryModel(
-        title: AppConstants.morningAzkarCategory,
-        image: 'sun',
-        page: const AzkarCategoryPage(
-          title: AppConstants.morningAzkarCategory,
-          categoryName: AppConstants.morningAzkarCategory,
-        ),
-      ),
-      AzkarCategoryModel(
-        title: AppConstants.eveningAzkarCategory,
-        image: 'night',
-        page: const AzkarCategoryPage(
-          title: AppConstants.eveningAzkarCategory,
-          categoryName: AppConstants.eveningAzkarCategory,
-        ),
-      ),
-      AzkarCategoryModel(
-        title: AppConstants.sleepingAzkarCategory,
-        image: 'sleep',
-        page: const AzkarCategoryPage(
-          title: AppConstants.sleepingAzkarCategory,
-          categoryName: AppConstants.sleepingAzkarCategory,
-        ),
-      ),
-      AzkarCategoryModel(
-        title: AppConstants.wakingUpAzkarCategory,
-        image: 'get-up',
-        page: const AzkarCategoryPage(
-          title: AppConstants.wakingUpAzkarCategory,
-          categoryName: AppConstants.wakingUpAzkarCategory,
-        ),
-      ),
-      AzkarCategoryModel(
-        title: AppConstants.exitHomeCategory,
-        image: 'door',
-        page: const AzkarCategoryPage(
-          title: AppConstants.exitHomeCategory,
-          categoryName: AppConstants.exitHomeCategory,
-        ),
-      ),
-      AzkarCategoryModel(
-        title: AppConstants.prayerAzkarCategory,
-        image: 'azan',
-        page: const AzkarCategoryPage(
-          title: AppConstants.prayerAzkarCategory,
-          categoryName: AppConstants.prayerAzkarCategory,
-        ),
-      ),
-      AzkarCategoryModel(
-        title: AppConstants.mosqueAzkarCategory,
-        image: 'temple',
-        page: const AzkarCategoryPage(
-          title: AppConstants.mosqueAzkarCategory,
-          categoryName: AppConstants.mosqueAzkarCategory,
-        ),
-      ),
-      AzkarCategoryModel(
-        title: AppConstants.shortSurahsTitle,
-        image: 'mat',
-        page: const SurahListPage(),
-      ),
-      AzkarCategoryModel(
-        title: AppConstants.variousDuaaTitle,
-        image: 'duaa',
-        page: const AzkarCategoryPage(
-          title: AppConstants.variousDuaaTitle,
-          categoryName: AppConstants.variousDuaaCategory,
-        ),
-      ),
-    ];
+    // استخراج التصنيفات الفريدة وتصفيتها
+    List<String> dynamicCategories =
+        azkarProvider.azkarList.map((e) => e.category).toSet().toList();
+
+    List<String> filteredCategories =
+        dynamicCategories.where((cat) => cat.contains(_searchQuery)).toList();
 
     return Scaffold(
       appBar: AppBar(
-        elevation: 0,
-        title: Text(
-          AppConstants.allAzkarPageTitle,
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: 22.sp,
-          ),
-        ),
+        title: Text(AppConstants.allAzkarPageTitle,
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22.sp)),
         centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
-      body: GridView.builder(
-        // Updated padding: increased bottom padding to 120.w
-        padding: EdgeInsets.only(
-          left: 20.w,
-          right: 20.w,
-          top: 10.h,
-          bottom: 120.h, // This provides space for the floating nav bar
-        ),
-        itemCount: categories.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 15.w,
-          mainAxisSpacing: 15.h,
-          // childAspectRatio: 1.1,
-        ),
-        itemBuilder: (context, index) {
-          final item = categories[index];
-          return _buildCategoryItem(context, item, isDark);
-        },
+      body: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+            child: SearchBarWidget(
+              onChanged: (val) => setState(() => _searchQuery = val),
+              onClear: () => setState(() {
+                _searchController.clear();
+                _searchQuery = '';
+              }),
+              searchController: _searchController,
+              hint: 'ابحث عن ذكر أو دعاء...',
+            ),
+          ),
+          Expanded(
+            child: GridView.builder(
+              padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 120.h),
+              // دمج "السور القصيرة" مع القائمة الديناميكية لسهولة الإدارة
+              itemCount: filteredCategories.length +
+                  (AppConstants.shortSurahsTitle.contains(_searchQuery)
+                      ? 1
+                      : 0),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16.w,
+                mainAxisSpacing: 16.h,
+                childAspectRatio: 1.1,
+              ),
+              itemBuilder: (context, index) {
+                // منطق عرض السور القصيرة
+                if (index == 0 && _searchQuery.isEmpty) {
+                  return _buildCategoryCard(
+                      context,
+                      AppConstants.shortSurahsTitle,
+                      _getIconData(AppConstants.shortSurahsTitle),
+                      const SurahListPage(),
+                      isDark);
+                }
+
+                final category = filteredCategories[
+                    _searchQuery.isEmpty ? index - 1 : index];
+                return _buildCategoryCard(
+                  context,
+                  category,
+                  _getIconData(category),
+                  AzkarCategoryPage(title: category, categoryName: category),
+                  isDark,
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildCategoryItem(
-      BuildContext context, AzkarCategoryModel item, bool isDark) {
-    return GestureDetector(
+  Widget _buildCategoryCard(BuildContext context, String title, IconData icon,
+      Widget page, bool isDark) {
+    return InkWell(
       onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => item.page),
-      ),
+          context, CupertinoPageRoute(builder: (context) => page)),
+      borderRadius: BorderRadius.circular(24.r),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+          color: isDark
+              ? AppPalette.mainColor.withValues(alpha: 0.1)
+              : Colors.white,
           borderRadius: BorderRadius.circular(24.r),
           border: Border.all(
-            color:
-                isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : AppPalette.mainColor.withValues(alpha: 0.1),
             width: 1,
           ),
           boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black26
-                  : Colors.black.withValues(alpha: 0.03),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
+            if (!isDark)
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
           ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Icon Background
-            Container(
-              padding: EdgeInsets.all(15.w),
-              decoration: BoxDecoration(
-                color: AppPalette.mainColor.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Image.asset(
-                'assets/images/${item.image}.png',
-                height: 25.h,
-                width: 25.h,
-                // color: AppPalette.mainColor,
-                errorBuilder: (context, error, stackTrace) => Icon(
-                    Icons.category,
-                    color: AppPalette.mainColor,
-                    size: 25.h),
-              ),
+            Icon(
+              icon,
+              size: 32.sp,
+              color: AppPalette.mainColor,
             ),
-            SizedBox(height: 15.h),
-            Text(
-              item.title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.bold,
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.9)
-                    : Colors.black87,
+            SizedBox(height: 12.h),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.w),
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w700,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.9)
+                      : Colors.black87,
+                ),
               ),
             ),
           ],
@@ -184,16 +173,4 @@ class AllAzkarPage extends StatelessWidget {
       ),
     );
   }
-}
-
-class AzkarCategoryModel {
-  final String title;
-  final String image;
-  final Widget page;
-
-  AzkarCategoryModel({
-    required this.title,
-    required this.image,
-    required this.page,
-  });
 }

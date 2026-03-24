@@ -53,7 +53,7 @@ class WelcomingWidget extends StatelessWidget {
               ),
               SizedBox(height: 4.h),
               Text(
-                'بذكر الله تطمئن القلوب 🌿',
+                'ألا بذكر الله تطمئن القلوب🌿',
                 style: TextStyle(
                   fontSize: 13.sp,
                   color: isDark ? Colors.white70 : Colors.grey[600],

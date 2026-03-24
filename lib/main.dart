@@ -48,7 +48,10 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(
+            create: (_) => ThemeProvider(
+                  prefs: sl<SharedPreferences>(),
+                )),
         ChangeNotifierProvider(
           create: (_) => AzkarProvider(
             getAzkarUseCase: sl<GetAzkarUseCase>(),
@@ -96,24 +99,14 @@ void main() async {
   );
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  @override
-  void initState() {
-    Provider.of<ThemeProvider>(context, listen: false).loadTheme();
-    super.initState();
-  }
-
+  // @override
   @override
   Widget build(BuildContext context) {
-    return Consumer2<ThemeProvider, NotificationProvider>(
-      builder: (context, themeProvider, notificationProvider, child) {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
         return ScreenUtilInit(
           designSize: const Size(430, 932),
           minTextAdapt: true,

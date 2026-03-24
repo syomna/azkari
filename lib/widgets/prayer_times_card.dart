@@ -8,9 +8,14 @@ import 'package:intl/intl.dart';
 
 class PrayerTimesCard extends StatelessWidget {
   final PrayerTimes times;
-  const PrayerTimesCard({super.key, required this.times});
+  final Map<String, TimeOfDay?> displayTimes; // ✅ override-aware times
 
-  // A stream that ticks every minute to update the 'active' highlight
+  const PrayerTimesCard({
+    super.key,
+    required this.times,
+    required this.displayTimes,
+  });
+
   Stream<DateTime> _minuteStream() {
     return Stream.periodic(const Duration(minutes: 1), (_) => DateTime.now());
   }
@@ -22,12 +27,11 @@ class PrayerTimesCard extends StatelessWidget {
     return StreamBuilder<DateTime>(
       stream: _minuteStream(),
       builder: (context, snapshot) {
-        // Re-calculate the next prayer every time the stream ticks
         final nextPrayer = times.nextPrayer();
 
         return Container(
           width: double.infinity,
-          padding: EdgeInsets.all(15.w), // Slightly reduced padding for safety
+          padding: EdgeInsets.all(15.w),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20.r),
             gradient: LinearGradient(
@@ -47,22 +51,21 @@ class PrayerTimesCard extends StatelessWidget {
             children: [
               _buildHeader(),
               SizedBox(height: 12.h),
-              // Using a Row with Expanded children to prevent overflow
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildPrayerItem(
-                      'الفجر', times.fajr, nextPrayer == Prayer.fajr, isDark),
-                  _buildPrayerItem('الشروق', times.sunrise,
+                  _buildPrayerItem('الفجر', displayTimes['fajr'],
+                      nextPrayer == Prayer.fajr, isDark),
+                  _buildPrayerItem('الشروق', displayTimes['sunrise'],
                       nextPrayer == Prayer.sunrise, isDark),
-                  _buildPrayerItem(
-                      'الظهر', times.dhuhr, nextPrayer == Prayer.dhuhr, isDark),
-                  _buildPrayerItem(
-                      'العصر', times.asr, nextPrayer == Prayer.asr, isDark),
-                  _buildPrayerItem('المغرب', times.maghrib,
+                  _buildPrayerItem('الظهر', displayTimes['dhuhr'],
+                      nextPrayer == Prayer.dhuhr, isDark),
+                  _buildPrayerItem('العصر', displayTimes['asr'],
+                      nextPrayer == Prayer.asr, isDark),
+                  _buildPrayerItem('المغرب', displayTimes['maghrib'],
                       nextPrayer == Prayer.maghrib, isDark),
-                  _buildPrayerItem(
-                      'العشاء', times.isha, nextPrayer == Prayer.isha, isDark),
+                  _buildPrayerItem('العشاء', displayTimes['isha'],
+                      nextPrayer == Prayer.isha, isDark),
                 ],
               ),
             ],
@@ -87,18 +90,22 @@ class PrayerTimesCard extends StatelessWidget {
   }
 
   Widget _buildPrayerItem(
-      String name, DateTime time, bool isActive, bool isDark) {
-    String formattedTime = DateFormat.jm('ar').format(time);
+      String name, TimeOfDay? time, bool isActive, bool isDark) {
+    // Convert TimeOfDay → formatted string, fallback to --:-- if null
+    final formattedTime = time != null
+        ? DateFormat.jm('ar').format(
+            DateTime(0, 0, 0, time.hour, time.minute),
+          )
+        : '--:--';
 
     return Expanded(
-      // Ensures each column takes equal space and doesn't push others out
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(name,
               maxLines: 1,
               style: TextStyle(
-                fontSize: 11.sp, // Reduced slightly for Arabic text width
+                fontSize: 11.sp,
                 color: isActive
                     ? AppPalette.mainColor
                     : isDark
@@ -108,7 +115,6 @@ class PrayerTimesCard extends StatelessWidget {
               )),
           SizedBox(height: 4.h),
           FittedBox(
-            // Automatically scales text down if the Arabic AM/PM is too long
             fit: BoxFit.scaleDown,
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),

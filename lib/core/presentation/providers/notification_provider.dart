@@ -32,11 +32,11 @@ class NotificationProvider extends ChangeNotifier {
       _areNotificationsEnabled =
           _prefs.getBool(_notificationsEnabledKey) ?? true;
     }
-    _applyNotificationStates();
+    applyNotificationStates();
   }
 
   /// Handles the actual scheduling/canceling logic
-  void _applyNotificationStates() async {
+  void applyNotificationStates() async {
     // Always start fresh by canceling
     _notificationService.cancelAllNotifications();
 
@@ -87,7 +87,7 @@ class NotificationProvider extends ChangeNotifier {
 
     // 4. If we reach here, it's either turning OFF or permissions are fine
     _areNotificationsEnabled = newValue;
-    _applyNotificationStates();
+    applyNotificationStates();
     _prefs.setBool(_notificationsEnabledKey, _areNotificationsEnabled);
     notifyListeners();
   }

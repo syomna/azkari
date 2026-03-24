@@ -38,29 +38,15 @@ class _AzkarCategoryPageState extends State<AzkarCategoryPage> {
     super.dispose();
   }
 
+  // داخل ملف azkar_category_page.dart ، قم بتعديل دالة _filterAzkar:
+
   void _filterAzkar(String query) {
     final azkarProvider = Provider.of<AzkarProvider>(context, listen: false);
-    List<ZekrEntity> baseList;
 
-    if (widget.categoryName == AppConstants.morningAzkarCategory) {
-      baseList = azkarProvider.morningAzkar;
-    } else if (widget.categoryName == AppConstants.eveningAzkarCategory) {
-      baseList = azkarProvider.eveningAzkar;
-    } else if (widget.categoryName == AppConstants.wakingUpAzkarCategory) {
-      baseList = azkarProvider.wakingUpAzkar;
-    } else if (widget.categoryName == AppConstants.sleepingAzkarCategory) {
-      baseList = azkarProvider.sleepingAzkar;
-    } else if (widget.categoryName == AppConstants.exitHomeCategory) {
-      baseList = azkarProvider.exitHomeAzkar;
-    } else if (widget.categoryName == AppConstants.prayerAzkarCategory) {
-      baseList = azkarProvider.prayerAzkar;
-    } else if (widget.categoryName == AppConstants.mosqueAzkarCategory) {
-      baseList = azkarProvider.mosqueAzkar;
-    } else if (widget.categoryName == AppConstants.variousDuaaCategory) {
-      baseList = azkarProvider.variousDuaa;
-    } else {
-      baseList = azkarProvider.azkarList;
-    }
+    // فلترة ديناميكية بناءً على اسم التصنيف الممرر للصفحة
+    List<ZekrEntity> baseList = azkarProvider.azkarList
+        .where((zekr) => zekr.category == widget.categoryName)
+        .toList();
 
     setState(() {
       if (query.isEmpty) {
@@ -68,8 +54,8 @@ class _AzkarCategoryPageState extends State<AzkarCategoryPage> {
       } else {
         _currentDisplayedAzkar = baseList
             .where((zekr) =>
-                zekr.category.toLowerCase().contains(query.toLowerCase()) ||
-                zekr.zekr.toLowerCase().contains(query.toLowerCase()))
+                zekr.zekr.toLowerCase().contains(query.toLowerCase()) ||
+                zekr.reference.toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
     });

@@ -37,15 +37,19 @@ class _HomePageState extends State<HomePage> {
 
     if (azkarProvider.azkarStatus == AppLoadingStatus.initial ||
         azkarProvider.azkarStatus == AppLoadingStatus.loading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          color: AppPalette.mainColor,
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(
+            color: AppPalette.mainColor,
+          ),
         ),
       );
     } else if (azkarProvider.azkarStatus == AppLoadingStatus.error) {
-      return Center(
-          child:
-              Text('Error loading Azkar: ${azkarProvider.azkarErrorMessage}'));
+      return Scaffold(
+        body: Center(
+            child: Text(
+                'Error loading Azkar: ${azkarProvider.azkarErrorMessage}')),
+      );
     } else {
       return Scaffold(
           body: Container(
@@ -110,14 +114,18 @@ class _HomePageState extends State<HomePage> {
                   SizedBox(
                     height: 15.h,
                   ),
-                  Consumer<AzkarProvider>(builder: (context, provider, child) {
-                    if (provider.prayerTimes == null) {
-                      return const SizedBox.shrink();
-                    }
-                    return PrayerTimesCard(
-                      times: context.read<AzkarProvider>().prayerTimes!,
-                    );
-                  }),
+                  // In your page/widget that has access to AzkarProvider
+                  Consumer<AzkarProvider>(
+                    builder: (context, provider, _) {
+                      if (provider.prayerTimes == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return PrayerTimesCard(
+                        times: provider.prayerTimes!,
+                        displayTimes: provider.allDisplayTimes,
+                      );
+                    },
+                  ),
                   SizedBox(
                     height: 15.h,
                   ),
@@ -231,10 +239,7 @@ class _HomePageState extends State<HomePage> {
       Component(
         text: AppConstants.variousDuaaCategory,
         img: 'duaa',
-        page: AzkarCategoryPage(
-          title: AppConstants.variousDuaaCategory,
-          categoryName: AppConstants.variousDuaaCategory,
-        ),
+        page: AllAzkarPage(),
         isColumn: true,
       ),
       Component(

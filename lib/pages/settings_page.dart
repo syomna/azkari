@@ -7,6 +7,7 @@ import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
+import 'package:azkar_app/pages/prayer_times_settings_screen.dart';
 import 'package:azkar_app/widgets/switch_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -31,6 +32,16 @@ class SettingsPage extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
             child: Column(
               children: [
+                _buildSectionHeader('مواقيت الصلاة'),
+                _buildSettingsCard([
+                  _buildListTile('ضبط مواقيت الصلاة', Icons.access_time_rounded,
+                      () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const PrayerTimesSettingsScreen()));
+                  }),
+                ]),
+
+                SizedBox(height: 25.h),
                 // 1. Appearance Section
                 _buildSectionHeader('المظهر العام'),
                 _buildSettingsCard([
@@ -40,6 +51,7 @@ class SettingsPage extends StatelessWidget {
                     value: !theme.isLight,
                     onChanged: (v) => theme.toggleTheme(),
                   ),
+                  _divider(),
                   _divider(),
                   _buildFontSlider(theme, context),
                 ]),
@@ -61,6 +73,7 @@ class SettingsPage extends StatelessWidget {
 
                 // 3. General Section
                 _buildSectionHeader('عام'),
+
                 _buildSettingsCard([
                   _buildListTile('مسح عداد التسبيح', Icons.refresh_rounded, () {
                     tasbeh.resetAll();

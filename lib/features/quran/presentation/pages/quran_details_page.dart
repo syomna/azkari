@@ -85,6 +85,24 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
+        leadingWidth: MediaQuery.of(context).size.width * 0.3,
+        leading: Row(
+          children: [
+            const BackButton(),
+            IconButton(
+              icon: const Icon(Icons.format_size_rounded,
+                  color: AppPalette.mainColor),
+              onPressed: () {
+                showModalBottomSheet(
+                  isScrollControlled: true,
+                  context: context,
+                  builder: (context) =>
+                      const QuranFontSheet(), // A simple slider to update your font provider
+                );
+              },
+            ),
+          ],
+        ),
         title: Text(
           quran.getSurahNameArabic(_surahNumber),
           style: TextStyle(
@@ -95,15 +113,20 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.format_size_rounded,
-                color: AppPalette.mainColor),
+            icon: Icon(
+                context.read<QuranProvider>().savedLatestQuranSurahNumber ==
+                        _surahNumber
+                    ? CupertinoIcons.bookmark_fill
+                    : CupertinoIcons.bookmark,
+                color: Colors.amber),
             onPressed: () {
-              showModalBottomSheet(
-                isScrollControlled: true,
-                context: context,
-                builder: (context) =>
-                    const QuranFontSheet(), // A simple slider to update your font provider
-              );
+              final provider = context.read<QuranProvider>();
+              if (provider.savedLatestQuranSurahNumber == _surahNumber) {
+                provider.saveLatestQuranSurahNumber(1);
+              } else {
+                provider.saveLatestQuranSurahNumber(_surahNumber);
+                provider.saveQuranPosition(_surahNumber, 1);
+              }
             },
           ),
           IconButton(

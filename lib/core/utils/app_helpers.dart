@@ -13,7 +13,6 @@ class AppHelpers {
     return number.toString().replaceAllMapped(
       RegExp(r'(\d)'),
       (match) {
-        // Map English digits (keys) to Arabic digits (values)
         const map = {
           '0': '٠',
           '1': '١',
@@ -27,7 +26,6 @@ class AppHelpers {
           '9': '٩',
         };
 
-        // Use ! because we know the regex (\d) only matches 0-9
         return map[match.group(0)!]!;
       },
     );

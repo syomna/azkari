@@ -11,13 +11,16 @@ class AzkarProvider extends ChangeNotifier {
   final GetAzkarUseCase getAzkarUseCase;
   final PrayerTimeService prayerTimeService;
   final SharedPreferences sharedPreferences;
-  AzkarProvider(
-      {required this.getAzkarUseCase,
-      required this.prayerTimeService,
-      required this.sharedPreferences}) {
+
+  AzkarProvider({
+    required this.getAzkarUseCase,
+    required this.prayerTimeService,
+    required this.sharedPreferences,
+  }) {
     loadPrayerTimes();
   }
-  // Azkar
+
+  // Azkar state (unchanged)
   List<ZekrEntity> _azkarList = [];
   AppLoadingStatus _azkarStatus = AppLoadingStatus.initial;
   String? _azkarErrorMessage;
@@ -26,27 +29,26 @@ class AzkarProvider extends ChangeNotifier {
   String? get azkarErrorMessage => _azkarErrorMessage;
 
   List<ZekrEntity> get morningAzkar => _azkarList.getMorningAzkar();
-
   List<ZekrEntity> get eveningAzkar => _azkarList.getEveningAzkar();
-
   List<ZekrEntity> get wakingUpAzkar => _azkarList.getWakingUpAzkar();
-
   List<ZekrEntity> get exitHomeAzkar => _azkarList.getExitHomeAzkar();
-
   List<ZekrEntity> get sleepingAzkar => _azkarList.getSleepingAzkar();
-
   List<ZekrEntity> get prayerAzkar => _azkarList.getPrayerAzkar();
-
   List<ZekrEntity> get variousDuaa => _azkarList.getVariousDuaa();
-
   List<ZekrEntity> get mosqueAzkar => _azkarList.getMosqueAzkar();
-  PrayerTimes? _prayerTimes;
 
+  // Prayer times — kept only for nextPrayer() highlighting
+  PrayerTimes? _prayerTimes;
   PrayerTimes? get prayerTimes => _prayerTimes;
+
+  // Callback to trigger notification reschedule when overrides change
+  VoidCallback? onOverrideChanged;
+
   Future<void> loadPrayerTimes() async {
     double? lat = sharedPreferences.getDouble('lat');
     double? lng = sharedPreferences.getDouble('lng');
-    if (lat == null && lng == null) {
+
+    if (lat == null || lng == null) {
       final position = await prayerTimeService.getCurrentLocation();
       lat = position?.latitude;
       lng = position?.longitude;
@@ -57,28 +59,68 @@ class AzkarProvider extends ChangeNotifier {
     }
 
     if (lat != null && lng != null) {
+      // Recalculate if stored date isn't today
+      final storedDate = sharedPreferences.getString('prayer_time_date');
+      final today =
+          DateTime.now().toIso8601String().substring(0, 10); // "2026-03-24"
+
+      if (storedDate != today) {
+        await prayerTimeService.calculateAndStore(lat, lng, sharedPreferences);
+        await sharedPreferences.setString('prayer_time_date', today);
+      }
+
+      // Only used for nextPrayer() highlighting in the UI
       _prayerTimes = prayerTimeService.getTimes(lat, lng);
       notifyListeners();
     }
   }
 
+  // --- Overrides (delegate everything to PrayerTimeService) ---
+
+  Map<String, TimeOfDay> get allDisplayTimes =>
+      prayerTimeService.getEffectiveTimes(sharedPreferences);
+
+  TimeOfDay? getDisplayTime(String key) => allDisplayTimes[key];
+
+  bool isOverridden(String key) =>
+      prayerTimeService.hasOverride(key, sharedPreferences);
+
+  void setOverride(String key, TimeOfDay time) {
+    prayerTimeService.saveOverride(key, time, sharedPreferences);
+    notifyListeners();
+    onOverrideChanged?.call();
+  }
+
+  void clearOverride(String key) {
+    prayerTimeService.clearOverride(key, sharedPreferences);
+    notifyListeners();
+    onOverrideChanged?.call();
+  }
+
+  void clearAllOverrides() {
+    prayerTimeService.clearAllOverrides(sharedPreferences);
+    notifyListeners();
+    onOverrideChanged?.call();
+  }
+
+  // Azkar loading (unchanged)
   Future<void> loadAzkar() async {
-    if (_azkarStatus == AppLoadingStatus.loading) {
-      // Prevent multiple concurrent calls if already loading
-      return;
-    }
+    if (_azkarStatus == AppLoadingStatus.loading) return;
     _azkarStatus = AppLoadingStatus.loading;
     _azkarErrorMessage = null;
     final result = await getAzkarUseCase();
-    result.fold((failure) {
-      _azkarStatus = AppLoadingStatus.error;
-      _azkarErrorMessage = failure.message;
-      _azkarList = [];
-      notifyListeners();
-    }, (azkarList) {
-      _azkarStatus = AppLoadingStatus.loaded;
-      _azkarList = azkarList;
-      notifyListeners();
-    });
+    result.fold(
+      (failure) {
+        _azkarStatus = AppLoadingStatus.error;
+        _azkarErrorMessage = failure.message;
+        _azkarList = [];
+        notifyListeners();
+      },
+      (azkarList) {
+        _azkarStatus = AppLoadingStatus.loaded;
+        _azkarList = azkarList;
+        notifyListeners();
+      },
+    );
   }
 }

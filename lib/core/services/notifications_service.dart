@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:adhan/adhan.dart';
 import 'package:azkar_app/core/constants/duaa_notifications.dart';
 import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -127,69 +126,56 @@ class NotificationService {
   );
 
   Future<void> schedulePrayerNotifications() async {
-    double? lat = prefs.getDouble('lat');
-    double? lng = prefs.getDouble('lng');
-    if (lat != null && lng != null) {
-      final times = prayerService.getTimes(lat, lng);
+    final effectiveTimes = prayerService.getEffectiveTimes(prefs);
 
-      // // Map of prayer names for the notification body
-      Map<Prayer, String> prayerNames = {
-        Prayer.fajr: 'صلاة الفجر',
-        Prayer.dhuhr: 'صلاة الظهر',
-        Prayer.asr: 'صلاة العصر',
-        Prayer.maghrib: 'صلاة المغرب',
-        Prayer.isha: 'صلاة العشاء',
-      };
+    const Map<String, String> prayerNames = {
+      'fajr': 'صلاة الفجر',
+      'dhuhr': 'صلاة الظهر',
+      'asr': 'صلاة العصر',
+      'maghrib': 'صلاة المغرب',
+      'isha': 'صلاة العشاء',
+    };
 
-      for (var prayer in prayerNames.keys) {
-        // 1. Get the specific time for this prayer
-        final DateTime prayerTime = times.timeForPrayer(prayer)!;
+    // Notification IDs per prayer
+    const Map<String, int> prayerIds = {
+      'fajr': 100,
+      'dhuhr': 101,
+      'asr': 102,
+      'maghrib': 103,
+      'isha': 104,
+    };
 
-        final TimezoneInfo timeZoneInfo =
-            await FlutterTimezone.getLocalTimezone();
-        tz.setLocalLocation(tz.getLocation(timeZoneInfo.identifier));
-        // 2. Convert to TZDateTime for zonedSchedule
-        final tz.TZDateTime scheduledDate =
-            tz.TZDateTime.from(prayerTime, tz.local);
+    final timeZoneInfo = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(timeZoneInfo.identifier));
 
-        // 3. Only schedule if it's in the future
-        if (scheduledDate.isAfter(tz.TZDateTime.now(tz.local))) {
-          await flutterLocalNotificationsPlugin.zonedSchedule(
-            100 + prayer.index, // Unique IDs 100-105
-            'حان وقت الصلاة',
-            'الله أكبر، حان وقت ${prayerNames[prayer]}',
-            scheduledDate,
-            adhanDetails,
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          );
-        }
-      }
+    final now = tz.TZDateTime.now(tz.local);
+
+    for (final key in prayerIds.keys) {
+      final timeOfDay = effectiveTimes[key];
+      if (timeOfDay == null) continue;
+
+      var scheduledDate = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month,
+        now.day,
+        timeOfDay.hour,
+        timeOfDay.minute,
+      );
+
+      // If already passed today, skip — will be rescheduled tomorrow at midnight
+      if (scheduledDate.isBefore(now)) continue;
+
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        prayerIds[key]!,
+        'حان وقت الصلاة',
+        'الله أكبر، حان وقت ${prayerNames[key]}',
+        scheduledDate,
+        adhanDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
     }
   }
-
-  // Future<void> testRepeatingZoned() async {
-  //   double? lat = prefs.getDouble('lat');
-  //   double? lng = prefs.getDouble('lng');
-
-  //   if (lat != null && lng != null) {
-  //     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-
-  //     // Start 5 seconds from now
-  //     final tz.TZDateTime firstTick = now.add(const Duration(seconds: 5));
-
-  //     await flutterLocalNotificationsPlugin.zonedSchedule(
-  //       123,
-  //       'تذكير الصلاة',
-  //       'هذا الإشعار سيتكرر كل دقيقة',
-  //       firstTick,
-  //       adhanDetails,
-  //       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-
-  //       // This tells the OS to repeat every time the "seconds" match
-  //       matchDateTimeComponents: DateTimeComponents.time,
-  //     );
-  //   }
-  // }
 
   Future<void> scheduleNotifications(double lat, double lng,
       {bool isDay = false}) async {
