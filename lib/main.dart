@@ -28,6 +28,7 @@ import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:upgrader/upgrader.dart';
 
 import 'di/injection_container.dart' as di;
 
@@ -35,6 +36,7 @@ final sl = GetIt.instance;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Upgrader.clearSavedSettings();
   tz.initializeTimeZones();
   await di.init();
   await ScreenUtil.ensureScreenSize();

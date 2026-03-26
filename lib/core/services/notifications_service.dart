@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:azkar_app/core/constants/duaa_notifications.dart';
 import 'package:azkar_app/core/services/prayer_times_service.dart';
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -128,14 +129,6 @@ class NotificationService {
   Future<void> schedulePrayerNotifications() async {
     final effectiveTimes = prayerService.getEffectiveTimes(prefs);
 
-    const Map<String, String> prayerNames = {
-      'fajr': 'صلاة الفجر',
-      'dhuhr': 'صلاة الظهر',
-      'asr': 'صلاة العصر',
-      'maghrib': 'صلاة المغرب',
-      'isha': 'صلاة العشاء',
-    };
-
     // Notification IDs per prayer
     const Map<String, int> prayerIds = {
       'fajr': 100,
@@ -169,7 +162,7 @@ class NotificationService {
       await flutterLocalNotificationsPlugin.zonedSchedule(
         prayerIds[key]!,
         'حان وقت الصلاة',
-        'الله أكبر، حان وقت ${prayerNames[key]}',
+        'الله أكبر، حان وقت ${AppHelpers.prayerNames[key]}',
         scheduledDate,
         adhanDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -241,10 +234,84 @@ class NotificationService {
     }
   }
 
-  Future<void> periodicallyShowDailyReminder() async {
-    await flutterLocalNotificationsPlugin.periodicallyShow(30, 'تذكير يومي',
-        'لا تنسى وردك اليومي', RepeatInterval.daily, azkarDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
+  Future<void> schedulePreAdhanReminders() async {
+    final effectiveTimes = prayerService.getEffectiveTimes(prefs);
+
+    final now = tz.TZDateTime.now(tz.local);
+
+    for (final entry in AppHelpers.prayerNames.entries) {
+      final timeOfDay = effectiveTimes[entry.key];
+      if (timeOfDay == null) continue;
+
+      var scheduledDate = tz.TZDateTime(tz.local, now.year, now.month, now.day,
+          timeOfDay.hour, timeOfDay.minute);
+
+      // Subtract 10 minutes
+      scheduledDate = scheduledDate.subtract(const Duration(minutes: 10));
+
+      if (scheduledDate.isBefore(now)) continue;
+
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        200 + entry.key.hashCode, // Unique ID offset
+        'استعد للصلاة',
+        'بقي ١٠ دقائق على ${entry.value}، حان وقت الوضوء',
+        scheduledDate,
+        azkarDetails, // Standard sound for reminder
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+    }
+  }
+
+  Future<void> scheduleQuranReminderAfterSalah() async {
+    final effectiveTimes = prayerService.getEffectiveTimes(prefs);
+    final now = tz.TZDateTime.now(tz.local);
+
+    int i = 0;
+    for (final key in ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']) {
+      final timeOfDay = effectiveTimes[key];
+      if (timeOfDay == null) continue;
+
+      var scheduledDate = tz.TZDateTime(tz.local, now.year, now.month, now.day,
+          timeOfDay.hour, timeOfDay.minute);
+
+      // Add 30 minutes after Salah
+      scheduledDate = scheduledDate.add(const Duration(minutes: 30));
+
+      if (scheduledDate.isBefore(now)) continue;
+
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        400 + i++, // Unique ID range 400-404
+        'وردك اليومي',
+        'حان وقت قراءة وردك من القرآن الكريم',
+        scheduledDate,
+        azkarDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+    }
+  }
+
+  Future<void> scheduleProphetBlessings() async {
+    final List<int> triggerHours = [10, 14, 17, 21]; // 10am, 2pm, 5pm, 9pm
+
+    for (int i = 0; i < triggerHours.length; i++) {
+      final now = tz.TZDateTime.now(tz.local);
+      var scheduledDate = tz.TZDateTime(
+          tz.local, now.year, now.month, now.day, triggerHours[i]);
+
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
+
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        300 + i, // Unique ID range 300-303
+        'الصلاة على النبي',
+        DuaaNotifications.blessings[i % DuaaNotifications.blessings.length],
+        scheduledDate,
+        azkarDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+    }
   }
 
   Future<void> cancelAllNotifications() async {

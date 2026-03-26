@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:azkar_app/core/services/notifications_service.dart';
 import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:flutter/material.dart';
@@ -62,7 +64,9 @@ class NotificationProvider extends ChangeNotifier {
       }
 
       _notificationService.periodicallyShowNotification(); // Periodic
-      _notificationService.periodicallyShowDailyReminder(); // Daily
+      _notificationService.schedulePreAdhanReminders(); // Daily
+      _notificationService.scheduleQuranReminderAfterSalah();
+      _notificationService.scheduleProphetBlessings();
     }
   }
 
@@ -90,5 +94,16 @@ class NotificationProvider extends ChangeNotifier {
     applyNotificationStates();
     _prefs.setBool(_notificationsEnabledKey, _areNotificationsEnabled);
     notifyListeners();
+  }
+
+  // Inside NotificationProvider class
+  Future<void> refreshNotifications() async {
+    // Check if they are actually enabled in preferences before scheduling
+    _areNotificationsEnabled = _prefs.getBool(_notificationsEnabledKey) ?? true;
+
+    if (_areNotificationsEnabled) {
+      applyNotificationStates();
+      log('Notifications refreshed on app launch');
+    }
   }
 }

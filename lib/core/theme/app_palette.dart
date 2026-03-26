@@ -5,6 +5,7 @@ class AppPalette {
   static const Color mainColor = Color(0xFF22a351);
   static const Color lightBackground = Color(0xFFF8FBF9);
   static const Color darkBackground = Color(0xFF121212);
+  static const Color favoriteColor = Color(0xFFF59E0B);
   static const String tajawalFontFamily = 'Tajawal';
   static const String amiriFontFamily = 'Amiri';
 
@@ -16,7 +17,7 @@ class AppPalette {
       titleTextStyle: TextStyle(
         fontFamily: tajawalFontFamily,
         fontWeight: FontWeight.w900,
-        fontSize: 22.sp,
+        fontSize: 18.sp,
         color: Colors.white,
       ),
     ),
@@ -34,7 +35,7 @@ class AppPalette {
           titleTextStyle: TextStyle(
             fontFamily: tajawalFontFamily,
             fontWeight: FontWeight.w900,
-            fontSize: 22.sp,
+            fontSize: 18.sp,
             color: AppPalette.mainColor,
           ),
         ),

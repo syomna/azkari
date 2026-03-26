@@ -7,15 +7,34 @@ import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
-import 'package:azkar_app/pages/prayer_times_settings_screen.dart';
+import 'package:azkar_app/pages/prayer_times_settings_page.dart';
 import 'package:azkar_app/widgets/switch_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  PackageInfo? packageInfo;
+
+  @override
+  void initState() {
+    super.initState();
+    _getAppInfo();
+  }
+
+  Future<void> _getAppInfo() async {
+    packageInfo = await PackageInfo.fromPlatform();
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +127,7 @@ class SettingsPage extends StatelessWidget {
                   }),
                   _divider(),
                   _buildListTile('عن التطبيق', Icons.info_rounded,
-                      () => _showAboutAppDialog(context)),
+                      () => _showAboutAppDialog(context, packageInfo)),
                 ]),
 
                 SizedBox(height: 40.h),
@@ -192,7 +211,7 @@ Widget _buildFontSlider(ThemeProvider theme, BuildContext context) {
   );
 }
 
-void _showAboutAppDialog(BuildContext context) {
+void _showAboutAppDialog(BuildContext context, PackageInfo? packageInfo) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
 
   showDialog(
@@ -219,7 +238,7 @@ void _showAboutAppDialog(BuildContext context) {
                     fontFamily: AppPalette.amiriFontFamily,
                     fontSize: 24.sp,
                     fontWeight: FontWeight.bold)),
-            Text('الإصدار 3.2.15',
+            Text('الإصدار ${packageInfo?.version}',
                 style: TextStyle(color: Colors.grey, fontSize: 12.sp)),
             SizedBox(height: 15.h),
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:azkar_app/core/presentation/providers/theme_provider.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
@@ -10,6 +11,7 @@ import 'package:azkar_app/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:upgrader/upgrader.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -25,6 +27,11 @@ class _SplashPageState extends State<SplashPage> {
   @override
   void initState() {
     super.initState();
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   if (mounted) {
+    //     context.read<NotificationProvider>().refreshNotifications();
+    //   }
+    // });
     // Trigger the fade-in animation shortly after boot
     Future.delayed(const Duration(milliseconds: 200), () {
       if (mounted) setState(() => _opacity = 1.0);
@@ -68,9 +75,11 @@ class _SplashPageState extends State<SplashPage> {
     if (mounted) {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              const HomePage(),
-          // const LayoutPage(),
+          pageBuilder: (context, animation, secondaryAnimation) => UpgradeAlert(
+              dialogStyle: Platform.isIOS
+                  ? UpgradeDialogStyle.cupertino
+                  : UpgradeDialogStyle.material,
+              child: const HomePage()),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },

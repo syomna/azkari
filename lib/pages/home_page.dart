@@ -5,7 +5,7 @@ import 'package:azkar_app/core/enums/app_loading_status.dart';
 import 'package:azkar_app/core/presentation/providers/theme_provider.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/presentation/pages/all_azkar_page.dart';
-import 'package:azkar_app/features/azkar/presentation/pages/azkar_category_page.dart';
+import 'package:azkar_app/features/azkar/presentation/pages/azkar_details_page.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/day_zekr_widget.dart';
 import 'package:azkar_app/features/names_of_allah/presentation/widgets/names_of_allah_widget.dart';
@@ -88,7 +88,7 @@ class _HomePageState extends State<HomePage> {
                                 .read<ThemeProvider>()
                                 .toggleTheme() // Example toggle function
                             ),
-                        SizedBox(width: 12.w),
+                        SizedBox(width: 16.w),
                         _buildHeaderAction(
                             context,
                             CupertinoIcons.bubble_left_bubble_right,
@@ -96,7 +96,7 @@ class _HomePageState extends State<HomePage> {
                                 context,
                                 MaterialPageRoute(
                                     builder: (_) => const ContactUsPage()))),
-                        SizedBox(width: 12.w),
+                        SizedBox(width: 16.w),
                         _buildHeaderAction(
                             context,
                             CupertinoIcons.settings,
@@ -215,7 +215,7 @@ class _HomePageState extends State<HomePage> {
       Component(
         text: AppConstants.morningAzkarCategory,
         img: 'sun',
-        page: AzkarCategoryPage(
+        page: AzkarDetailsPage(
           title: AppConstants.morningAzkarCategory,
           categoryName: AppConstants.morningAzkarCategory,
         ),
@@ -224,7 +224,7 @@ class _HomePageState extends State<HomePage> {
       Component(
         text: AppConstants.eveningAzkarCategory,
         img: 'night',
-        page: AzkarCategoryPage(
+        page: AzkarDetailsPage(
           title: AppConstants.eveningAzkarCategory,
           categoryName: AppConstants.eveningAzkarCategory,
         ),
@@ -237,9 +237,11 @@ class _HomePageState extends State<HomePage> {
         isColumn: true,
       ),
       Component(
-        text: AppConstants.variousDuaaCategory,
+        text: AppConstants.favoriteCategory,
         img: 'duaa',
-        page: AllAzkarPage(),
+        page: AllAzkarPage(
+          selectedFilter: 'المفضلة',
+        ),
         isColumn: true,
       ),
       Component(

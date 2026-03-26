@@ -3,7 +3,6 @@ import 'package:azkar_app/core/enums/app_loading_status.dart';
 import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:azkar_app/features/azkar/domain/entities/zikr_entity.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart';
-import 'package:azkar_app/features/azkar/utils/azkar_category_filter.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,17 +26,6 @@ class AzkarProvider extends ChangeNotifier {
   List<ZekrEntity> get azkarList => _azkarList;
   AppLoadingStatus get azkarStatus => _azkarStatus;
   String? get azkarErrorMessage => _azkarErrorMessage;
-
-  List<ZekrEntity> get morningAzkar => _azkarList.getMorningAzkar();
-  List<ZekrEntity> get eveningAzkar => _azkarList.getEveningAzkar();
-  List<ZekrEntity> get wakingUpAzkar => _azkarList.getWakingUpAzkar();
-  List<ZekrEntity> get exitHomeAzkar => _azkarList.getExitHomeAzkar();
-  List<ZekrEntity> get sleepingAzkar => _azkarList.getSleepingAzkar();
-  List<ZekrEntity> get prayerAzkar => _azkarList.getPrayerAzkar();
-  List<ZekrEntity> get variousDuaa => _azkarList.getVariousDuaa();
-  List<ZekrEntity> get mosqueAzkar => _azkarList.getMosqueAzkar();
-
-  // Prayer times — kept only for nextPrayer() highlighting
   PrayerTimes? _prayerTimes;
   PrayerTimes? get prayerTimes => _prayerTimes;
 
@@ -123,4 +111,46 @@ class AzkarProvider extends ChangeNotifier {
       },
     );
   }
+
+  // Inside AzkarProvider class
+
+  List<String> _favCategories = [];
+  List<String> _favIndividualItems = []; // Stores unique IDs or Text hashes
+
+  List<String> get favCategories => _favCategories;
+  List<String> get favIndividualItems => _favIndividualItems;
+
+// 1. Load everything on startup
+  void loadFavorites() {
+    _favCategories = sharedPreferences.getStringList('fav_categories') ?? [];
+    _favIndividualItems = sharedPreferences.getStringList('fav_items') ?? [];
+    notifyListeners();
+  }
+
+// 2. Category Level Logic (The "Folder")
+  Future<void> toggleCategoryFavorite(String categoryName) async {
+    if (_favCategories.contains(categoryName)) {
+      _favCategories.remove(categoryName);
+    } else {
+      _favCategories.add(categoryName);
+    }
+    await sharedPreferences.setStringList('fav_categories', _favCategories);
+    notifyListeners();
+  }
+
+// 3. Individual Item Logic (The "Zikr" or "Ayah")
+// Tip: If your ZekrEntity has a unique ID, use that. If not, use the zikr text.
+  Future<void> toggleItemFavorite(String itemIdentifier) async {
+    if (_favIndividualItems.contains(itemIdentifier)) {
+      _favIndividualItems.remove(itemIdentifier);
+    } else {
+      _favIndividualItems.add(itemIdentifier);
+    }
+    await sharedPreferences.setStringList('fav_items', _favIndividualItems);
+    notifyListeners();
+  }
+
+// Helpers for the UI
+  bool isCategoryFav(String name) => _favCategories.contains(name);
+  bool isItemFav(String identifier) => _favIndividualItems.contains(identifier);
 }

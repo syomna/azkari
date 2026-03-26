@@ -1,6 +1,8 @@
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/azkar/domain/entities/zikr_entity.dart';
+import 'package:azkar_app/features/azkar/presentation/widgets/zekr_action_button.dart';
+import 'package:azkar_app/features/azkar/presentation/widgets/zekr_counter_pill.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -8,11 +10,18 @@ class DisplayAzkar extends StatefulWidget {
   const DisplayAzkar({
     super.key,
     required this.zikrEntity,
-    this.showCategoryHeader = false,
+    this.isFavorite = false,
+    this.onFavoriteTap,
+    this.onCounted,
   });
 
   final ZekrEntity zikrEntity;
-  final bool showCategoryHeader;
+  final bool isFavorite;
+  final VoidCallback? onFavoriteTap;
+
+  /// Called when the user finishes all repetitions of this zekr.
+  /// Only passed for the currently active zekr in the list.
+  final VoidCallback? onCounted;
 
   @override
   State<DisplayAzkar> createState() => _DisplayAzkarState();
@@ -20,20 +29,22 @@ class DisplayAzkar extends StatefulWidget {
 
 class _DisplayAzkarState extends State<DisplayAzkar>
     with SingleTickerProviderStateMixin {
-  late int zekrCount;
+  late int _remaining;
+  late int _total;
   late AnimationController _pulseController;
   late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    zekrCount = int.tryParse(widget.zikrEntity.count) ?? 0;
+    _total = int.tryParse(widget.zikrEntity.count) ?? 1;
+    _remaining = _total;
 
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 100),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
   }
@@ -44,111 +55,136 @@ class _DisplayAzkarState extends State<DisplayAzkar>
     super.dispose();
   }
 
+  bool get _isDone => _total > 0 && _remaining == 0;
+
   void _handleTap() {
-    if (zekrCount > 0) {
-      _pulseController.forward().then((_) => _pulseController.reverse());
-      setState(() {
-        zekrCount--;
-      });
-      if (zekrCount == 0) {
-        AppHelpers.showToast('أكملت الذكر!');
-      }
+    if (_remaining <= 0) return;
+    _pulseController.forward().then((_) => _pulseController.reverse());
+    setState(() => _remaining--);
+    if (_remaining == 0) {
+      AppHelpers.showToast('أكملت الذكر!');
+      widget.onCounted?.call();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hasReference = widget.zikrEntity.reference.isNotEmpty;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (widget.showCategoryHeader)
-          Padding(
-            padding: EdgeInsets.only(bottom: 12.h, top: 8.h),
-            child: Text(
-              widget.zikrEntity.category,
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w900,
-                color: AppPalette.mainColor,
-              ),
+    return GestureDetector(
+      onTap: _handleTap,
+      onLongPress: () => AppHelpers.copyText(widget.zikrEntity.zekr),
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: _isDone ? 0.03 : 0.05)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(
+              color: _isDone
+                  ? Colors.grey.withValues(alpha: 0.15)
+                  : AppPalette.mainColor.withValues(alpha: 0.1),
+              width: 0.5,
             ),
           ),
-        GestureDetector(
-          onTap: _handleTap,
-          onLongPress: () => AppHelpers.copyText(widget.zikrEntity.zekr),
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(24.r),
-                border: Border.all(
-                  color: zekrCount == 0
-                      ? Colors.grey.withValues(alpha: 0.2)
-                      : AppPalette.mainColor.withValues(alpha: 0.1),
+          child: Column(
+            children: [
+              // ── Arabic text ────────────────────────────────
+              Padding(
+                padding: EdgeInsets.fromLTRB(18.w, 20.h, 18.w, 14.h),
+                child: Text(
+                  widget.zikrEntity.zekr,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: AppPalette.amiriFontFamily,
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    height: 1.85,
+                    color: _isDone
+                        ? (isDark ? Colors.white30 : Colors.grey)
+                        : (isDark ? Colors.white : Colors.black87),
+                  ),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
               ),
-              child: Stack(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 40.h),
-                    child: Text(
-                      widget.zikrEntity.zekr,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: AppPalette.amiriFontFamily,
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.bold,
-                        height: 1.8,
-                        color:
-                            zekrCount == 0 && widget.zikrEntity.count.isNotEmpty
-                                ? (isDark ? Colors.white38 : Colors.grey)
-                                : (isDark ? Colors.white : Colors.black87),
-                      ),
+
+              // ── Source / reference ─────────────────────────
+              if (hasReference) ...[
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 18.w),
+                  child: Divider(
+                    height: 0,
+                    thickness: 0.5,
+                    color: AppPalette.mainColor.withValues(alpha: 0.1),
+                  ),
+                ),
+                Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
+                  child: Text(
+                    widget.zikrEntity.reference,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppPalette.mainColor
+                          .withValues(alpha: _isDone ? 0.4 : 0.8),
                     ),
                   ),
-                  if (widget.zikrEntity.count.isNotEmpty)
-                    Positioned(
-                      left: 12.w,
-                      bottom: 12.h,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 14.w, vertical: 6.h),
-                        decoration: BoxDecoration(
-                          color: zekrCount == 0
-                              ? Colors.grey.withValues(alpha: 0.2)
-                              : AppPalette.mainColor,
-                          borderRadius: BorderRadius.circular(15.r),
-                        ),
-                        child: Text(
-                          AppHelpers.getArabicNumber(zekrCount),
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                ),
+              ],
+
+              // ── Bottom actions row ─────────────────────────
+              Padding(
+                padding: EdgeInsets.fromLTRB(12.w, 4.h, 12.w, 12.h),
+                child: Row(
+                  textDirection: TextDirection.rtl,
+                  children: [
+                    // Copy button
+                    ZekrActionButton(
+                      icon: Icons.copy_rounded,
+                      isDark: isDark,
+                      onTap: () => AppHelpers.copyText(widget.zikrEntity.zekr),
+                    ),
+                    SizedBox(width: 6.w),
+
+                    // Favorite button
+                    if (widget.onFavoriteTap != null)
+                      ZekrActionButton(
+                        isDark: isDark,
+                        onTap: widget.onFavoriteTap!,
+                        child: Icon(
+                          widget.isFavorite
+                              ? Icons.star_rounded
+                              : Icons.star_outline_rounded,
+                          size: 22.sp,
+                          color: widget.isFavorite
+                              ? const Color(0xFFF59E0B)
+                              : (isDark ? Colors.white38 : Colors.black26),
                         ),
                       ),
+
+                    const Spacer(),
+
+                    // Counter pill
+                    // if (hasCount)
+                    ZekrCounterPill(
+                      remaining: _remaining,
+                      total: _total,
+                      isDone: _isDone,
+                      isDark: isDark,
+                      onTap: _handleTap,
                     ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }

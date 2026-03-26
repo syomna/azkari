@@ -90,4 +90,14 @@ class AppHelpers {
   static double normalize(double angle) {
     return (angle + 360) % 360;
   }
+
+  static Map<String, String> prayerNames = {
+      'fajr': 'صلاة الفجر',
+      'dhuhr': 'صلاة الظهر',
+      'asr': 'صلاة العصر',
+      'maghrib': 'صلاة المغرب',
+      'isha': 'صلاة العشاء',
+    };
+
+    
 }

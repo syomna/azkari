@@ -21,7 +21,7 @@ class SearchBarWidget extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      height: 50.h, // Slightly taller for better touch targets
+      height: 45.h, // Slightly taller for better touch targets
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
         borderRadius:
@@ -56,7 +56,7 @@ class SearchBarWidget extends StatelessWidget {
             prefixIcon: Icon(
               Icons.search_rounded,
               color: AppPalette.mainColor,
-              size: 22.h,
+              size: 20.h,
             ),
             suffixIcon: searchController.text.isNotEmpty
                 ? IconButton(
