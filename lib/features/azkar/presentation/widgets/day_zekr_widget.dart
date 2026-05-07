@@ -8,7 +8,7 @@ import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.d
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intl/intl.dart';
+import 'package:hijri_date/hijri_date.dart';
 import 'package:provider/provider.dart';
 
 class DayZekrWidget extends StatefulWidget {
@@ -40,7 +40,12 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
 
     ZekrEntity currentZekr = azkarProvider
         .azkarList[_currentZekrIndex % azkarProvider.azkarList.length];
-    String dateString = DateFormat.yMMMMd('ar').format(DateTime.now());
+    // String dateString = DateFormat.yMMMMd('ar').format(DateTime.now());
+    HijriDate.setLocal('ar');
+    HijriDate fromGregorian = HijriDate.fromDate(DateTime.now());
+    // String date = fromGregorian.fullDate();
+    String dateString =
+        '${fromGregorian.dayWeName}، ${AppHelpers.getArabicNumber(fromGregorian.hDay)} ${fromGregorian.longMonthName} ${fromGregorian.hYear}';
 
     return Container(
       width: double.infinity,
@@ -136,8 +141,8 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
                       fontWeight: FontWeight.w600,
                       height: 1.6,
                     ),
-                    maxLines: 5,
-                    overflow: TextOverflow.ellipsis,
+                    // maxLines: 5,
+                    // overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: 5.h),
                   Row(

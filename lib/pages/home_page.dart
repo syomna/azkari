@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/core/enums/app_loading_status.dart';
@@ -8,7 +9,9 @@ import 'package:azkar_app/features/azkar/presentation/pages/all_azkar_page.dart'
 import 'package:azkar_app/features/azkar/presentation/pages/azkar_details_page.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/day_zekr_widget.dart';
-import 'package:azkar_app/features/names_of_allah/presentation/widgets/names_of_allah_widget.dart';
+import 'package:azkar_app/features/names_of_allah/presentation/pages/names_of_allah_page.dart';
+import 'package:azkar_app/features/names_of_allah/presentation/providers/names_of_allah_provider.dart';
+import 'package:azkar_app/features/names_of_allah/presentation/widgets/names_of_allah_card.dart';
 import 'package:azkar_app/features/qibla/presentation/pages/qibla_screen.dart';
 import 'package:azkar_app/features/quran/presentation/pages/quran_details_page.dart';
 import 'package:azkar_app/features/tasbeh/presentation/pages/tasbeh_page.dart';
@@ -177,11 +180,34 @@ class _HomePageState extends State<HomePage> {
                     SizedBox(
                       height: 10.h,
                     ),
-                  _buildTitle('أسماء الله الحسنى'),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildTitle('أسماء الله الحسنى'),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const NamesOfAllahPage()));
+                        },
+                        child: const Text(
+                          'عرض الكل',
+                          style: TextStyle(
+                              color: AppPalette.mainColor,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
                   SizedBox(
                     height: 10.h,
                   ),
-                  const NamesOfAllahWidget(),
+                  NamesOfAllahCard(
+                    item: context
+                        .read<NamesOfAllahProvider>()
+                        .namesOfAllahList[Random().nextInt(98) + 1],
+                  ),
                   SizedBox(
                     height: 40.h,
                   ),

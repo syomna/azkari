@@ -70,7 +70,8 @@ class NotificationService {
     );
 
     tz.initializeTimeZones();
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    await flutterLocalNotificationsPlugin.initialize(
+        settings: initializationSettings);
 
     // Platform-Specific Runtime Requests
     if (Platform.isIOS) {
@@ -160,11 +161,11 @@ class NotificationService {
       if (scheduledDate.isBefore(now)) continue;
 
       await flutterLocalNotificationsPlugin.zonedSchedule(
-        prayerIds[key]!,
-        'حان وقت الصلاة',
-        'الله أكبر، حان وقت ${AppHelpers.prayerNames[key]}',
-        scheduledDate,
-        adhanDetails,
+        id: prayerIds[key]!,
+        title: 'حان وقت الصلاة',
+        body: 'الله أكبر، حان وقت ${AppHelpers.prayerNames[key]}',
+        scheduledDate: scheduledDate,
+        notificationDetails: adhanDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
     }
@@ -191,11 +192,11 @@ class NotificationService {
     }
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
-      isDay ? 1 : 0,
-      'أذكاري',
-      isDay ? '🌞 حان وقت أذكار الصباح' : '🌙 حان وقت أذكار المساء',
-      scheduledDate,
-      azkarDetails,
+      id: isDay ? 1 : 0,
+      title: 'أذكاري',
+      body: isDay ? '🌞 حان وقت أذكار الصباح' : '🌙 حان وقت أذكار المساء',
+      scheduledDate: scheduledDate,
+      notificationDetails: azkarDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
@@ -222,12 +223,12 @@ class NotificationService {
       }
 
       await flutterLocalNotificationsPlugin.zonedSchedule(
-        20 + i, // Unique ID for each of the 4 slots (20, 21, 22, 23)
-        'أذكاري',
+        id: 20 + i, // Unique ID for each of the 4 slots (20, 21, 22, 23)
+        title: 'أذكاري',
         // This picks a different Adhkar based on the time slot index
-        adhkarPool[i % adhkarPool.length],
-        scheduledDate,
-        azkarDetails,
+        body: adhkarPool[i % adhkarPool.length],
+        scheduledDate: scheduledDate,
+        notificationDetails: azkarDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time,
       );
@@ -252,11 +253,11 @@ class NotificationService {
       if (scheduledDate.isBefore(now)) continue;
 
       await flutterLocalNotificationsPlugin.zonedSchedule(
-        200 + entry.key.hashCode, // Unique ID offset
-        'استعد للصلاة',
-        'بقي ١٠ دقائق على ${entry.value}، حان وقت الوضوء',
-        scheduledDate,
-        azkarDetails, // Standard sound for reminder
+        id: 200 + entry.key.hashCode, // Unique ID offset
+        title: 'استعد للصلاة',
+        body: 'بقي ١٠ دقائق على ${entry.value}، حان وقت الوضوء',
+        scheduledDate: scheduledDate,
+        notificationDetails: azkarDetails, // Standard sound for reminder
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
     }
@@ -280,11 +281,11 @@ class NotificationService {
       if (scheduledDate.isBefore(now)) continue;
 
       await flutterLocalNotificationsPlugin.zonedSchedule(
-        400 + i++, // Unique ID range 400-404
-        'وردك اليومي',
-        'حان وقت قراءة وردك من القرآن الكريم',
-        scheduledDate,
-        azkarDetails,
+        id: 400 + i++, // Unique ID range 400-404
+        title: 'وردك اليومي',
+        body: 'حان وقت قراءة وردك من القرآن الكريم',
+        scheduledDate: scheduledDate,
+        notificationDetails: azkarDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
     }
@@ -303,11 +304,12 @@ class NotificationService {
       }
 
       await flutterLocalNotificationsPlugin.zonedSchedule(
-        300 + i, // Unique ID range 300-303
-        'الصلاة على النبي',
-        DuaaNotifications.blessings[i % DuaaNotifications.blessings.length],
-        scheduledDate,
-        azkarDetails,
+        id: 300 + i, // Unique ID range 300-303
+        title: 'الصلاة على النبي',
+        body:
+            DuaaNotifications.blessings[i % DuaaNotifications.blessings.length],
+        scheduledDate: scheduledDate,
+        notificationDetails: azkarDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time,
       );
@@ -319,7 +321,7 @@ class NotificationService {
   }
 
   Future<void> cancelNotificationById(int id) async {
-    await flutterLocalNotificationsPlugin.cancel(id);
+    await flutterLocalNotificationsPlugin.cancel(id: id);
   }
 
   Future<bool> requestNotificationPermission() async {

@@ -127,8 +127,9 @@ class PrayerTimesSettingsScreen extends StatelessWidget {
                       icon: icon,
                       displayTime: displayTime,
                       isOverridden: isOverridden,
-                      onTap: () =>
-                          _pickTime(context, provider, key, displayTime),
+                      onTap: () => _showOffsetPicker(
+                          context, provider, key, name, displayTime),
+                      // _pickTime(context, provider, key, displayTime),
                       onReset: isOverridden
                           ? () => provider.clearOverride(key)
                           : null,
@@ -143,25 +144,44 @@ class PrayerTimesSettingsScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _pickTime(
-    BuildContext context,
-    AzkarProvider provider,
-    String key,
-    TimeOfDay? initial,
-  ) async {
-    final picked = await showTimePicker(
+  void _showOffsetPicker(BuildContext context, AzkarProvider provider,
+      String key, String name, TimeOfDay? time) {
+    showModalBottomSheet(
       context: context,
-      initialTime: initial ?? TimeOfDay.now(),
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-        child: child!,
-      ),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25.r))),
+      builder: (context) {
+        return _MinuteAdjustmentSheet(
+          prayerName: name,
+          initialOffset: time?.minute ?? 0,
+          onChanged: (newOffset) {
+            provider.setOverride(key, time!.replacing(minute: newOffset));
+            context.read<NotificationProvider>().applyNotificationStates();
+          },
+        );
+      },
     );
-    if (picked != null && context.mounted) {
-      provider.setOverride(key, picked);
-      context.read<NotificationProvider>().applyNotificationStates();
-    }
   }
+
+  // Future<void> _pickTime(
+  //   BuildContext context,
+  //   AzkarProvider provider,
+  //   String key,
+  //   TimeOfDay? initial,
+  // ) async {
+  //   final picked = await showTimePicker(
+  //     context: context,
+  //     initialTime: initial ?? TimeOfDay.now(),
+  //     builder: (context, child) => MediaQuery(
+  //       data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+  //       child: child!,
+  //     ),
+  //   );
+  //   if (picked != null && context.mounted) {
+  //     provider.setOverride(key, picked);
+  //     context.read<NotificationProvider>().applyNotificationStates();
+  //   }
+  // }
 
   void _confirmResetAll(BuildContext context, AzkarProvider provider) {
     showDialog(
@@ -310,6 +330,99 @@ class _PrayerTimeTile extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MinuteAdjustmentSheet extends StatefulWidget {
+  final String prayerName;
+  final int initialOffset;
+  final Function(int) onChanged;
+
+  const _MinuteAdjustmentSheet({
+    required this.prayerName,
+    required this.initialOffset,
+    required this.onChanged,
+  });
+
+  @override
+  State<_MinuteAdjustmentSheet> createState() => _MinuteAdjustmentSheetState();
+}
+
+class _MinuteAdjustmentSheetState extends State<_MinuteAdjustmentSheet> {
+  late int _currentOffset;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentOffset = widget.initialOffset;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 30.h),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('تعديل وقت صلاة ${widget.prayerName}',
+              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold)),
+          SizedBox(height: 25.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _roundButton(
+                  Icons.remove, () => setState(() => _currentOffset--)),
+              Container(
+                width: 120.w,
+                alignment: Alignment.center,
+                child: Text(
+                  '$_currentOffset دقيقة',
+                  style: TextStyle(
+                      fontSize: 22.sp,
+                      fontWeight: FontWeight.w900,
+                      color: AppPalette.mainColor),
+                ),
+              ),
+              _roundButton(Icons.add, () => setState(() => _currentOffset++)),
+            ],
+          ),
+          SizedBox(height: 30.h),
+          SizedBox(
+            width: double.infinity,
+            height: 50.h,
+            child: ElevatedButton(
+              onPressed: () {
+                widget.onChanged(_currentOffset);
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppPalette.mainColor,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15.r)),
+              ),
+              child: const Text('حفظ التعديل',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _roundButton(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(50),
+      child: Container(
+        padding: EdgeInsets.all(12.w),
+        decoration: BoxDecoration(
+          color: AppPalette.mainColor.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: AppPalette.mainColor, size: 28.sp),
       ),
     );
   }

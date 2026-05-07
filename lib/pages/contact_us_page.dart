@@ -20,6 +20,8 @@ class _ContactUsPageState extends State<ContactUsPage> {
   final TextEditingController _messageController = TextEditingController();
   PackageInfo? packageInfo;
 
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -39,32 +41,68 @@ class _ContactUsPageState extends State<ContactUsPage> {
   }
 
   Future<void> _sendEmail() async {
-    final String subject = _subjectController.text.trim();
-    final String message = _messageController.text.trim();
+    if (_isLoading) return;
 
-    if (subject.isEmpty || message.isEmpty) {
+    final String subject = _subjectController.text.trim();
+    final String userMessage = _messageController.text.trim();
+
+    if (subject.isEmpty || userMessage.isEmpty) {
       AppHelpers.showToast('يرجى ملء جميع الحقول', status: ToastStatus.warning);
       return;
     }
+
+    setState(() => _isLoading = true);
+
+    // --- 1. تجميع المعلومات التقنية ---
+    final String appVersion = packageInfo?.version ?? 'Unknown';
+    final String buildNumber = packageInfo?.buildNumber ?? 'Unknown';
+    final String platform =
+        Theme.of(context).platform.toString().split('.').last;
+
+    // ديباج انفو مخفي في أسفل الرسالة
+    // ignore: prefer_single_quotes
+    final String technicalDetails = """
+  
+  
+  ----------------------------------
+  Technical Details (Do not delete):
+  - App: Azkari (أذكاري)
+  - Version: $appVersion ($buildNumber)
+  - Platform: $platform
+  - Date: ${DateTime.now().toIso8601String()}
+  ----------------------------------
+  """;
+
+    // --- 2. نظام الـ Auto-Sorting في Gmail ---
+    // بإضافة [AZKARI-SUPPORT] للعنوان، يمكنك عمل Filter في Gmail يضع هذه الرسائل في مجلد خاص تلقائياً
+    final String formattedSubject = '[AZKARI-SUPPORT] $subject';
+    final String fullBody = '$userMessage\n$technicalDetails';
 
     final Uri emailUri = Uri(
       scheme: 'mailto',
       path: 'syomna444@gmail.com',
       query:
-          'subject=${Uri.encodeComponent(subject)}&body=${Uri.encodeComponent(message)}',
+          'subject=${Uri.encodeComponent(formattedSubject)}&body=${Uri.encodeComponent(fullBody)}',
     );
 
     try {
       if (await canLaunchUrl(emailUri)) {
         await launchUrl(emailUri);
       } else {
-        throw 'Could not launch $emailUri';
+        throw 'Could not launch email app';
       }
     } catch (e) {
       log(e.toString());
       if (mounted) {
         AppHelpers.showToast('تعذر فتح تطبيق البريد الإلكتروني',
             status: ToastStatus.error);
+      }
+    } finally {
+      if (mounted) {
+        // ننتظر قليلاً قبل إعادة تفعيل الزر لضمان عدم الضغط المزدوج
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) setState(() => _isLoading = false);
+        });
       }
     }
   }
@@ -161,7 +199,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
 
             // 3. Submit Button (Gradient Style)
             GestureDetector(
-              onTap: _sendEmail,
+              onTap: _isLoading ? null : _sendEmail,
               child: Container(
                 width: double.infinity,
                 height: 55.h,
@@ -187,7 +225,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
                     const Icon(Icons.send_rounded, color: Colors.white),
                     SizedBox(width: 12.w),
                     Text(
-                      'إرسال الآن',
+                      _isLoading ? 'جاري الفتح...' : 'إرسال الآن',
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.bold,
