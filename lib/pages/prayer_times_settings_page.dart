@@ -2,6 +2,8 @@ import 'package:azkar_app/core/presentation/providers/notification_provider.dart
 import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
+import 'package:azkar_app/widgets/prayer_time_tile.dart';
+import 'package:azkar_app/widgets/time_adjustment_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -122,7 +124,7 @@ class PrayerTimesSettingsScreen extends StatelessWidget {
                     final displayTime = provider.getDisplayTime(key);
                     final isOverridden = provider.isOverridden(key);
 
-                    return _PrayerTimeTile(
+                    return PrayerTimeTile(
                       name: name,
                       icon: icon,
                       displayTime: displayTime,
@@ -151,11 +153,11 @@ class PrayerTimesSettingsScreen extends StatelessWidget {
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(25.r))),
       builder: (context) {
-        return _MinuteAdjustmentSheet(
+        return TimeAdjustmentSheet(
           prayerName: name,
-          initialOffset: time?.minute ?? 0,
-          onChanged: (newOffset) {
-            provider.setOverride(key, time!.replacing(minute: newOffset));
+          initialTime: time ?? TimeOfDay.now(),
+          onChanged: (newTime) {
+            provider.setOverride(key, newTime);
             context.read<NotificationProvider>().applyNotificationStates();
           },
         );
@@ -214,215 +216,6 @@ class PrayerTimesSettingsScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PrayerTimeTile extends StatelessWidget {
-  final String name;
-  final IconData icon;
-  final TimeOfDay? displayTime;
-  final bool isOverridden;
-  final VoidCallback onTap;
-  final VoidCallback? onReset;
-
-  const _PrayerTimeTile({
-    required this.name,
-    required this.icon,
-    required this.displayTime,
-    required this.isOverridden,
-    required this.onTap,
-    this.onReset,
-  });
-
-  String _formatTime(TimeOfDay t) {
-    final h = t.hour.toString().padLeft(2, '0');
-    final m = t.minute.toString().padLeft(2, '0');
-    return '$h:$m';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final timeColor = isOverridden
-        ? AppPalette.mainColor
-        : (isDark ? Colors.white : Colors.black87);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 14.h),
-        decoration: BoxDecoration(
-          color: isOverridden
-              ? Colors.green.withValues(alpha: 0.06)
-              : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white),
-          borderRadius: BorderRadius.circular(18.r),
-          border: Border.all(
-            color: isOverridden
-                ? Colors.green.withValues(alpha: 0.3)
-                : AppPalette.mainColor.withValues(alpha: 0.1),
-            width: isOverridden ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            // Icon container
-            Container(
-              width: 40.w,
-              height: 40.w,
-              decoration: BoxDecoration(
-                color: timeColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Icon(icon, color: timeColor, size: 20.h),
-            ),
-            SizedBox(width: 14.w),
-
-            // Prayer name + override label
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (isOverridden)
-                    Text(
-                      'وقت معدّل يدوياً',
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: Colors.green.shade600,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-
-            // Time
-            Text(
-              displayTime != null ? _formatTime(displayTime!) : '--:--',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w800,
-                color: timeColor,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
-
-            // Reset or chevron
-            if (onReset != null) ...[
-              SizedBox(width: 8.w),
-              GestureDetector(
-                onTap: onReset,
-                child:
-                    Icon(Icons.refresh_rounded, color: Colors.grey, size: 18.h),
-              ),
-            ] else ...[
-              SizedBox(width: 8.w),
-              Icon(Icons.chevron_right_rounded,
-                  color: Colors.grey.shade400, size: 20.h),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MinuteAdjustmentSheet extends StatefulWidget {
-  final String prayerName;
-  final int initialOffset;
-  final Function(int) onChanged;
-
-  const _MinuteAdjustmentSheet({
-    required this.prayerName,
-    required this.initialOffset,
-    required this.onChanged,
-  });
-
-  @override
-  State<_MinuteAdjustmentSheet> createState() => _MinuteAdjustmentSheetState();
-}
-
-class _MinuteAdjustmentSheetState extends State<_MinuteAdjustmentSheet> {
-  late int _currentOffset;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentOffset = widget.initialOffset;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 30.h),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('تعديل وقت صلاة ${widget.prayerName}',
-              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold)),
-          SizedBox(height: 25.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _roundButton(
-                  Icons.remove, () => setState(() => _currentOffset--)),
-              Container(
-                width: 120.w,
-                alignment: Alignment.center,
-                child: Text(
-                  '$_currentOffset دقيقة',
-                  style: TextStyle(
-                      fontSize: 22.sp,
-                      fontWeight: FontWeight.w900,
-                      color: AppPalette.mainColor),
-                ),
-              ),
-              _roundButton(Icons.add, () => setState(() => _currentOffset++)),
-            ],
-          ),
-          SizedBox(height: 30.h),
-          SizedBox(
-            width: double.infinity,
-            height: 50.h,
-            child: ElevatedButton(
-              onPressed: () {
-                widget.onChanged(_currentOffset);
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppPalette.mainColor,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15.r)),
-              ),
-              child: const Text('حفظ التعديل',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _roundButton(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(50),
-      child: Container(
-        padding: EdgeInsets.all(12.w),
-        decoration: BoxDecoration(
-          color: AppPalette.mainColor.withValues(alpha: 0.1),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: AppPalette.mainColor, size: 28.sp),
       ),
     );
   }
