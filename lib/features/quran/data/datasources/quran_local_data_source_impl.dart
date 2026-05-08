@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:azkar_app/features/quran/data/datasources/quran_local_data_source.dart';
-import 'package:azkar_app/features/quran/data/models/quran_position_model.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,19 +12,7 @@ class QuranLocalDataSourceImpl implements QuranLocalDataSource {
   static const String _kSavedAyahNumberKey = 'latest_ayah_Number_key';
   static const String _kSavedLatestQuranSurahNumberKey =
       'latest_quran_surah_number_key';
-
-  List<QuranPositionModel> _savedQuranPositions = [];
-
-  void _loadPositionsFromPrefs() {
-    final List<String>? jsonList =
-        sharedPreferences.getStringList(_kSavedAyahNumberKey);
-    if (jsonList != null) {
-      _savedQuranPositions = jsonList
-          .map((jsonString) =>
-              QuranPositionModel.fromJson(jsonDecode(jsonString)))
-          .toList();
-    }
-  }
+  static const String _kSavedQuranPageNumberKey = 'quran_page_number_key';
 
   @override
   Future<void> saveLatestQuranSurahNumber(int surahNumber) async {
@@ -40,56 +26,10 @@ class QuranLocalDataSourceImpl implements QuranLocalDataSource {
   }
 
   @override
-  Future<void> saveQuranPosition(QuranPositionModel newPosition) async {
-    _loadPositionsFromPrefs();
-
-    final index = _savedQuranPositions.indexWhere(
-        (position) => position.surahNumber == newPosition.surahNumber);
-
-    if (index != -1) {
-      _savedQuranPositions[index] = newPosition;
-    } else {
-      _savedQuranPositions.add(newPosition);
-    }
-    _savedQuranPositions.sort((a, b) => a.surahNumber.compareTo(b.surahNumber));
-
-    final List<String> jsonList = _savedQuranPositions
-        .map((position) => jsonEncode(position.toJson()))
-        .toList();
-
-    await sharedPreferences.setStringList(_kSavedAyahNumberKey, jsonList);
-  }
-
-  @override
-  QuranPositionModel getSavedPosition(int surahNumber) {
-    _loadPositionsFromPrefs();
-
-    final position = _savedQuranPositions.firstWhere(
-      (position) => position.surahNumber == surahNumber,
-      orElse: () =>
-          QuranPositionModel(surahNumber: surahNumber, ayahNumber: 1),
-    );
-    return position;
-  }
-
-  @override
-  Future<void> clearSavedPosition(int surahNumber) async {
-    _loadPositionsFromPrefs();
-    _savedQuranPositions
-        .removeWhere((position) => position.surahNumber == surahNumber);
-
-    final List<String> jsonList = _savedQuranPositions
-        .map((position) => jsonEncode(position.toJson()))
-        .toList();
-
-    await sharedPreferences.setStringList(_kSavedAyahNumberKey, jsonList);
-  }
-
-  @override
   Future<void> clearAllSavedQuranValues() async {
     await sharedPreferences.remove(_kSavedAyahNumberKey);
     await sharedPreferences.remove(_kSavedLatestQuranSurahNumberKey);
-    _savedQuranPositions = [];
+    await sharedPreferences.remove(_kSavedQuranPageNumberKey);
   }
 
   @override
@@ -102,5 +42,15 @@ class QuranLocalDataSourceImpl implements QuranLocalDataSource {
   Future<bool> isDownloaded(int surahNumber) async {
     final path = await getSurahPath(surahNumber);
     return File(path).exists();
+  }
+
+  @override
+  int? getSavedQuranPageNumber() {
+    return sharedPreferences.getInt(_kSavedQuranPageNumberKey);
+  }
+
+  @override
+  Future<void> saveQuranPageNumber(int pageNumber) {
+    return sharedPreferences.setInt(_kSavedQuranPageNumberKey, pageNumber);
   }
 }

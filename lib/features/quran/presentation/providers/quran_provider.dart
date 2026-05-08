@@ -1,19 +1,16 @@
-import 'package:azkar_app/features/quran/domain/entities/quran_position_entity.dart';
 import 'package:azkar_app/features/quran/domain/usecases/check_surah_downloaded_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/clear_all_saved_quran_values_usecase.dart';
-import 'package:azkar_app/features/quran/domain/usecases/clear_quran_position_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_latest_quran_surah_number_usecase.dart';
-import 'package:azkar_app/features/quran/domain/usecases/get_saved_quran_position_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/get_saved_quran_page_number_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_surah_audio_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/save_latest_quran_surah_number_usecase.dart';
-import 'package:azkar_app/features/quran/domain/usecases/save_quran_position_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/save_quran_page_number_usecase.dart';
 import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
 
 class QuranProvider with ChangeNotifier {
-  final GetSavedQuranPositionUseCase getSavedPositionUseCase;
-  final SaveQuranPositionUseCase savePositionUseCase;
-  final ClearQuranPositionUseCase clearPositionUseCase;
+  final GetSavedQuranPageNumberUsecase getQuranPageNumberUseCase;
+  final SaveQuranPageNumberUsecase saveQuranPageNumberUseCase;
   final GetLatestQuranSurahNumberUseCase getLatestSurahNumberUseCase;
   final SaveLatestQuranSurahNumberUseCase saveLatestSurahNumberUseCase;
   final ClearAllSavedQuranValuesUseCase clearAllSavedQuranValuesUsecase;
@@ -21,9 +18,8 @@ class QuranProvider with ChangeNotifier {
   final CheckSurahDownloadedUseCase checkSurahDownloadedUseCase;
 
   QuranProvider(
-      {required this.getSavedPositionUseCase,
-      required this.savePositionUseCase,
-      required this.clearPositionUseCase,
+      {required this.getQuranPageNumberUseCase,
+      required this.saveQuranPageNumberUseCase,
       required this.getLatestSurahNumberUseCase,
       required this.saveLatestSurahNumberUseCase,
       required this.clearAllSavedQuranValuesUsecase,
@@ -31,20 +27,25 @@ class QuranProvider with ChangeNotifier {
       required this.checkSurahDownloadedUseCase});
 
   int? get savedLatestQuranSurahNumber => getLatestSurahNumberUseCase();
+  int? get savedLatestQuranPageNumber => getQuranPageNumberUseCase();
 
-  QuranPositionEntity getSavedPosition(int surahNumber) {
-    return getSavedPositionUseCase(surahNumber);
-  }
+  // QuranPositionEntity getSavedPosition(int surahNumber) {
+  //   return getSavedPositionUseCase(surahNumber);
+  // }
 
-  Future<void> saveQuranPosition(int surahNumber, int ayahNumber) async {
-    await savePositionUseCase(surahNumber, ayahNumber);
+  // Future<void> saveQuranPosition(int surahNumber, int ayahNumber) async {
+  //   await savePositionUseCase(surahNumber, ayahNumber);
+  //   notifyListeners();
+  // }
+  Future<void> saveQuranPageNumber(int pageNumber) async {
+    await saveQuranPageNumberUseCase(pageNumber);
     notifyListeners();
   }
 
-  Future<void> clearSavedPosition(int surahNumber) async {
-    await clearPositionUseCase(surahNumber);
-    notifyListeners();
-  }
+  // Future<void> clearSavedPosition(int surahNumber) async {
+  //   await clearPositionUseCase(surahNumber);
+  //   notifyListeners();
+  // }
 
   Future<void> clearAllSavedQuranValues() async {
     await clearAllSavedQuranValuesUsecase();

@@ -1,6 +1,4 @@
 import 'package:azkar_app/features/quran/data/datasources/quran_local_data_source.dart';
-import 'package:azkar_app/features/quran/data/models/quran_position_model.dart';
-import 'package:azkar_app/features/quran/domain/entities/quran_position_entity.dart';
 import 'package:azkar_app/features/quran/domain/repositories/quran_repository.dart';
 import 'package:dio/dio.dart';
 
@@ -19,29 +17,6 @@ class QuranRepositoryImpl implements QuranRepository {
   @override
   int? getLatestQuranSurahNumber() {
     return quranLocalDataSource.getLatestQuranSurahNumber();
-  }
-
-  @override
-  Future<void> saveQuranPosition(QuranPositionEntity position) async {
-    final quranPositionModel = QuranPositionModel(
-      surahNumber: position.surahNumber,
-      ayahNumber: position.ayahNumber,
-    );
-    await quranLocalDataSource.saveQuranPosition(quranPositionModel);
-  }
-
-  @override
-  QuranPositionEntity getSavedPosition(int surahNumber) {
-    final model = quranLocalDataSource.getSavedPosition(surahNumber);
-    return QuranPositionEntity(
-      surahNumber: model.surahNumber,
-      ayahNumber: model.ayahNumber,
-    );
-  }
-
-  @override
-  Future<void> clearSavedPosition(int surahNumber) async {
-    await quranLocalDataSource.clearSavedPosition(surahNumber);
   }
 
   @override
@@ -82,5 +57,15 @@ class QuranRepositoryImpl implements QuranRepository {
   @override
   Future<bool> isSurahDownloaded(int surahNumber) {
     return quranLocalDataSource.isDownloaded(surahNumber);
+  }
+
+  @override
+  int? getSavedQuranPageNumber() {
+    return quranLocalDataSource.getSavedQuranPageNumber();
+  }
+
+  @override
+  Future<void> saveQuranPageNumber(int pageNumber) async {
+    await quranLocalDataSource.saveQuranPageNumber(pageNumber);
   }
 }

@@ -20,12 +20,11 @@ import 'package:azkar_app/features/quran/data/repositories/quran_repository_impl
 import 'package:azkar_app/features/quran/domain/repositories/quran_repository.dart';
 import 'package:azkar_app/features/quran/domain/usecases/check_surah_downloaded_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/clear_all_saved_quran_values_usecase.dart';
-import 'package:azkar_app/features/quran/domain/usecases/clear_quran_position_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_latest_quran_surah_number_usecase.dart';
-import 'package:azkar_app/features/quran/domain/usecases/get_saved_quran_position_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/get_saved_quran_page_number_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_surah_audio_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/save_latest_quran_surah_number_usecase.dart';
-import 'package:azkar_app/features/quran/domain/usecases/save_quran_position_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/save_quran_page_number_usecase.dart';
 import 'package:azkar_app/features/surah/data/datasources/surah_local_data_source.dart';
 import 'package:azkar_app/features/surah/data/datasources/surah_local_data_source_impl.dart';
 import 'package:azkar_app/features/surah/data/repositories/surah_repositoy_impl.dart';
@@ -84,15 +83,13 @@ Future<void> init() async {
   sl.registerLazySingleton<QuranRepository>(
       () => QuranRepositoryImpl(quranLocalDataSource: sl(), dio: sl()));
   sl.registerLazySingleton(
-      () => SaveQuranPositionUseCase(quranRepository: sl()));
+      () => SaveQuranPageNumberUsecase(quranRepository: sl()));
   sl.registerLazySingleton(
-      () => GetSavedQuranPositionUseCase(quranRepository: sl()));
+      () => GetSavedQuranPageNumberUsecase(quranRepository: sl()));
   sl.registerLazySingleton(
       () => GetLatestQuranSurahNumberUseCase(quranRepository: sl()));
   sl.registerLazySingleton(
       () => SaveLatestQuranSurahNumberUseCase(quranRepository: sl()));
-  sl.registerLazySingleton(
-      () => ClearQuranPositionUseCase(quranRepository: sl()));
   sl.registerLazySingleton(
       () => ClearAllSavedQuranValuesUseCase(quranRepository: sl()));
   sl.registerLazySingleton(() => GetSurahAudioUseCase(sl()));

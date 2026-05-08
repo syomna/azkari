@@ -1,20 +1,16 @@
-import 'dart:async';
-import 'dart:ui';
-
+import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
-import 'package:azkar_app/features/quran/presentation/widgets/infinate_download_icon.dart';
-import 'package:azkar_app/features/quran/presentation/widgets/page_number_card.dart';
+import 'package:azkar_app/features/quran/presentation/widgets/audio_player_card.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/quran_font_sheet.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/quran_list.dart';
-import 'package:azkar_app/features/quran/presentation/widgets/quran_surah.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:quran/quran.dart' as quran;
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class QuranDetailPage extends StatefulWidget {
   const QuranDetailPage({super.key});
@@ -25,47 +21,20 @@ class QuranDetailPage extends StatefulWidget {
 
 class _QuranDetailPageState extends State<QuranDetailPage> {
   late PageController _pageController;
-  int _surahNumber = 1;
+  int _currentPageNumber = 1;
   bool _isAudioVisible = false;
-
-  final Map<int, ItemScrollController> _scrollControllers = {};
-  final Map<int, ItemPositionsListener> _positionsListeners = {};
-  Timer? _debounce;
+  bool _showControls = true;
 
   @override
   void initState() {
     super.initState();
     final provider = Provider.of<QuranProvider>(context, listen: false);
-    _surahNumber = provider.savedLatestQuranSurahNumber ?? 1;
-    _pageController = PageController(initialPage: _surahNumber - 1);
-  }
-
-  void _onScrollChanged(int surahNum) {
-    if (surahNum != _surahNumber) return;
-    if (_debounce?.isActive ?? false) return;
-
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      final listener = _positionsListeners[surahNum];
-      if (listener == null) return;
-
-      final positions = listener.itemPositions.value;
-      if (positions.isEmpty) return;
-
-      final firstVisible = positions
-          .where((pos) => pos.itemLeadingEdge >= 0)
-          .fold(positions.first,
-              (a, b) => a.itemLeadingEdge < b.itemLeadingEdge ? a : b)
-          .index;
-
-      final provider = Provider.of<QuranProvider>(context, listen: false);
-      provider.saveLatestQuranSurahNumber(surahNum);
-      provider.saveQuranPosition(surahNum, firstVisible + 1);
-    });
+    _currentPageNumber = provider.savedLatestQuranPageNumber ?? 1;
+    _pageController = PageController(initialPage: _currentPageNumber - 1);
   }
 
   @override
   void dispose() {
-    _debounce?.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -73,126 +42,79 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<QuranProvider>(context);
-
-    if (provider.errorMessage != null) {
-      Future.microtask(() {
-        AppHelpers.showToast(provider.errorMessage!, status: ToastStatus.error);
-        provider
-            .clearError(); // Clear it so it doesn't show again on next rebuild
-      });
-    }
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
+    int surahNumber = quran.getPageData(_currentPageNumber).first['surah'];
 
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        leadingWidth: MediaQuery.of(context).size.width * 0.3,
-        leading: Row(
-          children: [
-            const BackButton(),
-            IconButton(
-              icon: const Icon(Icons.format_size_rounded,
-                  color: AppPalette.mainColor),
-              onPressed: () {
-                showModalBottomSheet(
-                  isScrollControlled: true,
-                  context: context,
-                  builder: (context) =>
-                      const QuranFontSheet(), // A simple slider to update your font provider
-                );
-              },
-            ),
-          ],
-        ),
-        title: Text(
-          quran.getSurahNameArabic(_surahNumber),
-          style: TextStyle(
-              fontFamily: AppPalette.amiriFontFamily,
-              fontWeight: FontWeight.bold,
-              fontSize: 26.sp),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(
-                context.read<QuranProvider>().savedLatestQuranSurahNumber ==
-                        _surahNumber
-                    ? CupertinoIcons.bookmark_fill
-                    : CupertinoIcons.bookmark,
-                color: Colors.amber),
-            onPressed: () {
-              final provider = context.read<QuranProvider>();
-              if (provider.savedLatestQuranSurahNumber == _surahNumber) {
-                provider.saveLatestQuranSurahNumber(1);
-              } else {
-                provider.saveLatestQuranSurahNumber(_surahNumber);
-                provider.saveQuranPosition(_surahNumber, 1);
-              }
-            },
-          ),
-          IconButton(
-            onPressed: () => setState(() => _isAudioVisible = !_isAudioVisible),
-            icon: Icon(
-              CupertinoIcons.headphones,
-              size: 22.h,
-              color: _isAudioVisible ? AppPalette.mainColor : null,
-            ),
-          ),
-          IconButton(
-            icon: Icon(CupertinoIcons.list_bullet, size: 22.h),
-            onPressed: () => _showSurahPicker(context),
-          ),
-        ],
-      ),
-      body: InkWell(
-        onTap: () => setState(() => _isAudioVisible = !_isAudioVisible),
-        splashColor: Colors.transparent,
+      body: GestureDetector(
+        onTap: () {
+          setState(() {
+            _showControls = !_showControls;
+            _isAudioVisible = false;
+          });
+        },
         child: Stack(
           children: [
             Column(
               children: [
+                SizedBox(height: MediaQuery.of(context).padding.top),
+                if (_showControls)
+                  SizedBox(
+                    height: 70.h,
+                  ),
                 LinearProgressIndicator(
-                  value: _surahNumber / 114,
+                  value: _currentPageNumber / 604,
                   backgroundColor: AppPalette.mainColor.withValues(alpha: 0.1),
                   color: AppPalette.mainColor,
                   minHeight: 2.h,
                 ),
+                SizedBox(height: 10.h),
+                _buildInfoRow(isDark),
+                SizedBox(height: 10.h),
+                _buildSurahNameCard(context, surahNumber),
                 Expanded(
                   child: PageView.builder(
                     controller: _pageController,
-                    itemCount: 114,
+                    itemCount: 604,
                     onPageChanged: (index) {
                       provider.resetAudio();
-
-                      setState(() => _surahNumber = index + 1);
-                      context
-                          .read<QuranProvider>()
-                          .saveLatestQuranSurahNumber(_surahNumber);
-                      context
-                          .read<QuranProvider>()
-                          .saveQuranPosition(_surahNumber, 1);
+                      int newPage = index + 1;
+                      setState(() => _currentPageNumber = newPage);
+                      provider.saveQuranPageNumber(newPage);
+                      int currentSurah =
+                          quran.getPageData(newPage).first['surah'];
+                      provider.saveLatestQuranSurahNumber(currentSurah);
                     },
                     itemBuilder: (context, index) =>
-                        _buildSurahPage(index + 1, provider),
+                        _buildPageContent(index + 1),
                   ),
                 ),
               ],
             ),
+
+            // 2. الرأس العائم (Top Floating Header)
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              top: _showControls ? 0 : -120.h,
+              left: 0,
+              right: 0,
+              child: _buildFloatingHeader(context),
+            ),
+
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              bottom: _showControls ? 25.h : -100.h,
+              left: 20.w,
+              right: 20.w,
+              child: _buildBottomControls(context, provider, surahNumber),
+            ),
+
+            // 4. كرت المشغل الصوتي
             Align(
               alignment: Alignment.bottomCenter,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 500),
-                transitionBuilder: (child, animation) => SlideTransition(
-                  position: Tween<Offset>(
-                          begin: const Offset(0, 1.2), end: Offset.zero)
-                      .animate(CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.fastLinearToSlowEaseIn)),
-                  child: child,
-                ),
-                child: _isAudioVisible
-                    ? _buildAudioPlayer(context, provider)
-                    : const SizedBox.shrink(),
-              ),
+              child: _isAudioVisible
+                  ? AudioPlayerCard(surahNumber: surahNumber)
+                  : const SizedBox.shrink(),
             ),
           ],
         ),
@@ -200,230 +122,302 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
     );
   }
 
-  Widget _buildSurahPage(int surahNum, QuranProvider provider) {
-    final verseCount = quran.getVerseCount(surahNum);
-    final initialAyah = provider.getSavedPosition(surahNum).ayahNumber;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.w),
-      child: NotificationListener<ScrollNotification>(
-        onNotification: (notification) {
-          _onScrollChanged(surahNum);
-          return false;
-        },
-        child: ScrollablePositionedList.builder(
-          key: PageStorageKey('surah_$surahNum'),
-          itemCount: verseCount,
-          itemScrollController: _scrollControllers[surahNum] ??=
-              ItemScrollController(),
-          itemPositionsListener: _positionsListeners[surahNum] ??=
-              ItemPositionsListener.create(),
-          initialScrollIndex: initialAyah - 1,
-          itemBuilder: (context, index) {
-            final currentPageNum = quran.getPageNumber(surahNum, index + 1);
-            final previousPageNum =
-                index > 0 ? quran.getPageNumber(surahNum, index) : 0;
-
-            return Column(
-              children: [
-                if (currentPageNum != previousPageNum)
-                  PageNumberCard(
-                      pageNumber: currentPageNum,
-                      juz: quran.getJuzNumber(surahNum, index + 1)),
-                QuranSurah(surahNumber: surahNum, index: index),
-                // Padding at the end so the player doesn't cover the last verse
-                if (index == verseCount - 1)
-                  SizedBox(height: _isAudioVisible ? 180.h : 40.h),
-              ],
-            );
-          },
-        ),
+  Widget _buildFloatingHeader(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 10.h,
+        bottom: 15.h,
+        left: 15.w,
+        right: 15.w,
+      ),
+      decoration: BoxDecoration(
+        color:
+            Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.95),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5))
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const BackButton(),
+          Text(
+            AppConstants.holyQuran,
+            style: TextStyle(
+              fontFamily: AppPalette.amiriFontFamily,
+              fontWeight: FontWeight.bold,
+              fontSize: 20.sp,
+            ),
+          ),
+          const SizedBox(width: 40),
+        ],
       ),
     );
   }
 
-  Widget _buildAudioPlayer(BuildContext context, QuranProvider provider) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final String url = quran.getAudioURLBySurah(_surahNumber);
-
+  Widget _buildBottomControls(
+      BuildContext context, QuranProvider provider, int surahNumber) {
     return Container(
-      key: const ValueKey('floating_audio_player'),
-      height: 155.h,
-      margin: EdgeInsets.all(20.h),
+      height: 65.h,
       decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF1E1E1E).withValues(alpha: 0.8)
-            : Colors.white.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(30.r),
-        border: Border.all(color: AppPalette.mainColor.withValues(alpha: 0.15)),
+        color:
+            Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.98),
+        borderRadius: BorderRadius.circular(35.r),
         boxShadow: [
           BoxShadow(
               color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 20,
-              offset: const Offset(0, 10))
+              offset: const Offset(0, -2))
+        ],
+        border: Border.all(color: AppPalette.mainColor.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildControlIcon(
+              icon: Icons.format_size_rounded,
+              onTap: () {
+                showModalBottomSheet(
+                  isScrollControlled: true,
+                  context: context,
+                  builder: (context) => const QuranFontSheet(),
+                );
+              }),
+          _buildControlIcon(
+            icon: provider.savedLatestQuranSurahNumber == surahNumber
+                ? CupertinoIcons.bookmark_fill
+                : CupertinoIcons.bookmark,
+            color: Colors.amber,
+            onTap: () {
+              if (provider.savedLatestQuranSurahNumber == surahNumber) {
+                provider.saveLatestQuranSurahNumber(1);
+                provider.saveQuranPageNumber(1);
+              } else {
+                provider.saveLatestQuranSurahNumber(surahNumber);
+                provider.saveQuranPageNumber(_currentPageNumber);
+              }
+            },
+          ),
+          _buildControlIcon(
+            icon: CupertinoIcons.headphones,
+            color: _isAudioVisible ? AppPalette.mainColor : null,
+            onTap: () => setState(() {
+              _isAudioVisible = !_isAudioVisible;
+              _showControls = false;
+            }),
+          ),
+          _buildControlIcon(
+            icon: CupertinoIcons.list_bullet,
+            onTap: () => _showSurahPicker(context),
+          ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(30.r),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Padding(
-            padding: EdgeInsets.all(15.h),
-            child: Column(
-              children: [
-                _buildAudioSlider(provider),
-                _buildAudioControls(provider, url, isDark),
-              ],
-            ),
-          ),
-        ),
+    );
+  }
+
+  Widget _buildControlIcon(
+      {required IconData icon, Color? color, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(30),
+      child: Padding(
+        padding: EdgeInsets.all(12.w),
+        child: Icon(icon, size: 22.h, color: color),
       ),
     );
   }
 
-  Widget _buildAudioSlider(QuranProvider provider) {
-    return StreamBuilder<Duration?>(
-      stream: provider.positionStream,
-      builder: (context, snapshot) {
-        final bool isSameSurah = provider.currentPlayingSurah == _surahNumber;
-        final position =
-            isSameSurah ? (snapshot.data ?? Duration.zero) : Duration.zero;
-        final duration = isSameSurah
-            ? (provider.player.duration ?? Duration.zero)
-            : Duration.zero;
+  Widget _buildSurahNameCard(BuildContext context, int surahNumber) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
+    Color contentColor = isDark ? Colors.white : AppPalette.mainColor;
 
-        return Column(
-          children: [
-            SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                trackHeight: 4.h,
-                thumbShape: RoundSliderThumbShape(enabledThumbRadius: 7.r),
-                activeTrackColor: AppPalette.mainColor,
-                inactiveTrackColor: AppPalette.mainColor.withValues(alpha: 0.2),
-                thumbColor: AppPalette.mainColor,
-              ),
-              child: Slider(
-                value: position.inMilliseconds.toDouble(),
-                max: duration.inMilliseconds.toDouble() > 0
-                    ? duration.inMilliseconds.toDouble()
-                    : 1.0,
-                onChanged: isSameSurah
-                    ? (v) => provider.seek(Duration(milliseconds: v.toInt()))
-                    : null,
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12.w),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(_formatDuration(position),
-                      style: TextStyle(fontSize: 10.sp, color: Colors.grey)),
-                  Text(_formatDuration(duration),
-                      style: TextStyle(fontSize: 10.sp, color: Colors.grey)),
-                ],
+    int totalAyahs = quran.getVerseCount(surahNumber);
+    String surahOrder = AppHelpers.getArabicNumber(surahNumber);
+    String ayahsCount = AppHelpers.getArabicNumber(totalAyahs);
+
+    return SizedBox(
+      height: 40.h,
+      width: double.infinity,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SvgPicture.asset(
+            'assets/images/surah_border.svg',
+            width: MediaQuery.of(context).size.width * 0.95,
+            fit: BoxFit.contain,
+            colorFilter: ColorFilter.mode(contentColor, BlendMode.srcIn),
+          ),
+          Positioned(
+            left: 74.w,
+            child: Text(
+              'ترتيبها\n$surahOrder',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: AppPalette.amiriFontFamily,
+                fontSize: 7.sp,
+                fontWeight: FontWeight.bold,
+                color: contentColor,
+                height: 1.1,
               ),
             ),
-          ],
-        );
-      },
+          ),
+          Text(
+            quran.getSurahNameArabic(surahNumber),
+            style: TextStyle(
+              fontFamily: AppPalette.amiriFontFamily,
+              fontWeight: FontWeight.bold,
+              fontSize: 20.sp,
+              color: contentColor,
+            ),
+          ),
+          Positioned(
+            right: 74.w,
+            child: Text(
+              'آياتها\n$ayahsCount',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: AppPalette.amiriFontFamily,
+                fontSize: 7.sp,
+                fontWeight: FontWeight.bold,
+                color: contentColor,
+                height: 1.1,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildAudioControls(QuranProvider provider, String url, bool isDark) {
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: () => provider.toggleAudio(_surahNumber, url),
-          child: Container(
-            width: 50.h,
-            height: 50.h,
-            decoration: const BoxDecoration(
-                color: AppPalette.mainColor, shape: BoxShape.circle),
-            child: (provider.isDownloading &&
-                    provider.currentPlayingSurah == _surahNumber)
-                ? const Padding(
-                    padding: EdgeInsets.all(15),
-                    child: CircularProgressIndicator(
-                        color: Colors.white, strokeWidth: 2))
-                : Icon(
-                    (provider.isActuallyPlaying &&
-                            provider.currentPlayingSurah == _surahNumber)
-                        ? Icons.pause_rounded
-                        : Icons.play_arrow_rounded,
-                    color: Colors.white,
-                    size: 30.h),
+  Widget _buildInfoRow(bool isDark) {
+    List<Map<String, dynamic>> pageData =
+        quran.getPageData(_currentPageNumber).cast<Map<String, dynamic>>();
+    int juz =
+        quran.getJuzNumber(pageData.first['surah'], pageData.first['start']);
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('الجزء ${AppHelpers.getArabicNumber(juz)}',
+              style: TextStyle(
+                  fontSize: 12.sp,
+                  color: AppPalette.mainColor,
+                  fontWeight: FontWeight.w600)),
+          Text('صفحة ${AppHelpers.getArabicNumber(_currentPageNumber)}',
+              style: TextStyle(
+                  fontFamily: AppPalette.amiriFontFamily,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPageContent(int pageNum) {
+    List<Map<String, dynamic>> pageData =
+        quran.getPageData(pageNum).cast<Map<String, dynamic>>();
+    bool hasNewSurah =
+        pageData.any((data) => data['start'] == 1 && data['surah'] != 9);
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+      child: Column(
+        children: [
+          if (hasNewSurah) ...[
+            SizedBox(height: 10.h),
+            _buildBasmalaHeader(),
+          ],
+          SizedBox(height: 10.h),
+          Text.rich(
+            TextSpan(children: _buildVersesList(pageData)),
+            textAlign: TextAlign.justify,
+            textDirection: TextDirection.rtl,
           ),
-        ),
-        SizedBox(width: 15.w),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('سورة ${quran.getSurahNameArabic(_surahNumber)}',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16.sp,
-                      color: AppPalette.mainColor)),
-              Text(
-                provider.isDownloading
-                    ? 'جاري التحميل...'
-                    : 'اضغط للاستماع للقارئ',
-                style: TextStyle(fontSize: 11.sp, color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
-        FutureBuilder<bool>(
-          future: provider.checkSurahDownloadedUseCase(_surahNumber),
-          builder: (context, snapshot) {
-            if (provider.isDownloading) {
-              return const InfiniteDownloadIcon();
-            }
-            return Icon(
-              (snapshot.data ?? false)
-                  ? CupertinoIcons.check_mark_circled_solid
-                  : CupertinoIcons.cloud_download,
-              color: (snapshot.data ?? false)
-                  ? AppPalette.mainColor
-                  : Colors.grey.withValues(alpha: 0.5),
-            );
-          },
-        ),
-      ],
+          if (_isAudioVisible) SizedBox(height: 200.h),
+          if (_showControls) SizedBox(height: 100.h),
+        ],
+      ),
+    );
+  }
+
+  List<InlineSpan> _buildVersesList(List<Map<String, dynamic>> pageData) {
+    List<InlineSpan> spans = [];
+    for (var surahData in pageData) {
+      int surahNum = surahData['surah'];
+      int start = surahData['start'];
+      int end = surahData['end'];
+      for (int vNum = start; vNum <= end; vNum++) {
+        spans.add(buildVerseSpan(surahNumber: surahNum, index: vNum - 1));
+      }
+    }
+    return spans;
+  }
+
+  TextSpan buildVerseSpan({required int surahNumber, required int index}) {
+    final int verseNumber = index + 1;
+    String ayah =
+        quran.getVerse(surahNumber, verseNumber, verseEndSymbol: true);
+
+    if (verseNumber == 1 && surahNumber != 9) {
+      const basmalaRegex = 'بِسْمِ اللَّهِ الرَّحْمَـٰنِ الرَّحِيمِ';
+      if (ayah.contains(basmalaRegex)) {
+        ayah = ayah.replaceFirst(basmalaRegex, '').trim();
+      } else {
+        ayah = ayah.replaceFirst(quran.basmala, '').trim();
+      }
+    }
+
+    return TextSpan(
+      text: '$ayah ',
+      style: TextStyle(
+        fontFamily: AppPalette.amiriFontFamily,
+        fontSize: 22.sp,
+        height: 2.2,
+        fontWeight: FontWeight.w500,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white
+            : Colors.black,
+      ),
+    );
+  }
+
+  Widget _buildBasmalaHeader() {
+    return Text(
+      quran.basmala,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+          fontFamily: AppPalette.amiriFontFamily,
+          fontSize: 24.sp,
+          fontWeight: FontWeight.bold),
     );
   }
 
   void _showSurahPicker(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Allows the sheet to take up more screen space
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       useSafeArea: true,
       builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.9, // Opens at 90% height
-        minChildSize: 0.5, // Can be dragged down to 50%
-        maxChildSize: 0.95, // Can be dragged up to 95%
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
         builder: (context, scrollController) {
-          // Pass the scrollController to your QuranList to sync scrolling
           return QuranList(
-            selectedSurahNumber: _surahNumber,
+            selectedSurahNumber:
+                quran.getPageData(_currentPageNumber).first['surah'],
             onSurahSelected: (int surahNum) {
               Navigator.pop(context);
-              context
-                  .read<QuranProvider>()
-                  .saveLatestQuranSurahNumber(surahNum);
-              context.read<QuranProvider>().saveQuranPosition(surahNum, 1);
-              _pageController.jumpToPage(surahNum - 1);
+              int firstPageOfSurah = quran.getPageNumber(surahNum, 1);
+              _pageController.jumpToPage(firstPageOfSurah - 1);
             },
           );
         },
       ),
     );
-  }
-
-  String _formatDuration(Duration d) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    return '${twoDigits(d.inMinutes.remainder(60))}:${twoDigits(d.inSeconds.remainder(60))}';
   }
 }

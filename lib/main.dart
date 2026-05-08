@@ -9,12 +9,11 @@ import 'package:azkar_app/features/names_of_allah/domain/usecases/get_names_of_a
 import 'package:azkar_app/features/names_of_allah/presentation/providers/names_of_allah_provider.dart';
 import 'package:azkar_app/features/quran/domain/usecases/check_surah_downloaded_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/clear_all_saved_quran_values_usecase.dart';
-import 'package:azkar_app/features/quran/domain/usecases/clear_quran_position_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_latest_quran_surah_number_usecase.dart';
-import 'package:azkar_app/features/quran/domain/usecases/get_saved_quran_position_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/get_saved_quran_page_number_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_surah_audio_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/save_latest_quran_surah_number_usecase.dart';
-import 'package:azkar_app/features/quran/domain/usecases/save_quran_position_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/save_quran_page_number_usecase.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/surah/domain/usecases/get_surah_usecase.dart';
 import 'package:azkar_app/features/surah/presentation/providers/surah_provider.dart';
@@ -77,13 +76,13 @@ void main() async {
                 )),
         ChangeNotifierProvider(
             create: (_) => QuranProvider(
-                  savePositionUseCase: sl<SaveQuranPositionUseCase>(),
-                  getSavedPositionUseCase: sl<GetSavedQuranPositionUseCase>(),
+                  saveQuranPageNumberUseCase: sl<SaveQuranPageNumberUsecase>(),
+                  getQuranPageNumberUseCase: sl<GetSavedQuranPageNumberUsecase>(),
                   saveLatestSurahNumberUseCase:
                       sl<SaveLatestQuranSurahNumberUseCase>(),
                   getLatestSurahNumberUseCase:
                       sl<GetLatestQuranSurahNumberUseCase>(),
-                  clearPositionUseCase: sl<ClearQuranPositionUseCase>(),
+                  
                   clearAllSavedQuranValuesUsecase:
                       sl<ClearAllSavedQuranValuesUseCase>(),
                   getSurahAudioUseCase: sl<GetSurahAudioUseCase>(),
