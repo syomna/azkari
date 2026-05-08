@@ -1,122 +1,142 @@
-// // test/data/repositories/quran_repository_impl_test.dart
+import 'package:azkar_app/features/quran/data/datasources/quran_local_data_source.dart';
+import 'package:azkar_app/features/quran/data/repositories/quran_repository_impl.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 
-// import 'package:azkar_app/features/quran/data/datasources/quran_local_data_source.dart';
-// import 'package:azkar_app/features/quran/data/models/quran_position_model.dart';
-// import 'package:azkar_app/features/quran/data/repositories/quran_repository_impl.dart';
-// import 'package:azkar_app/features/quran/domain/entities/quran_position_entity.dart';
-// import 'package:dio/dio.dart';
-// import 'package:flutter_test/flutter_test.dart';
-// import 'package:mockito/annotations.dart';
-// import 'package:mockito/mockito.dart';
+// سيتم إنشاء هذا الملف بعد تشغيل build_runner
+import 'quran_repository_impl_test.mocks.dart';
 
-// import 'quran_repository_impl_test.mocks.dart';
+@GenerateMocks([QuranLocalDataSource, Dio])
+void main() {
+  late QuranRepositoryImpl repository;
+  late MockQuranLocalDataSource mockLocalDataSource;
+  late MockDio mockDio;
 
-// @GenerateMocks([QuranLocalDataSource, Dio])
-// void main() {
-//   late QuranRepositoryImpl repository;
-//   late MockQuranLocalDataSource mockLocalDataSource;
-//   late MockDio mockDio;
+  setUp(() {
+    mockLocalDataSource = MockQuranLocalDataSource();
+    mockDio = MockDio();
+    repository = QuranRepositoryImpl(
+      quranLocalDataSource: mockLocalDataSource,
+      dio: mockDio,
+    );
+  });
 
-//   setUp(() {
-//     mockLocalDataSource = MockQuranLocalDataSource();
-//     mockDio = MockDio();
-//     repository = QuranRepositoryImpl(
-//         quranLocalDataSource: mockLocalDataSource, dio: mockDio);
-//   });
+  group('QuranRepositoryImpl - Local Data', () {
+    test('should return page number from local data source', () {
+      // Arrange
+      const tPageNumber = 50;
+      when(mockLocalDataSource.getSavedQuranPageNumber()).thenReturn(tPageNumber);
 
-//   group('QuranRepositoryImpl', () {
-//     test('should return a QuranPositionEntity when getSavedPosition is called',
-//         () {
-//       final tSurahNumber = 1;
-//       final tAyahNumber = 50;
+      // Act
+      final result = repository.getSavedQuranPageNumber();
 
-//       when(mockLocalDataSource.getSavedPosition(tSurahNumber))
-//           .thenReturn(tQuranPositionModel);
+      // Assert
+      expect(result, tPageNumber);
+      verify(mockLocalDataSource.getSavedQuranPageNumber()).called(1);
+    });
 
-//       // Act
-//       final result = repository.getSavedQuranPageNumber();
+    test('should call local data source to save page number', () async {
+      // Arrange
+      const tPageNumber = 100;
+      when(mockLocalDataSource.saveQuranPageNumber(tPageNumber))
+          .thenAnswer((_) async => {});
 
-//       // Assert
-//       expect(result, isA<QuranPositionEntity>());
-//       expect(result.surahNumber, tSurahNumber);
-//       expect(result.ayahNumber, tAyahNumber);
-//       verify(mockLocalDataSource.getSavedPosition(tSurahNumber)).called(1);
-//       verifyNoMoreInteractions(mockLocalDataSource);
-//     });
+      // Act
+      await repository.saveQuranPageNumber(tPageNumber);
 
-//     test('should call the local data source to save a QuranPositionModel',
-//         () async {
-//       // Arrange
-//       final tSurahNumber = 2;
-//       final tAyahNumber = 100;
-//       final tQuranPositionEntity = QuranPositionEntity(
-//         surahNumber: tSurahNumber,
-//         ayahNumber: tAyahNumber,
-//       );
-//       final tQuranPositionModel = QuranPositionModel(
-//         surahNumber: tSurahNumber,
-//         ayahNumber: tAyahNumber,
-//       );
-//       when(mockLocalDataSource.saveQuranPosition(tQuranPositionModel))
-//           .thenAnswer((_) async => {});
+      // Assert
+      verify(mockLocalDataSource.saveQuranPageNumber(tPageNumber)).called(1);
+    });
 
-//       // Act
-//       await repository.saveQuranPageNumber(tQuranPositionEntity);
+    test('should return latest surah number from local data source', () {
+      // Arrange
+      const tSurahNumber = 18;
+      when(mockLocalDataSource.getLatestQuranSurahNumber()).thenReturn(tSurahNumber);
 
-//       // Assert
-//       verify(mockLocalDataSource.saveQuranPosition(argThat(
-//         isA<QuranPositionModel>()
-//             .having((model) => model.surahNumber, 'surahNumber', tSurahNumber)
-//             .having((model) => model.ayahNumber, 'ayahNumber', tAyahNumber),
-//       ))).called(1);
-//       verifyNoMoreInteractions(mockLocalDataSource);
-//     });
+      // Act
+      final result = repository.getLatestQuranSurahNumber();
 
-//     test('should call the local data source to save the latest surah number',
-//         () async {
-//       // Arrange
-//       final tSurahNumber = 3;
-//       when(mockLocalDataSource.saveLatestQuranSurahNumber(tSurahNumber))
-//           .thenAnswer((_) async => {});
+      // Assert
+      expect(result, tSurahNumber);
+      verify(mockLocalDataSource.getLatestQuranSurahNumber()).called(1);
+    });
 
-//       // Act
-//       await repository.saveLatestQuranSurahNumber(tSurahNumber);
+    test('should call local data source to clear all saved values', () async {
+      // Arrange
+      when(mockLocalDataSource.clearAllSavedQuranValues())
+          .thenAnswer((_) async => {});
 
-//       // Assert
-//       verify(mockLocalDataSource.saveLatestQuranSurahNumber(tSurahNumber))
-//           .called(1);
-//       verifyNoMoreInteractions(mockLocalDataSource);
-//     });
+      // Act
+      await repository.clearAllSavedQuranValues();
 
-//     test('should call the local data source to get the latest surah number',
-//         () {
-//       // Arrange
-//       final tSurahNumber = 4;
-//       when(mockLocalDataSource.getLatestQuranSurahNumber())
-//           .thenReturn(tSurahNumber);
+      // Assert
+      verify(mockLocalDataSource.clearAllSavedQuranValues()).called(1);
+    });
+  });
 
-//       // Act
-//       final result = repository.getLatestQuranSurahNumber();
+  group('QuranRepositoryImpl - Dio Download', () {
+    const tUrl = 'https://example.com/audio.mp3';
+    const tPath = '/storage/emulated/0/audio.mp3';
 
-//       // Assert
-//       expect(result, tSurahNumber);
-//       verify(mockLocalDataSource.getLatestQuranSurahNumber()).called(1);
-//       verifyNoMoreInteractions(mockLocalDataSource);
-//     });
+    test('should complete download successfully when Dio returns success', () async {
+      // Arrange
+      when(mockDio.download(
+        any,
+        any,
+        options: anyNamed('options'),
+      )).thenAnswer((_) async => Response(requestOptions: RequestOptions(path: tUrl)));
 
-//     test('should call the local data source to clear a saved position',
-//         () async {
-//       // Arrange
-//       final tSurahNumber = 5;
-//       when(mockLocalDataSource.clearSavedPosition(tSurahNumber))
-//           .thenAnswer((_) async {});
+      // Act & Assert
+      await expectLater(repository.downloadSurah(tUrl, tPath), completes);
+      verify(mockDio.download(tUrl, tPath, options: anyNamed('options'))).called(1);
+    });
 
-//       // Act
-//       await repository.clearSavedPosition(tSurahNumber);
+    test('should throw connection timeout message when DioException is timeout', () async {
+      // Arrange
+      when(mockDio.download(any, any, options: anyNamed('options')))
+          .thenThrow(DioException(
+        type: DioExceptionType.connectionTimeout,
+        requestOptions: RequestOptions(path: tUrl),
+      ));
 
-//       // Assert
-//       verify(mockLocalDataSource.clearSavedPosition(tSurahNumber)).called(1);
-//       verifyNoMoreInteractions(mockLocalDataSource);
-//     });
-//   });
-// }
+      // Act & Assert
+      expect(
+        () => repository.downloadSurah(tUrl, tPath),
+        throwsA('انتهت مهلة الاتصال، تحقق من الشبكة'),
+      );
+    });
+
+    test('should throw bad response message when server returns error (404/500)', () async {
+      // Arrange
+      when(mockDio.download(any, any, options: anyNamed('options')))
+          .thenThrow(DioException(
+        type: DioExceptionType.badResponse,
+        requestOptions: RequestOptions(path: tUrl),
+        response: Response(
+          statusCode: 404,
+          requestOptions: RequestOptions(path: tUrl),
+        ),
+      ));
+
+      // Act & Assert
+      expect(
+        () => repository.downloadSurah(tUrl, tPath),
+        throwsA('الملف غير موجود على الخادم'),
+      );
+    });
+
+    test('should throw default failure message on generic exception', () async {
+      // Arrange
+      when(mockDio.download(any, any, options: anyNamed('options')))
+          .thenThrow(Exception());
+
+      // Act & Assert
+      expect(
+        () => repository.downloadSurah(tUrl, tPath),
+        throwsA('فشل التحميل، تأكد من وجود مساحة كافية'),
+      );
+    });
+  });
+}
