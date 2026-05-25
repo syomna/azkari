@@ -108,19 +108,54 @@ class NotificationService {
     iOS: DarwinNotificationDetails(presentSound: true),
   );
 
+  NotificationDetails azkarDetailsNoSound = const NotificationDetails(
+    android: AndroidNotificationDetails(
+      'azkar_channel_no_sound_v4',
+      'الأذكار',
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: false,
+    ),
+    iOS: DarwinNotificationDetails(presentSound: false),
+  );
+
 // 2. For Prayer (Custom Adhan sound)
+  // NotificationDetails adhanDetails = const NotificationDetails(
+  //   android: AndroidNotificationDetails(
+  //     'adhan_channel_v3',
+  //     'الأذان',
+  //     importance: Importance.max,
+  //     priority: Priority.high,
+  //     sound:
+  //         RawResourceAndroidNotificationSound('adhan'), // adhan.mp3 in res/raw
+  //     playSound: true,
+  //   ),
+  //   iOS: DarwinNotificationDetails(
+  //     sound: 'adhan.wav',
+  //     presentSound: true,
+  //     presentAlert: true,
+  //     presentBadge: true,
+  //   ),
+  // );
+
+  // 2. For Prayer (Custom Adhan sound)
   NotificationDetails adhanDetails = const NotificationDetails(
     android: AndroidNotificationDetails(
-      'adhan_channel_v3',
+      'adhan_channel_v4', // 1. Incremented to v4 to force Android to recreate the channel with full sound properties
       'الأذان',
       importance: Importance.max,
       priority: Priority.high,
-      sound:
-          RawResourceAndroidNotificationSound('adhan'), // adhan.mp3 in res/raw
+      sound: RawResourceAndroidNotificationSound(
+          'adhan'), // Must be adhan.mp3 in res/raw (keep lowercase, no extension)
       playSound: true,
+      // 2. Critical additions for background audio stability:
+      audioAttributesUsage: AudioAttributesUsage
+          .alarm, // Forces system to treat it with high audio priority
+      fullScreenIntent:
+          true, // Helps wake up the lock screen on aggressive devices
     ),
     iOS: DarwinNotificationDetails(
-      sound: 'adhan.wav',
+      sound: 'adhan.wav', // 3. MUST be under 30 seconds and properly encoded
       presentSound: true,
       presentAlert: true,
       presentBadge: true,
@@ -157,8 +192,9 @@ class NotificationService {
         timeOfDay.minute,
       );
 
-      // If already passed today, skip — will be rescheduled tomorrow at midnight
-      if (scheduledDate.isBefore(now)) continue;
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
 
       await flutterLocalNotificationsPlugin.zonedSchedule(
         id: prayerIds[key]!,
@@ -167,6 +203,7 @@ class NotificationService {
         scheduledDate: scheduledDate,
         notificationDetails: adhanDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
       );
     }
   }
@@ -228,7 +265,7 @@ class NotificationService {
         // This picks a different Adhkar based on the time slot index
         body: adhkarPool[i % adhkarPool.length],
         scheduledDate: scheduledDate,
-        notificationDetails: azkarDetails,
+        notificationDetails: azkarDetailsNoSound,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time,
       );
@@ -259,6 +296,7 @@ class NotificationService {
         scheduledDate: scheduledDate,
         notificationDetails: azkarDetails, // Standard sound for reminder
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
       );
     }
   }
@@ -285,7 +323,7 @@ class NotificationService {
         title: 'وردك اليومي',
         body: 'حان وقت قراءة وردك من القرآن الكريم',
         scheduledDate: scheduledDate,
-        notificationDetails: azkarDetails,
+        notificationDetails: azkarDetailsNoSound,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
     }
@@ -309,7 +347,7 @@ class NotificationService {
         body:
             DuaaNotifications.blessings[i % DuaaNotifications.blessings.length],
         scheduledDate: scheduledDate,
-        notificationDetails: azkarDetails,
+        notificationDetails: azkarDetailsNoSound,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time,
       );

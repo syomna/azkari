@@ -77,12 +77,12 @@ void main() async {
         ChangeNotifierProvider(
             create: (_) => QuranProvider(
                   saveQuranPageNumberUseCase: sl<SaveQuranPageNumberUsecase>(),
-                  getQuranPageNumberUseCase: sl<GetSavedQuranPageNumberUsecase>(),
+                  getQuranPageNumberUseCase:
+                      sl<GetSavedQuranPageNumberUsecase>(),
                   saveLatestSurahNumberUseCase:
                       sl<SaveLatestQuranSurahNumberUseCase>(),
                   getLatestSurahNumberUseCase:
                       sl<GetLatestQuranSurahNumberUseCase>(),
-                  
                   clearAllSavedQuranValuesUsecase:
                       sl<ClearAllSavedQuranValuesUseCase>(),
                   getSurahAudioUseCase: sl<GetSurahAudioUseCase>(),
@@ -93,7 +93,8 @@ void main() async {
             create: (_) => NotificationProvider(
                 notificationService: sl<NotificationService>(),
                 prayerTimeService: sl<PrayerTimeService>(),
-                sharedPreferences: sl<SharedPreferences>())),
+                sharedPreferences: sl<SharedPreferences>())
+              ..applyNotificationStates()),
       ],
       child: const MyApp(),
     ),
