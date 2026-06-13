@@ -1,9 +1,12 @@
-import 'package:azkar_app/core/presentation/providers/notification_provider.dart';
-import 'package:azkar_app/core/presentation/providers/theme_provider.dart';
+import 'package:azkar_app/core/providers/notification_provider.dart';
+import 'package:azkar_app/core/providers/theme_provider.dart';
 import 'package:azkar_app/core/services/notifications_service.dart';
 import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
+import 'package:azkar_app/features/azkar/domain/usecases/delete_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart';
+import 'package:azkar_app/features/azkar/domain/usecases/get_custom_azkar_usecase.dart';
+import 'package:azkar_app/features/azkar/domain/usecases/save_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:azkar_app/features/names_of_allah/domain/usecases/get_names_of_allah_usecase.dart';
 import 'package:azkar_app/features/names_of_allah/presentation/providers/names_of_allah_provider.dart';
@@ -55,10 +58,12 @@ void main() async {
                 )),
         ChangeNotifierProvider(
           create: (_) => AzkarProvider(
-            getAzkarUseCase: sl<GetAzkarUseCase>(),
-            prayerTimeService: sl<PrayerTimeService>(),
-            sharedPreferences: sl<SharedPreferences>(),
-          ),
+              getAzkarUseCase: sl<GetAzkarUseCase>(),
+              prayerTimeService: sl<PrayerTimeService>(),
+              sharedPreferences: sl<SharedPreferences>(),
+              getCustomAzkarUseCase: sl<GetCustomAzkarUseCase>(),
+              saveCustomAzkarUseCase: sl<SaveCustomAzkarUseCase>(),
+              deleteCustomAzkarUseCase: sl<DeleteCustomAzkarUseCase>()),
         ),
         ChangeNotifierProvider(
           create: (_) => NamesOfAllahProvider(
@@ -93,8 +98,7 @@ void main() async {
             create: (_) => NotificationProvider(
                 notificationService: sl<NotificationService>(),
                 prayerTimeService: sl<PrayerTimeService>(),
-                sharedPreferences: sl<SharedPreferences>())
-              ..applyNotificationStates()),
+                sharedPreferences: sl<SharedPreferences>())),
       ],
       child: const MyApp(),
     ),

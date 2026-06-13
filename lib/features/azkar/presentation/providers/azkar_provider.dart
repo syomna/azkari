@@ -1,35 +1,66 @@
+import 'dart:developer';
+
 import 'package:adhan/adhan.dart';
 import 'package:azkar_app/core/enums/app_loading_status.dart';
 import 'package:azkar_app/core/services/prayer_times_service.dart';
-import 'package:azkar_app/features/azkar/domain/entities/zikr_entity.dart';
+import 'package:azkar_app/features/azkar/domain/entities/zekr_entity.dart';
+import 'package:azkar_app/features/azkar/domain/usecases/delete_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart';
+// IMPORT YOUR NEW USE CASES HERE
+import 'package:azkar_app/features/azkar/domain/usecases/get_custom_azkar_usecase.dart';
+import 'package:azkar_app/features/azkar/domain/usecases/save_custom_azkar_usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AzkarProvider extends ChangeNotifier {
   final GetAzkarUseCase getAzkarUseCase;
+  // Added new custom use case dependencies
+  final GetCustomAzkarUseCase getCustomAzkarUseCase;
+  final SaveCustomAzkarUseCase saveCustomAzkarUseCase;
+  final DeleteCustomAzkarUseCase deleteCustomAzkarUseCase;
+
   final PrayerTimeService prayerTimeService;
   final SharedPreferences sharedPreferences;
 
   AzkarProvider({
     required this.getAzkarUseCase,
+    required this.getCustomAzkarUseCase,
+    required this.saveCustomAzkarUseCase,
+    required this.deleteCustomAzkarUseCase,
     required this.prayerTimeService,
     required this.sharedPreferences,
   }) {
-    loadPrayerTimes();
+    _initData();
   }
 
-  // Azkar state (unchanged)
+  // Orchestrate app initialization steps safely
+  Future<void> _initData() async {
+    await loadAzkar();
+    loadFavorites();
+    await loadCustomAzkar(); // Load sqflite cache data right away
+    await loadPrayerTimes();
+  }
+
+  // --- Core Azkar Asset State ---
   List<ZekrEntity> _azkarList = [];
   AppLoadingStatus _azkarStatus = AppLoadingStatus.initial;
   String? _azkarErrorMessage;
   List<ZekrEntity> get azkarList => _azkarList;
   AppLoadingStatus get azkarStatus => _azkarStatus;
   String? get azkarErrorMessage => _azkarErrorMessage;
+
   PrayerTimes? _prayerTimes;
   PrayerTimes? get prayerTimes => _prayerTimes;
 
-  // Callback to trigger notification reschedule when overrides change
+  // --- 📍 NEW: Custom User-Generated Azkar State ---
+  List<ZekrEntity> _customAzkarList = [];
+  List<ZekrEntity> get customAzkarList => _customAzkarList;
+
+  // Extends your navigation menus by getting all unique custom titles
+  List<String> get customCategories {
+    return _customAzkarList.map((item) => item.category).toSet().toList();
+  }
+
   VoidCallback? onOverrideChanged;
 
   Future<void> loadPrayerTimes() async {
@@ -47,24 +78,20 @@ class AzkarProvider extends ChangeNotifier {
     }
 
     if (lat != null && lng != null) {
-      // Recalculate if stored date isn't today
       final storedDate = sharedPreferences.getString('prayer_time_date');
-      final today =
-          DateTime.now().toIso8601String().substring(0, 10); // "2026-03-24"
+      final today = DateTime.now().toIso8601String().substring(0, 10);
 
       if (storedDate != today) {
         await prayerTimeService.calculateAndStore(lat, lng, sharedPreferences);
         await sharedPreferences.setString('prayer_time_date', today);
       }
 
-      // Only used for nextPrayer() highlighting in the UI
       _prayerTimes = prayerTimeService.getTimes(lat, lng);
       notifyListeners();
     }
   }
 
-  // --- Overrides (delegate everything to PrayerTimeService) ---
-
+  // --- Overrides ---
   Map<String, TimeOfDay> get allDisplayTimes =>
       prayerTimeService.getEffectiveTimes(sharedPreferences);
 
@@ -91,7 +118,7 @@ class AzkarProvider extends ChangeNotifier {
     onOverrideChanged?.call();
   }
 
-  // Azkar loading (unchanged)
+  // Standard Azkar loading from JSON
   Future<void> loadAzkar() async {
     if (_azkarStatus == AppLoadingStatus.loading) return;
     _azkarStatus = AppLoadingStatus.loading;
@@ -112,22 +139,74 @@ class AzkarProvider extends ChangeNotifier {
     );
   }
 
-  // Inside AzkarProvider class
+  // --- 📍 NEW: Custom SQLite Interaction Handlers via Use Cases ---
 
+  /// Fetches your user-defined entries natively from the database helper layer
+  Future<void> loadCustomAzkar() async {
+    final result = await getCustomAzkarUseCase();
+    result.fold(
+      (failure) =>
+          null, // Fail silently or assign to a dedicated error state if needed
+      (customList) {
+        _customAzkarList = customList;
+        notifyListeners();
+      },
+    );
+  }
+
+  /// Packages multi-field dynamic inputs into pure entities and writes them to sqflite
+  Future<void> saveCustomAzkarCategory({
+    required String categoryTitle,
+    required List<Map<String, dynamic>> azkarItems,
+  }) async {
+    final List<ZekrEntity> modelsToInsert = azkarItems.map((item) {
+      return ZekrEntity(
+        category: categoryTitle,
+        zekr: item['text'] as String,
+        count: (item['count']
+            as int).toString(), // 👈 Here is your custom counter parsed properly!
+        description: '',
+        reference: '',
+      );
+    }).toList();
+
+    if (modelsToInsert.isNotEmpty) {
+      final result = await saveCustomAzkarUseCase(modelsToInsert);
+      await result.fold(
+        (failure) => null, // Handle local disk write constraint exceptions here
+        (_) async =>
+            await loadCustomAzkar(), // Reload immediately to populate UI maps
+      );
+    }
+  }
+
+  Future<void> deleteCustomCategory(String categoryName) async {
+    final result = await deleteCustomAzkarUseCase(categoryName);
+
+    result.fold(
+      (failure) => log('Failed to delete category: ${failure.message}'),
+      (_) async {
+        log('Successfully deleted category: $categoryName');
+        // Refresh your in-memory list so the UI updates instantly!
+        await loadCustomAzkar();
+        loadFavorites(); // Also refresh favorites in case the deleted category was favorited
+      },
+    );
+  }
+
+  // --- Favorites Management ---
   List<String> _favCategories = [];
-  List<String> _favIndividualItems = []; // Stores unique IDs or Text hashes
+  List<String> _favIndividualItems = [];
 
   List<String> get favCategories => _favCategories;
   List<String> get favIndividualItems => _favIndividualItems;
 
-// 1. Load everything on startup
   void loadFavorites() {
     _favCategories = sharedPreferences.getStringList('fav_categories') ?? [];
     _favIndividualItems = sharedPreferences.getStringList('fav_items') ?? [];
     notifyListeners();
   }
 
-// 2. Category Level Logic (The "Folder")
   Future<void> toggleCategoryFavorite(String categoryName) async {
     if (_favCategories.contains(categoryName)) {
       _favCategories.remove(categoryName);
@@ -138,8 +217,6 @@ class AzkarProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-// 3. Individual Item Logic (The "Zikr" or "Ayah")
-// Tip: If your ZekrEntity has a unique ID, use that. If not, use the zikr text.
   Future<void> toggleItemFavorite(String itemIdentifier) async {
     if (_favIndividualItems.contains(itemIdentifier)) {
       _favIndividualItems.remove(itemIdentifier);
@@ -150,7 +227,6 @@ class AzkarProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-// Helpers for the UI
   bool isCategoryFav(String name) => _favCategories.contains(name);
   bool isItemFav(String identifier) => _favIndividualItems.contains(identifier);
 }

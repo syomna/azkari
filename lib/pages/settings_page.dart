@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:azkar_app/core/constants/app_constants.dart';
-import 'package:azkar_app/core/presentation/providers/notification_provider.dart';
-import 'package:azkar_app/core/presentation/providers/theme_provider.dart';
+import 'package:azkar_app/core/providers/notification_provider.dart';
+import 'package:azkar_app/core/providers/theme_provider.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';

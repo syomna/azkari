@@ -58,8 +58,8 @@ class NotificationProvider extends ChangeNotifier {
 
       if (lat != null && lng != null) {
         await _notificationService.schedulePrayerNotifications();
-        _notificationService.scheduleNotifications(lat, lng); // Morning
-        _notificationService.scheduleNotifications(lat, lng,
+        _notificationService.scheduleDayNightNotifications(lat, lng); // Morning
+        _notificationService.scheduleDayNightNotifications(lat, lng,
             isDay: true); // Evening
       }
 

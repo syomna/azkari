@@ -2,9 +2,13 @@ import 'package:azkar_app/core/services/notifications_service.dart';
 import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:azkar_app/features/azkar/data/datasources/azkar_local_data_source.dart';
 import 'package:azkar_app/features/azkar/data/datasources/azkar_local_data_source_impl.dart';
+import 'package:azkar_app/features/azkar/data/datasources/sqflite/database_helper.dart';
 import 'package:azkar_app/features/azkar/data/repositories/azkar_repository_impl.dart';
 import 'package:azkar_app/features/azkar/domain/repositories/azkar_repository.dart';
+import 'package:azkar_app/features/azkar/domain/usecases/delete_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart';
+import 'package:azkar_app/features/azkar/domain/usecases/get_custom_azkar_usecase.dart';
+import 'package:azkar_app/features/azkar/domain/usecases/save_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/names_of_allah/data/datasources/names_of_allah_local_data_source.dart';
 import 'package:azkar_app/features/names_of_allah/data/datasources/names_of_allah_local_data_source_impl.dart';
 import 'package:azkar_app/features/names_of_allah/data/repositories/names_of_allah_repositoy_impl.dart';
@@ -48,11 +52,15 @@ Future<void> init() async {
       () => NotificationService.instance);
   sl.registerLazySingleton<PrayerTimeService>(() => PrayerTimeService());
   // Azkar
+  sl.registerLazySingleton<DatabaseHelper>(() => DatabaseHelper.instance);
   sl.registerLazySingleton<AzkarLocalDataSource>(
-      () => AzkarLocalDataSourceImpl());
+      () => AzkarLocalDataSourceImpl(dbHelper: sl()));
   sl.registerLazySingleton<AzkarRepository>(
       () => AzkarRepositoryImpl(azkarLocalDataSource: sl()));
   sl.registerLazySingleton(() => GetAzkarUseCase(azkarRepository: sl()));
+  sl.registerLazySingleton(() => GetCustomAzkarUseCase(azkarRepository: sl()));
+  sl.registerLazySingleton(() => SaveCustomAzkarUseCase(azkarRepository: sl()));
+  sl.registerLazySingleton(() => DeleteCustomAzkarUseCase(azkarRepository: sl()));
 
   // Names of allah
   sl.registerLazySingleton<NamesOfAllahLocalDataSource>(

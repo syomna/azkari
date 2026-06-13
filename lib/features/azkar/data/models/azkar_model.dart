@@ -1,4 +1,4 @@
-import 'package:azkar_app/features/azkar/domain/entities/zikr_entity.dart';
+import 'package:azkar_app/features/azkar/domain/entities/zekr_entity.dart';
 
 class AzkarModel extends ZekrEntity {
   const AzkarModel(
@@ -11,7 +11,7 @@ class AzkarModel extends ZekrEntity {
   factory AzkarModel.fromJson(Map<String, dynamic> json) {
     return AzkarModel(
       category: json['category'],
-      count: json['count'],
+      count: json['count'].toString(),
       description: json['description'],
       reference: json['reference'],
       zekr: json['zekr'],
@@ -24,7 +24,7 @@ class AzkarModel extends ZekrEntity {
       'count': count,
       'description': description,
       'reference': reference,
-      'zikr': zekr,
+      'zekr': zekr,
     };
   }
 }

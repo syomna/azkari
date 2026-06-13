@@ -127,11 +127,11 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
                       provider.resetAudio();
                       setState(() => _currentIndex = index);
 
-                      final targetPage = _virtualPages[index];
-                      int targetSurah = targetPage.surahSegments.first['surah'];
+                      // final targetPage = _virtualPages[index];
+                      // int targetSurah = targetPage.surahSegments.first['surah'];
 
-                      provider.saveQuranPageNumber(targetPage.globalPageNumber);
-                      provider.saveLatestQuranSurahNumber(targetSurah);
+                      // provider.saveQuranPageNumber(targetPage.globalPageNumber);
+                      // provider.saveLatestQuranSurahNumber(targetSurah);
                     },
                     itemBuilder: (context, index) =>
                         _buildPageContent(_virtualPages[index]),
@@ -236,22 +236,7 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
                   builder: (context) => const QuranFontSheet(),
                 );
               }),
-          _buildControlIcon(
-            icon: provider.savedLatestQuranSurahNumber == surahNumber
-                ? CupertinoIcons.bookmark_fill
-                : CupertinoIcons.bookmark,
-            color: Colors.amber,
-            onTap: () {
-              if (provider.savedLatestQuranSurahNumber == surahNumber) {
-                provider.saveLatestQuranSurahNumber(1);
-                provider.saveQuranPageNumber(1);
-              } else {
-                provider.saveLatestQuranSurahNumber(surahNumber);
-                provider.saveQuranPageNumber(
-                    _virtualPages[_currentIndex].globalPageNumber);
-              }
-            },
-          ),
+          _bookmark(provider, surahNumber),
           _buildControlIcon(
             icon: CupertinoIcons.headphones,
             color: _isAudioVisible ? AppPalette.mainColor : null,
@@ -266,6 +251,32 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _bookmark(QuranProvider provider, int surahNumber) {
+    // int index = _virtualPages.indexWhere((page) =>
+    //     page.globalPageNumber ==
+    //         _virtualPages[_currentIndex].globalPageNumber &&
+    //     page.surahSegments.first['surah'] == surahNumber);
+    final targetPage = _virtualPages[_currentIndex];
+    int targetSurah = targetPage.surahSegments.first['surah'];
+
+    bool isBookmarked = provider.savedLatestQuranSurahNumber == targetSurah &&
+        provider.savedLatestQuranPageNumber == targetPage.globalPageNumber;
+    return _buildControlIcon(
+      icon:
+          isBookmarked ? CupertinoIcons.bookmark_fill : CupertinoIcons.bookmark,
+      color: Colors.amber,
+      onTap: () {
+        if (isBookmarked) {
+          provider.saveLatestQuranSurahNumber(1);
+          provider.saveQuranPageNumber(1);
+        } else {
+          provider.saveQuranPageNumber(targetPage.globalPageNumber);
+          provider.saveLatestQuranSurahNumber(targetSurah);
+        }
+      },
     );
   }
 

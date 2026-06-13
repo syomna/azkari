@@ -98,40 +98,38 @@ class PrayerTimesCard extends StatelessWidget {
           )
         : '--:--';
 
-    return Expanded(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(name,
-              maxLines: 1,
-              style: TextStyle(
-                fontSize: 11.sp,
-                color: isActive
-                    ? AppPalette.mainColor
-                    : isDark
-                        ? Colors.white
-                        : Colors.black54,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              )),
-          SizedBox(height: 4.h),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
-              decoration: BoxDecoration(
-                color: isActive ? AppPalette.mainColor : Colors.transparent,
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: Text(formattedTime,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: isActive ? Colors.white : null,
-                    fontWeight: FontWeight.w600,
-                  )),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(name,
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: isActive
+                  ? AppPalette.mainColor
+                  : isDark
+                      ? Colors.white
+                      : Colors.black54,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            )),
+        SizedBox(height: 4.h),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: isActive ? AppPalette.mainColor : Colors.transparent,
+              borderRadius: BorderRadius.circular(8.r),
             ),
+            child: Text(formattedTime,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: isActive ? Colors.white : null,
+                  fontWeight: FontWeight.w600,
+                )),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -1,4 +1,4 @@
-import 'package:azkar_app/core/presentation/providers/theme_provider.dart';
+import 'package:azkar_app/core/providers/theme_provider.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';

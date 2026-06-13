@@ -34,3 +34,10 @@ class JsonParsingFailure extends Failure {
   @override
   List<Object?> get props => [message];
 }
+
+class DatabaseFailure extends Failure {
+  const DatabaseFailure(super.message);
+
+  @override
+  List<Object?> get props => [message];
+}

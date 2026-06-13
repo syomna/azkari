@@ -208,7 +208,7 @@ class NotificationService {
     }
   }
 
-  Future<void> scheduleNotifications(double lat, double lng,
+  Future<void> scheduleDayNightNotifications(double lat, double lng,
       {bool isDay = false}) async {
     // await testRepeatingZoned();
     final TimezoneInfo timeZoneInfo = await FlutterTimezone.getLocalTimezone();

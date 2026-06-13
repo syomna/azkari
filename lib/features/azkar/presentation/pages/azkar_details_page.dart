@@ -1,6 +1,6 @@
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
-import 'package:azkar_app/features/azkar/domain/entities/zikr_entity.dart';
+import 'package:azkar_app/features/azkar/domain/entities/zekr_entity.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/display_azkar.dart';
 import 'package:flutter/material.dart';
@@ -12,10 +12,12 @@ class AzkarDetailsPage extends StatefulWidget {
     super.key,
     required this.title,
     required this.categoryName,
+    this.isCustomCategory = false,
   });
 
   final String title;
   final String categoryName;
+  final bool isCustomCategory; // Flag to indicate if this is a custom category
 
   @override
   State<AzkarDetailsPage> createState() => _AzkarDetailsPageState();
@@ -44,11 +46,17 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // final azkarProvider = Provider.of<AzkarProvider>(context);
-    List<ZekrEntity> currentDisplayedAzkar = context
-        .read<AzkarProvider>()
-        .azkarList
-        .where((zekr) => zekr.category == widget.categoryName)
-        .toList();
+    List<ZekrEntity> currentDisplayedAzkar = widget.isCustomCategory
+        ? context
+            .read<AzkarProvider>()
+            .customAzkarList
+            .where((zekr) => zekr.category == widget.categoryName)
+            .toList()
+        : context
+            .read<AzkarProvider>()
+            .azkarList
+            .where((zekr) => zekr.category == widget.categoryName)
+            .toList();
 
     return Scaffold(
       appBar: AppBar(

@@ -1,7 +1,7 @@
 import 'package:azkar_app/core/error/failures.dart';
 import 'package:azkar_app/features/azkar/data/models/azkar_model.dart';
 import 'package:azkar_app/features/azkar/data/repositories/azkar_repository_impl.dart';
-import 'package:azkar_app/features/azkar/domain/entities/zikr_entity.dart';
+import 'package:azkar_app/features/azkar/domain/entities/zekr_entity.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';

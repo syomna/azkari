@@ -1,4 +1,4 @@
-import 'package:azkar_app/core/presentation/providers/notification_provider.dart';
+import 'package:azkar_app/core/providers/notification_provider.dart';
 import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';

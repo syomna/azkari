@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:azkar_app/core/enums/app_loading_status.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
-import 'package:azkar_app/features/azkar/domain/entities/zikr_entity.dart';
+import 'package:azkar_app/features/azkar/domain/entities/zekr_entity.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
