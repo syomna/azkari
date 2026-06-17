@@ -60,7 +60,7 @@ class DatabaseHelper {
 
   Future<int> deleteCustomCategory(String categoryName) async {
     final db = await instance.database;
-    
+
     return await db.delete(
       'custom_azkar',
       where: 'category = ?',

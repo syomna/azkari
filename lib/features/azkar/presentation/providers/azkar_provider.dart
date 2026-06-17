@@ -163,8 +163,8 @@ class AzkarProvider extends ChangeNotifier {
       return ZekrEntity(
         category: categoryTitle,
         zekr: item['text'] as String,
-        count: (item['count']
-            as int).toString(), // 👈 Here is your custom counter parsed properly!
+        count: (item['count'] as int)
+            .toString(), // 👈 Here is your custom counter parsed properly!
         description: '',
         reference: '',
       );
@@ -180,16 +180,24 @@ class AzkarProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> deleteCustomCategory(String categoryName) async {
+  Future<void> deleteCustomCategory(String categoryName,
+      {bool keepInFavorites = false}) async {
     final result = await deleteCustomAzkarUseCase(categoryName);
 
     result.fold(
       (failure) => log('Failed to delete category: ${failure.message}'),
       (_) async {
         log('Successfully deleted category: $categoryName');
-        // Refresh your in-memory list so the UI updates instantly!
         await loadCustomAzkar();
-        loadFavorites(); // Also refresh favorites in case the deleted category was favorited
+
+        if (!keepInFavorites) {
+          if (_favCategories.contains(categoryName)) {
+            _favCategories.remove(categoryName);
+            await sharedPreferences.setStringList(
+                'fav_categories', _favCategories);
+          }
+        }
+        loadFavorites();
       },
     );
   }
