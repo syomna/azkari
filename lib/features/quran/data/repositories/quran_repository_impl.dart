@@ -43,7 +43,7 @@ class QuranRepositoryImpl implements QuranRepository {
           receiveTimeout: const Duration(minutes: 5),
         ),
       );
-      await File(tempPath).rename(savePath);
+      await moveTempFile(tempPath, savePath);
     } on DioException catch (e) {
       await _deleteTempFile(tempPath);
       String errorMessage = 'حدث خطأ أثناء التحميل';
@@ -57,6 +57,10 @@ class QuranRepositoryImpl implements QuranRepository {
       await _deleteTempFile(tempPath);
       throw 'فشل التحميل، تأكد من وجود مساحة كافية';
     }
+  }
+
+  Future<void> moveTempFile(String from, String to) async {
+    await File(from).rename(to);
   }
 
   Future<void> _deleteTempFile(String path) async {

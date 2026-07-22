@@ -9,15 +9,25 @@ import 'package:mockito/mockito.dart';
 import 'quran_repository_impl_test.mocks.dart';
 
 @GenerateMocks([QuranLocalDataSource, Dio])
+class TestableQuranRepositoryImpl extends QuranRepositoryImpl {
+  TestableQuranRepositoryImpl({
+    required super.quranLocalDataSource,
+    required super.dio,
+  });
+
+  @override
+  Future<void> moveTempFile(String from, String to) async {}
+}
+
 void main() {
-  late QuranRepositoryImpl repository;
+  late TestableQuranRepositoryImpl repository;
   late MockQuranLocalDataSource mockLocalDataSource;
   late MockDio mockDio;
 
   setUp(() {
     mockLocalDataSource = MockQuranLocalDataSource();
     mockDio = MockDio();
-    repository = QuranRepositoryImpl(
+    repository = TestableQuranRepositoryImpl(
       quranLocalDataSource: mockLocalDataSource,
       dio: mockDio,
     );
@@ -90,7 +100,7 @@ void main() {
 
       // Act & Assert
       await expectLater(repository.downloadSurah(tUrl, tPath), completes);
-      verify(mockDio.download(tUrl, tPath, options: anyNamed('options'))).called(1);
+      verify(mockDio.download(tUrl, '$tPath.tmp', options: anyNamed('options'))).called(1);
     });
 
     test('should throw connection timeout message when DioException is timeout', () async {
