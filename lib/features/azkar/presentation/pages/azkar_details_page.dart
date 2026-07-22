@@ -46,15 +46,12 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // final azkarProvider = Provider.of<AzkarProvider>(context);
+    final azkarProvider = context.watch<AzkarProvider>();
     List<ZekrEntity> currentDisplayedAzkar = widget.isCustomCategory
-        ? context
-            .read<AzkarProvider>()
-            .customAzkarList
+        ? azkarProvider.customAzkarList
             .where((zekr) => zekr.category == widget.categoryName)
             .toList()
-        : context
-            .read<AzkarProvider>()
-            .azkarList
+        : azkarProvider.azkarList
             .where((zekr) => zekr.category == widget.categoryName)
             .toList();
 

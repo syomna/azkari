@@ -97,7 +97,7 @@ class QuranFontSheet extends StatelessWidget {
               _buildStepButton(
                 icon: Icons.add_rounded,
                 onTap: () {
-                  if (theme.textScaleFactor < 2.0) {
+                  if (theme.textScaleFactor < 1.5) {
                     theme.setTextScaleFactor(theme.textScaleFactor + 0.1);
                   }
                 },

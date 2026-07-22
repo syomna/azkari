@@ -71,12 +71,19 @@ class QiblaProvider extends ChangeNotifier {
       // Clean Arch: Provider doesn't know about Geolocator, only the Repo
       _qiblaDirection = await getQiblaDirectionUseCase.call();
 
-      _compassSubscription = FlutterCompass.events!
-          .distinct((prev, next) => (prev.heading! - next.heading!).abs() < 0.5)
-          .listen((event) {
-        _currentHeading = event.heading ?? 0;
-        notifyListeners();
-      });
+      if (FlutterCompass.events != null) {
+        _compassSubscription = FlutterCompass.events!
+            .distinct((prev, next) {
+              final prevHeading = prev.heading;
+              final nextHeading = next.heading;
+              if (prevHeading == null || nextHeading == null) return false;
+              return (prevHeading - nextHeading).abs() < 0.5;
+            })
+            .listen((event) {
+          _currentHeading = event.heading ?? 0;
+          notifyListeners();
+        });
+      }
 
       _isLoading = false;
       _errorMessage = null;

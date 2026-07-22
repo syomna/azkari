@@ -124,14 +124,19 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
                     controller: _pageController,
                     itemCount: _virtualPages.length,
                     onPageChanged: (index) {
-                      provider.resetAudio();
+                      final targetPage = _virtualPages[index];
+                      int targetSurah = targetPage.surahSegments.first['surah'];
+                      int prevSurah =
+                          _virtualPages[_currentIndex].surahSegments.first['surah'];
+
+                      if (targetSurah != prevSurah) {
+                        provider.resetAudio();
+                      }
+
                       setState(() => _currentIndex = index);
 
-                      // final targetPage = _virtualPages[index];
-                      // int targetSurah = targetPage.surahSegments.first['surah'];
-
-                      // provider.saveQuranPageNumber(targetPage.globalPageNumber);
-                      // provider.saveLatestQuranSurahNumber(targetSurah);
+                      provider.saveQuranPageNumber(targetPage.globalPageNumber);
+                      provider.saveLatestQuranSurahNumber(targetSurah);
                     },
                     itemBuilder: (context, index) =>
                         _buildPageContent(_virtualPages[index]),
@@ -270,8 +275,7 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
       color: Colors.amber,
       onTap: () {
         if (isBookmarked) {
-          provider.saveLatestQuranSurahNumber(1);
-          provider.saveQuranPageNumber(1);
+          provider.clearSavedPosition();
         } else {
           provider.saveQuranPageNumber(targetPage.globalPageNumber);
           provider.saveLatestQuranSurahNumber(targetSurah);

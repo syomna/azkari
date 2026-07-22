@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
-class PrayerTimesCard extends StatelessWidget {
+class PrayerTimesCard extends StatefulWidget {
   final PrayerTimes times;
-  final Map<String, TimeOfDay?> displayTimes; // ✅ override-aware times
+  final Map<String, TimeOfDay?> displayTimes;
 
   const PrayerTimesCard({
     super.key,
@@ -16,62 +16,73 @@ class PrayerTimesCard extends StatelessWidget {
     required this.displayTimes,
   });
 
-  Stream<DateTime> _minuteStream() {
-    return Stream.periodic(const Duration(minutes: 1), (_) => DateTime.now());
+  @override
+  State<PrayerTimesCard> createState() => _PrayerTimesCardState();
+}
+
+class _PrayerTimesCardState extends State<PrayerTimesCard> {
+  late Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final nextPrayer = widget.times.nextPrayer();
 
-    return StreamBuilder<DateTime>(
-      stream: _minuteStream(),
-      builder: (context, snapshot) {
-        final nextPrayer = times.nextPrayer();
-
-        return Container(
-          width: double.infinity,
-          padding: EdgeInsets.all(15.w),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20.r),
-            gradient: LinearGradient(
-              colors: isDark
-                  ? [
-                      AppPalette.mainColor.withValues(alpha: 0.2),
-                      Colors.black12
-                    ]
-                  : [AppPalette.mainColor.withValues(alpha: 0.1), Colors.white],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            border:
-                Border.all(color: AppPalette.mainColor.withValues(alpha: 0.1)),
-          ),
-          child: Column(
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(15.w),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20.r),
+        gradient: LinearGradient(
+          colors: isDark
+              ? [
+                  AppPalette.mainColor.withValues(alpha: 0.2),
+                  Colors.black12
+                ]
+              : [AppPalette.mainColor.withValues(alpha: 0.1), Colors.white],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border:
+            Border.all(color: AppPalette.mainColor.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        children: [
+          _buildHeader(),
+          SizedBox(height: 12.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildHeader(),
-              SizedBox(height: 12.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildPrayerItem('الفجر', displayTimes['fajr'],
-                      nextPrayer == Prayer.fajr, isDark),
-                  _buildPrayerItem('الشروق', displayTimes['sunrise'],
-                      nextPrayer == Prayer.sunrise, isDark),
-                  _buildPrayerItem('الظهر', displayTimes['dhuhr'],
-                      nextPrayer == Prayer.dhuhr, isDark),
-                  _buildPrayerItem('العصر', displayTimes['asr'],
-                      nextPrayer == Prayer.asr, isDark),
-                  _buildPrayerItem('المغرب', displayTimes['maghrib'],
-                      nextPrayer == Prayer.maghrib, isDark),
-                  _buildPrayerItem('العشاء', displayTimes['isha'],
-                      nextPrayer == Prayer.isha, isDark),
-                ],
-              ),
+              _buildPrayerItem('الفجر', widget.displayTimes['fajr'],
+                  nextPrayer == Prayer.fajr, isDark),
+              _buildPrayerItem('الشروق', widget.displayTimes['sunrise'],
+                  nextPrayer == Prayer.sunrise, isDark),
+              _buildPrayerItem('الظهر', widget.displayTimes['dhuhr'],
+                  nextPrayer == Prayer.dhuhr, isDark),
+              _buildPrayerItem('العصر', widget.displayTimes['asr'],
+                  nextPrayer == Prayer.asr, isDark),
+              _buildPrayerItem('المغرب', widget.displayTimes['maghrib'],
+                  nextPrayer == Prayer.maghrib, isDark),
+              _buildPrayerItem('العشاء', widget.displayTimes['isha'],
+                  nextPrayer == Prayer.isha, isDark),
             ],
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -91,7 +102,6 @@ class PrayerTimesCard extends StatelessWidget {
 
   Widget _buildPrayerItem(
       String name, TimeOfDay? time, bool isActive, bool isDark) {
-    // Convert TimeOfDay → formatted string, fallback to --:-- if null
     final formattedTime = time != null
         ? DateFormat.jm('ar').format(
             DateTime(0, 0, 0, time.hour, time.minute),

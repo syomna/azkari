@@ -21,9 +21,11 @@ class PrayerTimeTile extends StatelessWidget {
   });
 
   String _formatTime(TimeOfDay t) {
-    final h = t.hour.toString().padLeft(2, '0');
+    final hour = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
+    final h = hour.toString().padLeft(2, '0');
     final m = t.minute.toString().padLeft(2, '0');
-    return '$h:$m';
+    final period = t.period == DayPeriod.am ? 'ص' : 'م';
+    return '$h:$m $period';
   }
 
   @override

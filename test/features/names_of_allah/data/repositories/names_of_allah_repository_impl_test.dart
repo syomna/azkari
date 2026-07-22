@@ -1,6 +1,6 @@
 import 'package:azkar_app/core/error/failures.dart';
 import 'package:azkar_app/features/names_of_allah/data/models/names_of_allah_model.dart';
-import 'package:azkar_app/features/names_of_allah/data/repositories/names_of_allah_repositoy_impl.dart';
+import 'package:azkar_app/features/names_of_allah/data/repositories/names_of_allah_repository_impl.dart';
 import 'package:azkar_app/features/names_of_allah/domain/entities/names_of_allah_entity.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,12 +9,12 @@ import 'package:mockito/mockito.dart';
 import 'names_of_allah_repository_impl_test.mocks.mocks.dart';
 
 void main() {
-  late NamesOfAllahRepositoyImpl repository;
+  late NamesOfAllahRepositoryImpl repository;
   late MockNamesOfAllahLocalDataSource mockNamesOfAllahLocalDataSource;
 
   setUp(() {
     mockNamesOfAllahLocalDataSource = MockNamesOfAllahLocalDataSource();
-    repository = NamesOfAllahRepositoyImpl(
+    repository = NamesOfAllahRepositoryImpl(
       namesOfAllahLocalDataSource: mockNamesOfAllahLocalDataSource,
     );
   });

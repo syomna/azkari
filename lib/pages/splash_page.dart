@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:azkar_app/core/providers/notification_provider.dart';
 import 'package:azkar_app/core/providers/theme_provider.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
@@ -14,7 +15,9 @@ import 'package:provider/provider.dart';
 import 'package:upgrader/upgrader.dart';
 
 class SplashPage extends StatefulWidget {
-  const SplashPage({super.key});
+  final VoidCallback? onReady;
+
+  const SplashPage({super.key, this.onReady});
 
   @override
   State<SplashPage> createState() => _SplashPageState();
@@ -27,11 +30,13 @@ class _SplashPageState extends State<SplashPage> {
   @override
   void initState() {
     super.initState();
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   if (mounted) {
-    //     context.read<NotificationProvider>().refreshNotifications();
-    //   }
-    // });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        // Force-creates NotificationProvider and triggers scheduling.
+        // Without this, notifications are never scheduled until Settings is opened.
+        context.read<NotificationProvider>();
+      }
+    });
     // Trigger the fade-in animation shortly after boot
     Future.delayed(const Duration(milliseconds: 200), () {
       if (mounted) setState(() => _opacity = 1.0);
@@ -43,7 +48,9 @@ class _SplashPageState extends State<SplashPage> {
     super.didChangeDependencies();
     if (!_initialized) {
       _initialized = true;
-      _initializeAndNavigate();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _initializeAndNavigate();
+      });
     }
   }
 
@@ -70,7 +77,7 @@ class _SplashPageState extends State<SplashPage> {
     await Future.wait([
       minSplashDuration,
       ...dataLoadingFutures,
-    ]);
+    ]).catchError((_) => <void>[]);
 
     if (mounted) {
       Navigator.of(context).pushReplacement(
@@ -85,7 +92,11 @@ class _SplashPageState extends State<SplashPage> {
           },
           transitionDuration: const Duration(milliseconds: 800),
         ),
-      );
+      ).then((_) {
+        // After navigating to HomePage, fire the callback if the app
+        // was launched from a notification (e.g. to open AdhanPage).
+        widget.onReady?.call();
+      });
     }
   }
 

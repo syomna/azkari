@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:azkar_app/features/azkar/data/models/azkar_model.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -5,12 +7,22 @@ import 'package:sqflite/sqflite.dart';
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
+  static Completer<Database>? _completer;
 
   DatabaseHelper._init();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('custom_azkar.db');
+    if (_completer != null) return _completer!.future;
+    _completer = Completer<Database>();
+    try {
+      _database = await _initDB('custom_azkar.db');
+      _completer!.complete(_database);
+    } catch (e) {
+      _completer!.completeError(e);
+      _completer = null;
+      rethrow;
+    }
     return _database!;
   }
 

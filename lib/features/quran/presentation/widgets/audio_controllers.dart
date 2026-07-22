@@ -9,10 +9,35 @@ import 'package:provider/provider.dart';
 import 'package:quran/quran.dart' as quran;
 
 
-class AudioControllers extends StatelessWidget {
+class AudioControllers extends StatefulWidget {
   const AudioControllers({super.key, required this.surahNumber, required this.url});
 final int surahNumber;
 final String url;
+
+  @override
+  State<AudioControllers> createState() => _AudioControllersState();
+}
+
+class _AudioControllersState extends State<AudioControllers> {
+  late Future<bool> _isDownloadedFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _isDownloadedFuture = _checkDownloaded();
+  }
+
+  Future<bool> _checkDownloaded() async {
+    final provider = Provider.of<QuranProvider>(context, listen: false);
+    return provider.checkSurahDownloadedUseCase(widget.surahNumber);
+  }
+
+  void _refreshDownloadStatus() {
+    setState(() {
+      _isDownloadedFuture = _checkDownloaded();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
         final provider = Provider.of<QuranProvider>(context);
@@ -20,21 +45,24 @@ final String url;
     return Row(
       children: [
         GestureDetector(
-          onTap: () => provider.toggleAudio(surahNumber, url),
+          onTap: () async {
+            await provider.toggleAudio(widget.surahNumber, widget.url);
+            _refreshDownloadStatus();
+          },
           child: Container(
             width: 50.h,
             height: 50.h,
             decoration: const BoxDecoration(
                 color: AppPalette.mainColor, shape: BoxShape.circle),
             child: (provider.isDownloading &&
-                    provider.currentPlayingSurah == surahNumber)
+                    provider.currentPlayingSurah == widget.surahNumber)
                 ? const Padding(
                     padding: EdgeInsets.all(15),
                     child: CircularProgressIndicator(
                         color: Colors.white, strokeWidth: 2))
                 : Icon(
                     (provider.isActuallyPlaying &&
-                            provider.currentPlayingSurah == surahNumber)
+                            provider.currentPlayingSurah == widget.surahNumber)
                         ? Icons.pause_rounded
                         : Icons.play_arrow_rounded,
                     color: Colors.white,
@@ -46,7 +74,7 @@ final String url;
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('سورة ${quran.getSurahNameArabic(surahNumber)}',
+              Text('سورة ${quran.getSurahNameArabic(widget.surahNumber)}',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16.sp,
@@ -61,7 +89,7 @@ final String url;
           ),
         ),
         FutureBuilder<bool>(
-          future: provider.checkSurahDownloadedUseCase(surahNumber),
+          future: _isDownloadedFuture,
           builder: (context, snapshot) {
             if (provider.isDownloading) {
               return const InfiniteDownloadIcon();

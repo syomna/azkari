@@ -11,7 +11,7 @@ import 'package:azkar_app/features/azkar/domain/usecases/get_custom_azkar_usecas
 import 'package:azkar_app/features/azkar/domain/usecases/save_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/names_of_allah/data/datasources/names_of_allah_local_data_source.dart';
 import 'package:azkar_app/features/names_of_allah/data/datasources/names_of_allah_local_data_source_impl.dart';
-import 'package:azkar_app/features/names_of_allah/data/repositories/names_of_allah_repositoy_impl.dart';
+import 'package:azkar_app/features/names_of_allah/data/repositories/names_of_allah_repository_impl.dart';
 import 'package:azkar_app/features/names_of_allah/domain/repositories/names_of_allah_repository.dart';
 import 'package:azkar_app/features/names_of_allah/domain/usecases/get_names_of_allah_usecase.dart';
 import 'package:azkar_app/features/qibla/data/repositories/qibla_repository_impl.dart';
@@ -24,6 +24,7 @@ import 'package:azkar_app/features/quran/data/repositories/quran_repository_impl
 import 'package:azkar_app/features/quran/domain/repositories/quran_repository.dart';
 import 'package:azkar_app/features/quran/domain/usecases/check_surah_downloaded_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/clear_all_saved_quran_values_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/clear_saved_position_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_latest_quran_surah_number_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_saved_quran_page_number_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_surah_audio_usecase.dart';
@@ -31,10 +32,9 @@ import 'package:azkar_app/features/quran/domain/usecases/save_latest_quran_surah
 import 'package:azkar_app/features/quran/domain/usecases/save_quran_page_number_usecase.dart';
 import 'package:azkar_app/features/surah/data/datasources/surah_local_data_source.dart';
 import 'package:azkar_app/features/surah/data/datasources/surah_local_data_source_impl.dart';
-import 'package:azkar_app/features/surah/data/repositories/surah_repositoy_impl.dart';
+import 'package:azkar_app/features/surah/data/repositories/surah_repository_impl.dart';
 import 'package:azkar_app/features/surah/domain/repositories/surah_repository.dart';
 import 'package:azkar_app/features/surah/domain/usecases/get_surah_usecase.dart';
-import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -66,7 +66,7 @@ Future<void> init() async {
   sl.registerLazySingleton<NamesOfAllahLocalDataSource>(
       () => NamesOfAllahLocalDataSourceImpl());
   sl.registerLazySingleton<NamesOfAllahRepository>(
-      () => NamesOfAllahRepositoyImpl(namesOfAllahLocalDataSource: sl()));
+      () => NamesOfAllahRepositoryImpl(namesOfAllahLocalDataSource: sl()));
   sl.registerLazySingleton(
       () => GetNamesOfAllahUseCase(namesOfAllahRepository: sl()));
 
@@ -74,9 +74,8 @@ Future<void> init() async {
   sl.registerLazySingleton<SurahLocalDataSource>(
       () => SurahLocalDataSourceImpl());
   sl.registerLazySingleton<SurahRepository>(
-      () => SurahRepositoyImpl(surahLocalDataSource: sl()));
+      () => SurahRepositoryImpl(surahLocalDataSource: sl()));
   sl.registerLazySingleton(() => GetSurahUseCase(surahRepository: sl()));
-  sl.registerFactory(() => TasbehProvider(sharedPreferences: sl()));
 // Register Dio as a Singleton here
   sl.registerLazySingleton<Dio>(() => Dio(
         BaseOptions(
@@ -100,6 +99,8 @@ Future<void> init() async {
       () => SaveLatestQuranSurahNumberUseCase(quranRepository: sl()));
   sl.registerLazySingleton(
       () => ClearAllSavedQuranValuesUseCase(quranRepository: sl()));
+  sl.registerLazySingleton(
+      () => ClearSavedPositionUseCase(quranRepository: sl()));
   sl.registerLazySingleton(() => GetSurahAudioUseCase(sl()));
   sl.registerLazySingleton(() => CheckSurahDownloadedUseCase(sl()));
 

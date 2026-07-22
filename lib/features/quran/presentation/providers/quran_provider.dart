@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:azkar_app/features/quran/domain/usecases/check_surah_downloaded_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/clear_all_saved_quran_values_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/clear_saved_position_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_latest_quran_surah_number_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_saved_quran_page_number_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_surah_audio_usecase.dart';
@@ -14,6 +17,7 @@ class QuranProvider with ChangeNotifier {
   final GetLatestQuranSurahNumberUseCase getLatestSurahNumberUseCase;
   final SaveLatestQuranSurahNumberUseCase saveLatestSurahNumberUseCase;
   final ClearAllSavedQuranValuesUseCase clearAllSavedQuranValuesUsecase;
+  final ClearSavedPositionUseCase clearSavedPositionUseCase;
   final GetSurahAudioUseCase getSurahAudioUseCase;
   final CheckSurahDownloadedUseCase checkSurahDownloadedUseCase;
 
@@ -23,8 +27,27 @@ class QuranProvider with ChangeNotifier {
       required this.getLatestSurahNumberUseCase,
       required this.saveLatestSurahNumberUseCase,
       required this.clearAllSavedQuranValuesUsecase,
+      required this.clearSavedPositionUseCase,
       required this.getSurahAudioUseCase,
-      required this.checkSurahDownloadedUseCase});
+      required this.checkSurahDownloadedUseCase}) {
+    _playerSubscription = _player.playbackEventStream.listen(
+      (event) => notifyListeners(),
+      onError: (Object e, StackTrace st) {
+        _isDownloading = false;
+        _errorMessage = 'حدث خطأ في مشغل الصوت';
+        notifyListeners();
+      },
+    );
+  }
+
+  late final StreamSubscription<PlaybackEvent> _playerSubscription;
+
+  @override
+  void dispose() {
+    _playerSubscription.cancel();
+    _player.dispose();
+    super.dispose();
+  }
 
   int? get savedLatestQuranSurahNumber => getLatestSurahNumberUseCase();
   int? get savedLatestQuranPageNumber => getQuranPageNumberUseCase();
@@ -49,6 +72,11 @@ class QuranProvider with ChangeNotifier {
 
   Future<void> clearAllSavedQuranValues() async {
     await clearAllSavedQuranValuesUsecase();
+    notifyListeners();
+  }
+
+  Future<void> clearSavedPosition() async {
+    await clearSavedPositionUseCase();
     notifyListeners();
   }
 
@@ -132,15 +160,6 @@ class QuranProvider with ChangeNotifier {
       _isDownloading = false;
       await _player.setFilePath(path);
       await _player.play();
-
-      // Listeners remain the same...
-      _player.playbackEventStream.listen((event) {
-        notifyListeners();
-      }, onError: (Object e, StackTrace st) {
-        _isDownloading = false;
-        _errorMessage = 'حدث خطأ في مشغل الصوت';
-        notifyListeners();
-      });
     } catch (e) {
       _isDownloading = false;
       // This catches the string thrown by your RepositoryImpl
@@ -161,5 +180,12 @@ class QuranProvider with ChangeNotifier {
     _currentPlayingSurah = null;
 
     notifyListeners();
+  }
+
+  void pauseForNotification() {
+    if (_player.playing) {
+      _player.pause();
+      notifyListeners();
+    }
   }
 }

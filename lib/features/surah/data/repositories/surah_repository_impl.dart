@@ -5,9 +5,9 @@ import 'package:azkar_app/features/surah/domain/entities/surah_entity.dart';
 import 'package:azkar_app/features/surah/domain/repositories/surah_repository.dart';
 import 'package:dartz/dartz.dart';
 
-class SurahRepositoyImpl extends SurahRepository {
-  SurahLocalDataSource surahLocalDataSource;
-  SurahRepositoyImpl({required this.surahLocalDataSource});
+class SurahRepositoryImpl extends SurahRepository {
+  final SurahLocalDataSource surahLocalDataSource;
+  SurahRepositoryImpl({required this.surahLocalDataSource});
   @override
   Future<Either<Failure, List<SurahEntity>>> getSurah() async {
     Either<Failure, List<SurahModel>> result =

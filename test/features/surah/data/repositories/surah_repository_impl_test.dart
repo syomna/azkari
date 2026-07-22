@@ -1,6 +1,6 @@
 import 'package:azkar_app/core/error/failures.dart';
 import 'package:azkar_app/features/surah/data/models/surah_model.dart';
-import 'package:azkar_app/features/surah/data/repositories/surah_repositoy_impl.dart';
+import 'package:azkar_app/features/surah/data/repositories/surah_repository_impl.dart';
 import 'package:azkar_app/features/surah/domain/entities/surah_entity.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,13 +9,13 @@ import 'package:mockito/mockito.dart';
 import 'surah_repository_impl_test.mocks.mocks.dart';
 
 void main() {
-  late SurahRepositoyImpl surahRepositoryImpl;
+  late SurahRepositoryImpl surahRepositoryImpl;
   late MockSurahLocalDataSource mockSurahLocalDataSource;
 
   setUp(() {
     mockSurahLocalDataSource = MockSurahLocalDataSource();
     surahRepositoryImpl =
-        SurahRepositoyImpl(surahLocalDataSource: mockSurahLocalDataSource);
+        SurahRepositoryImpl(surahLocalDataSource: mockSurahLocalDataSource);
   });
 
   group('getSurah', () {

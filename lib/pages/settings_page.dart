@@ -44,97 +44,146 @@ class _SettingsPageState extends State<SettingsPage> {
             style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22.sp)),
         centerTitle: true,
       ),
-      body: Consumer4<ThemeProvider, NotificationProvider, TasbehProvider,
-          QuranProvider>(
-        builder: (context, theme, notify, tasbeh, quran, child) {
-          return SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-            child: Column(
-              children: [
-                _buildSectionHeader('مواقيت الصلاة'),
-                _buildSettingsCard([
-                  _buildListTile('ضبط مواقيت الصلاة', Icons.access_time_rounded,
-                      () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => const PrayerTimesSettingsScreen()));
-                  }),
-                ]),
-
-                SizedBox(height: 25.h),
-                // 1. Appearance Section
-                _buildSectionHeader('المظهر العام'),
-                _buildSettingsCard([
-                  SwitchTile(
-                    title: 'الوضع المظلم',
-                    // icon: Icons.dark_mode_rounded,
-                    value: !theme.isLight,
-                    onChanged: (v) => theme.toggleTheme(),
-                  ),
-                  _divider(),
-                  _divider(),
-                  _buildFontSlider(theme, context),
-                ]),
-
-                SizedBox(height: 25.h),
-
-                // 2. Notifications Section (Simplified)
-                _buildSectionHeader('التنبيهات'),
-                _buildSettingsCard([
-                  SwitchTile(
-                    title: 'تفعيل الإشعارات',
-                    // icon: Icons.notifications_active_rounded,
-                    value: notify.areNotificationsEnabled,
-                    onChanged: (v) => notify.toggleAllNotifications(v),
-                  ),
-                ]),
-
-                SizedBox(height: 25.h),
-
-                // 3. General Section
-                _buildSectionHeader('عام'),
-
-                _buildSettingsCard([
-                  _buildListTile('مسح عداد التسبيح', Icons.refresh_rounded, () {
-                    tasbeh.resetAll();
-                    AppHelpers.showToast('تم مسح العداد!');
-                  }),
-                  _divider(),
-                  _buildListTile('مسح تقدم القرآن', Icons.auto_stories_rounded,
-                      () {
-                    quran.clearAllSavedQuranValues();
-                    AppHelpers.showToast('تم مسح التقدم!');
-                  }),
-                  _divider(),
-                  _buildListTile('مشاركة التطبيق', Icons.share_rounded,
-                      () async {
-                    final box = context.findRenderObject() as RenderBox?;
-                    String appStoreLink = '';
-                    if (Platform.isIOS) {
-                      appStoreLink = AppConstants.appStoreURL;
-                    } else if (Platform.isAndroid) {
-                      appStoreLink = AppConstants.playStoreURL;
+      body: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+        child: Column(
+          children: [
+            _buildSectionHeader('مواقيت الصلاة'),
+            _buildSettingsCard([
+              _buildListTile('ضبط مواقيت الصلاة', Icons.access_time_rounded,
+                  () {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const PrayerTimesSettingsScreen()));
+              }),
+            ]),
+            SizedBox(height: 25.h),
+            _buildSectionHeader('المظهر العام'),
+            Consumer<ThemeProvider>(
+              builder: (context, theme, _) => _buildSettingsCard([
+                SwitchTile(
+                  title: 'الوضع المظلم',
+                  value: !theme.isLight,
+                  onChanged: (v) => theme.toggleTheme(),
+                ),
+                _divider(),
+                _divider(),
+                _buildFontSlider(theme, context),
+              ]),
+            ),
+            SizedBox(height: 25.h),
+            _buildSectionHeader('التنبيهات'),
+            Consumer<NotificationProvider>(
+              builder: (context, notify, _) => _buildSettingsCard([
+                SwitchTile(
+                  title: 'تفعيل الإشعارات',
+                  value: notify.areNotificationsEnabled,
+                  onChanged: (v) async {
+                    final error = await notify.toggleAllNotifications(v);
+                    if (!context.mounted) return;
+                    if (v == true && error != null) {
+                      AppHelpers.showToast(error, status: ToastStatus.error);
+                    } else if (v == true && error == null) {
+                      AppHelpers.showToast('تم تفعيل الإشعارات');
+                    } else {
+                      AppHelpers.showToast('تم إيقاف الإشعارات');
                     }
+                  },
+                ),
+                if (notify.areNotificationsEnabled) ...[
+                  _divider(),
+                  SwitchTile(
+                    title: 'أذان الصلاة',
+                    value: notify.isPrayerAdhanEnabled,
+                    onChanged: (v) => notify.toggleNotificationType(
+                        NotificationProvider.prayerAdhanKey, v),
+                  ),
+                  _divider(),
+                  SwitchTile(
+                    title: 'أذكار الصباح والمساء',
+                    value: notify.isMorningEveningAzkarEnabled,
+                    onChanged: (v) => notify.toggleNotificationType(
+                        NotificationProvider.morningEveningAzkarKey, v),
+                  ),
+                  _divider(),
+                  SwitchTile(
+                    title: 'تذكيرات عشوائية',
+                    value: notify.isPeriodicAzkarEnabled,
+                    onChanged: (v) => notify.toggleNotificationType(
+                        NotificationProvider.periodicAzkarKey, v),
+                  ),
+                  _divider(),
+                  SwitchTile(
+                    title: 'تذكير ما قبل الأذان',
+                    value: notify.isPreAdhanEnabled,
+                    onChanged: (v) => notify.toggleNotificationType(
+                        NotificationProvider.preAdhanKey, v),
+                  ),
+                  _divider(),
+                  SwitchTile(
+                    title: 'ورد القرآن بعد الصلاة',
+                    value: notify.isQuranAfterSalahEnabled,
+                    onChanged: (v) => notify.toggleNotificationType(
+                        NotificationProvider.quranAfterSalahKey, v),
+                  ),
+                  _divider(),
+                  SwitchTile(
+                    title: 'الصلاة على النبي ﷺ',
+                    value: notify.isProphetBlessingsEnabled,
+                    onChanged: (v) => notify.toggleNotificationType(
+                        NotificationProvider.prophetBlessingsKey, v),
+                  ),
+                ],
+              ]),
+            ),
+            SizedBox(height: 25.h),
+            _buildSectionHeader('عام'),
+            Consumer2<TasbehProvider, QuranProvider>(
+              builder: (context, tasbeh, quran, _) => _buildSettingsCard([
+                _buildListTile('مسح عداد التسبيح', Icons.refresh_rounded, () {
+                  tasbeh.resetAll();
+                  AppHelpers.showToast('تم مسح العداد!');
+                }),
+                _divider(),
+                _buildListTile('مسح تقدم القرآن', Icons.auto_stories_rounded,
+                    () {
+                  quran.clearAllSavedQuranValues();
+                  AppHelpers.showToast('تم مسح التقدم!');
+                }),
+                _divider(),
+                _buildListTile('مشاركة التطبيق', Icons.share_rounded, () async {
+                  final box = context.findRenderObject() as RenderBox?;
+                  String appStoreLink = '';
+                  if (Platform.isIOS) {
+                    appStoreLink = AppConstants.appStoreURL;
+                  } else if (Platform.isAndroid) {
+                    appStoreLink = AppConstants.playStoreURL;
+                  }
 
-                    final String shareMessage =
-                        'تطبيق أذكاري - رفيقك اليومي للذكر والدعاء. حمله الآن!\n$appStoreLink';
+                  final String shareMessage =
+                      'تطبيق أذكاري - رفيقك اليومي للذكر والدعاء. حمله الآن!\n$appStoreLink';
 
-                    await SharePlus.instance.share(ShareParams(
+                  ShareParams params = ShareParams(
+                    text: shareMessage,
+                    subject: 'تطبيق أذكاري',
+                  );
+                  if (box != null && box.hasSize) {
+                    params = ShareParams(
                       text: shareMessage,
                       subject: 'تطبيق أذكاري',
                       sharePositionOrigin:
-                          box!.localToGlobal(Offset.zero) & box.size,
-                    ));
-                  }),
-                  _divider(),
-                  _buildListTile('عن التطبيق', Icons.info_rounded,
-                      () => _showAboutAppDialog(context, packageInfo)),
-                ]),
-
-                SizedBox(height: 40.h),
-              ],
+                          box.localToGlobal(Offset.zero) & box.size,
+                    );
+                  }
+                  await SharePlus.instance.share(params);
+                }),
+                _divider(),
+                _buildListTile('عن التطبيق', Icons.info_rounded,
+                    () => _showAboutAppDialog(context, packageInfo)),
+              ]),
             ),
-          );
-        },
+            SizedBox(height: 40.h),
+          ],
+        ),
       ),
     );
   }
@@ -165,8 +214,8 @@ Widget _buildSectionHeader(String title) {
 
 Widget _buildSettingsCard(List<Widget> children) {
   return Container(
+    clipBehavior: Clip.antiAlias,
     decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.05), // For Dark Mode
       borderRadius: BorderRadius.circular(20.r),
       border: Border.all(color: AppPalette.mainColor.withValues(alpha: 0.1)),
     ),
@@ -176,6 +225,7 @@ Widget _buildSettingsCard(List<Widget> children) {
 
 Widget _buildListTile(String title, IconData icon, VoidCallback onTap) {
   return ListTile(
+    tileColor: Colors.transparent,
     leading: Icon(icon, color: AppPalette.mainColor, size: 22.h),
     title: Text(title,
         style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w500)),

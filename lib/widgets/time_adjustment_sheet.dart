@@ -69,12 +69,8 @@ class _TimeAdjustmentSheetState extends State<TimeAdjustmentSheet> {
             onRemove: () => _updateTime(_hour, _minute - 1),
           ),
 
-          // SizedBox(height: 15.h),
-          // Text(period,
-          //     style: TextStyle(
-          //         fontSize: 16.sp,
-          //         fontWeight: FontWeight.bold,
-          //         color: AppPalette.mainColor)),
+          SizedBox(height: 15.h),
+          _buildAmPmToggle(),
 
           SizedBox(height: 30.h),
           SizedBox(
@@ -123,6 +119,42 @@ class _TimeAdjustmentSheetState extends State<TimeAdjustmentSheet> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildAmPmToggle() {
+    final isPm = _hour >= 12;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _amPmButton('ص', !isPm),
+        SizedBox(width: 12.w),
+        _amPmButton('م', isPm),
+      ],
+    );
+  }
+
+  Widget _amPmButton(String label, bool selected) {
+    return GestureDetector(
+      onTap: () {
+        if (label == 'م' && !selected) {
+          _updateTime(_hour + 12, _minute);
+        } else if (label == 'ص' && !selected) {
+          _updateTime(_hour - 12, _minute);
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: selected ? AppPalette.mainColor : Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+        child: Text(label,
+            style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.bold,
+                color: selected ? Colors.white : Colors.grey.shade600)),
+      ),
     );
   }
 

@@ -22,7 +22,7 @@ class AppPalette {
       ),
     ),
     textTheme: Typography.englishLike2018
-        .apply(fontSizeFactor: 1.sp)
+        .apply(fontSizeFactor: 1.0)
         .apply(fontFamily: tajawalFontFamily, bodyColor: Colors.white),
   );
 
@@ -41,7 +41,7 @@ class AppPalette {
         ),
         primaryColor: mainColor,
         textTheme: Typography.englishLike2018
-            .apply(fontSizeFactor: 1.sp)
+            .apply(fontSizeFactor: 1.0)
             .apply(fontFamily: tajawalFontFamily, bodyColor: Colors.black),
       )
       .copyWith(primaryColorDark: Colors.white);

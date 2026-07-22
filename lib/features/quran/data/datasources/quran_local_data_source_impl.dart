@@ -26,6 +26,12 @@ class QuranLocalDataSourceImpl implements QuranLocalDataSource {
   }
 
   @override
+  Future<void> clearSavedPosition() async {
+    await sharedPreferences.remove(_kSavedLatestQuranSurahNumberKey);
+    await sharedPreferences.remove(_kSavedQuranPageNumberKey);
+  }
+
+  @override
   Future<void> clearAllSavedQuranValues() async {
     await sharedPreferences.remove(_kSavedAyahNumberKey);
     await sharedPreferences.remove(_kSavedLatestQuranSurahNumberKey);

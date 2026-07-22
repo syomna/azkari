@@ -13,26 +13,43 @@ class PrayerTimeService {
   static const _overridePrefix = 'prayer_override_';
   static const prayerKeys = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
+  Future<Position?>? _ongoingLocationFetch;
+
   Future<Position?> getCurrentLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      await Geolocator.openLocationSettings();
-      serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return null;
-    }
+    return _ongoingLocationFetch ??= _fetchLocation();
+  }
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      try {
-        permission = await Geolocator.requestPermission();
-      } catch (e) {
-        return null;
+  Future<Position?> _fetchLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        await Geolocator.openLocationSettings();
+        serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled) return null;
       }
-      if (permission == LocationPermission.denied) return null;
-    }
-    if (permission == LocationPermission.deniedForever) return null;
 
-    return await Geolocator.getCurrentPosition();
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        try {
+          permission = await Geolocator.requestPermission();
+        } catch (e) {
+          return null;
+        }
+        if (permission == LocationPermission.denied) return null;
+      }
+      if (permission == LocationPermission.deniedForever) return null;
+
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 30),
+        ),
+      );
+    } catch (e) {
+      return null;
+    } finally {
+      _ongoingLocationFetch = null;
+    }
   }
 
   PrayerTimes getTimes(double lat, double lng) {
@@ -67,27 +84,25 @@ class PrayerTimeService {
   Map<String, TimeOfDay> getEffectiveTimes(SharedPreferences prefs) {
     final result = <String, TimeOfDay>{};
     for (final key in prayerKeys) {
-      // Check override first
-      final override = prefs.getString('$_overridePrefix$key');
-      if (override != null) {
-        final parts = override.split(':');
-        result[key] = TimeOfDay(
-          hour: int.parse(parts[0]),
-          minute: int.parse(parts[1]),
-        );
-        continue;
-      }
-      // Fall back to calculated
-      final calculated = prefs.getString('$_timePrefix$key');
-      if (calculated != null) {
-        final parts = calculated.split(':');
-        result[key] = TimeOfDay(
-          hour: int.parse(parts[0]),
-          minute: int.parse(parts[1]),
-        );
+      final raw = prefs.getString('$_overridePrefix$key') ??
+          prefs.getString('$_timePrefix$key');
+      if (raw != null) {
+        result[key] = _parseTimeOfDay(raw);
       }
     }
     return result;
+  }
+
+  TimeOfDay _parseTimeOfDay(String raw) {
+    try {
+      final parts = raw.split(':');
+      return TimeOfDay(
+        hour: int.parse(parts[0]),
+        minute: parts.length > 1 ? int.parse(parts[1]) : 0,
+      );
+    } catch (_) {
+      return TimeOfDay.now();
+    }
   }
 
   void saveOverride(String key, TimeOfDay time, SharedPreferences prefs) {

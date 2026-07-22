@@ -23,6 +23,18 @@ class _AddAzkarBottomSheetState extends State<AddAzkarBottomSheet> {
   ];
 
   @override
+  void dispose() {
+    titleController.dispose();
+    for (final c in zikrControllers) {
+      c.dispose();
+    }
+    for (final c in countControllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 

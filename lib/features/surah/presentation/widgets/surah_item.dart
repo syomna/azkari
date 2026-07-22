@@ -15,6 +15,9 @@ class SurahItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isFav = context.select<AzkarProvider, bool>(
+      (p) => p.isItemFav(surah.surah),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,13 +100,11 @@ class SurahItem extends StatelessWidget {
                           .read<AzkarProvider>()
                           .toggleItemFavorite(surah.surah),
                       child: Icon(
-                        context.watch<AzkarProvider>().isItemFav(surah.surah)
+                        isFav
                             ? Icons.star_rounded
                             : Icons.star_outline_rounded,
                         size: 22.sp,
-                        color: context
-                                .watch<AzkarProvider>()
-                                .isItemFav(surah.surah)
+                        color: isFav
                             ? const Color(0xFFF59E0B)
                             : (isDark ? Colors.white38 : Colors.black26),
                       ),

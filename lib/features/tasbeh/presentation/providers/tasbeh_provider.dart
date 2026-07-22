@@ -17,7 +17,7 @@ class TasbehProvider extends ChangeNotifier {
   Future<void> loadCount() async {
     _savedCount = sharedPreferences.getInt(_kTotalTasbehCountKey) ?? 0;
     _count = sharedPreferences.getInt(_kCurrentSessionTasbehCountKey) ?? 0;
-    // notifyListeners();
+    notifyListeners();
   }
 
   Future<void> addCount() async {

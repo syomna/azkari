@@ -21,6 +21,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
   PackageInfo? packageInfo;
 
   bool _isLoading = false;
+  bool _emailLaunched = false;
 
   @override
   void initState() {
@@ -41,7 +42,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
   }
 
   Future<void> _sendEmail() async {
-    if (_isLoading) return;
+    if (_isLoading || _emailLaunched) return;
 
     final String subject = _subjectController.text.trim();
     final String userMessage = _messageController.text.trim();
@@ -51,19 +52,19 @@ class _ContactUsPageState extends State<ContactUsPage> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _emailLaunched = true;
+    });
 
-    // --- 1. تجميع المعلومات التقنية ---
     final String appVersion = packageInfo?.version ?? 'Unknown';
     final String buildNumber = packageInfo?.buildNumber ?? 'Unknown';
     final String platform =
         Theme.of(context).platform.toString().split('.').last;
 
-    // ديباج انفو مخفي في أسفل الرسالة
-    // ignore: prefer_single_quotes
-    final String technicalDetails = """
-  
-  
+    final String technicalDetails = '''
+
+
   ----------------------------------
   Technical Details (Do not delete):
   - App: Azkari (أذكاري)
@@ -71,10 +72,8 @@ class _ContactUsPageState extends State<ContactUsPage> {
   - Platform: $platform
   - Date: ${DateTime.now().toIso8601String()}
   ----------------------------------
-  """;
+  ''';
 
-    // --- 2. نظام الـ Auto-Sorting في Gmail ---
-    // بإضافة [AZKARI-SUPPORT] للعنوان، يمكنك عمل Filter في Gmail يضع هذه الرسائل في مجلد خاص تلقائياً
     final String formattedSubject = '[AZKARI-SUPPORT] $subject';
     final String fullBody = '$userMessage\n$technicalDetails';
 
@@ -87,21 +86,24 @@ class _ContactUsPageState extends State<ContactUsPage> {
 
     try {
       if (await canLaunchUrl(emailUri)) {
-        await launchUrl(emailUri);
+        await launchUrl(
+          emailUri,
+          mode: LaunchMode.externalApplication,
+        );
       } else {
         throw 'Could not launch email app';
       }
     } catch (e) {
       log(e.toString());
+      _emailLaunched = false;
       if (mounted) {
         AppHelpers.showToast('تعذر فتح تطبيق البريد الإلكتروني',
             status: ToastStatus.error);
       }
     } finally {
       if (mounted) {
-        // ننتظر قليلاً قبل إعادة تفعيل الزر لضمان عدم الضغط المزدوج
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
         });
       }
     }

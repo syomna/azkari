@@ -5,9 +5,9 @@ import 'package:azkar_app/features/names_of_allah/domain/entities/names_of_allah
 import 'package:azkar_app/features/names_of_allah/domain/repositories/names_of_allah_repository.dart';
 import 'package:dartz/dartz.dart';
 
-class NamesOfAllahRepositoyImpl extends NamesOfAllahRepository {
-  NamesOfAllahLocalDataSource namesOfAllahLocalDataSource;
-  NamesOfAllahRepositoyImpl({required this.namesOfAllahLocalDataSource});
+class NamesOfAllahRepositoryImpl extends NamesOfAllahRepository {
+  final NamesOfAllahLocalDataSource namesOfAllahLocalDataSource;
+  NamesOfAllahRepositoryImpl({required this.namesOfAllahLocalDataSource});
   @override
   Future<Either<Failure, List<NamesOfAllahEntity>>> getNamesOfAllah() async {
     Either<Failure, List<NamesOfAllahModel>> result =

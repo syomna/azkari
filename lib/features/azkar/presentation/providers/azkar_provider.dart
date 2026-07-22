@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:adhan/adhan.dart';
 import 'package:azkar_app/core/enums/app_loading_status.dart';
 import 'package:azkar_app/core/services/prayer_times_service.dart';
+import 'package:azkar_app/core/services/prayer_times_widget_service.dart';
 import 'package:azkar_app/features/azkar/domain/entities/zekr_entity.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/delete_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart';
@@ -88,6 +89,8 @@ class AzkarProvider extends ChangeNotifier {
 
       _prayerTimes = prayerTimeService.getTimes(lat, lng);
       notifyListeners();
+      PrayerTimesWidgetService.updateWidget(
+          prayerTimes: _prayerTimes, prefs: sharedPreferences);
     }
   }
 
@@ -104,18 +107,24 @@ class AzkarProvider extends ChangeNotifier {
     prayerTimeService.saveOverride(key, time, sharedPreferences);
     notifyListeners();
     onOverrideChanged?.call();
+    PrayerTimesWidgetService.updateWidget(
+        prayerTimes: _prayerTimes, prefs: sharedPreferences);
   }
 
   void clearOverride(String key) {
     prayerTimeService.clearOverride(key, sharedPreferences);
     notifyListeners();
     onOverrideChanged?.call();
+    PrayerTimesWidgetService.updateWidget(
+        prayerTimes: _prayerTimes, prefs: sharedPreferences);
   }
 
   void clearAllOverrides() {
     prayerTimeService.clearAllOverrides(sharedPreferences);
     notifyListeners();
     onOverrideChanged?.call();
+    PrayerTimesWidgetService.updateWidget(
+        prayerTimes: _prayerTimes, prefs: sharedPreferences);
   }
 
   // Standard Azkar loading from JSON

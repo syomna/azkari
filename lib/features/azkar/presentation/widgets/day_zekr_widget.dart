@@ -54,14 +54,12 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
         gradient: LinearGradient(
           colors: isDark
               ? [
-                  const Color(0xFF1E1E1E), // Deep Charcoal
-                  const Color(0xFF121212)
-                      .withBlue(30)
-                      .withGreen(30), // Hints of midnight green
+                  const Color(0xFF1E1E1E),
+                  const Color(0xFF121E1E),
                 ]
               : [
                   AppPalette.mainColor,
-                  AppPalette.mainColor.withBlue(100).withGreen(180),
+                  const Color(0xFF3ABB7A),
                 ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
