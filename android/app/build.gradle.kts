@@ -16,7 +16,7 @@ plugins {
 
 android {
     namespace = "com.yomna.azkar_app"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = "28.2.13676358"
 
     compileOptions {
@@ -34,7 +34,7 @@ android {
     defaultConfig {
         applicationId = "com.yomna.azkar_app"
         minSdk = flutter.minSdkVersion
-        targetSdk = 35
+        targetSdk = 36
         versionCode = appVersionCode
         versionName = flutter.versionName
     }

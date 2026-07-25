@@ -3,9 +3,8 @@ import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/audio_player_card.dart';
-import 'package:azkar_app/features/quran/presentation/widgets/quran_font_sheet.dart';
-import 'package:azkar_app/features/quran/presentation/widgets/quran_list.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:azkar_app/features/quran/presentation/widgets/bottom_navigation_controls.dart';
+import 'package:azkar_app/features/quran/presentation/widgets/side_tools.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -126,8 +125,9 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
                     onPageChanged: (index) {
                       final targetPage = _virtualPages[index];
                       int targetSurah = targetPage.surahSegments.first['surah'];
-                      int prevSurah =
-                          _virtualPages[_currentIndex].surahSegments.first['surah'];
+                      int prevSurah = _virtualPages[_currentIndex]
+                          .surahSegments
+                          .first['surah'];
 
                       if (targetSurah != prevSurah) {
                         provider.resetAudio();
@@ -144,8 +144,6 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
                 ),
               ],
             ),
-
-            // الرأس العائم (Top Floating Header)
             AnimatedPositioned(
               duration: const Duration(milliseconds: 300),
               top: _showControls ? 0 : -120.h,
@@ -153,18 +151,55 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
               right: 0,
               child: _buildFloatingHeader(context),
             ),
-
-            // التحكم السفلي
             AnimatedPositioned(
               duration: const Duration(milliseconds: 300),
               bottom: _showControls ? 25.h : -100.h,
               left: 20.w,
               right: 20.w,
-              child:
-                  _buildBottomControls(context, provider, currentSurahNumber),
+              child: BottomNavigationControls(
+                currentIndex: _currentIndex,
+                virtualPages: _virtualPages,
+                onPreviousPage: _goToPreviousPage,
+                onNextPage: _goToNextPage,
+                onPreviousSurah: _goToPreviousSurah,
+                onNextSurah: _goToNextSurah,
+              ),
             ),
+            AnimatedPositionedDirectional(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              start: _showControls ? 14.w : -90.w,
+              top: MediaQuery.sizeOf(context).height * 0.34,
+              child: SideTools(
+                currentSurahNumber: currentSurahNumber,
+                isAudioVisible: _isAudioVisible,
+                onAudioToggle: () {
+                  setState(() {
+                    _isAudioVisible = !_isAudioVisible;
 
-            // كرت المشغل الصوتي
+                    if (_isAudioVisible) {
+                      _showControls = false;
+                    }
+                  });
+                },
+                selectedSurahNumber:
+                    _virtualPages[_currentIndex].surahSegments.first['surah'],
+                onSurahSelected: (int surahNum) {
+                  Navigator.pop(context);
+                  int firstPageOfSurah = quran.getPageNumber(surahNum, 1);
+
+                  // الانتقال إلى أول صفحة افتراضية تحتوي على هذه السورة
+                  int targetIndex = _virtualPages.indexWhere((page) =>
+                      page.globalPageNumber == firstPageOfSurah &&
+                      page.surahSegments.first['surah'] == surahNum);
+
+                  if (targetIndex != -1) {
+                    _pageController.jumpToPage(targetIndex);
+                  }
+                },
+                targetPage: _virtualPages[_currentIndex],
+              ),
+            ),
             Align(
               alignment: Alignment.bottomCenter,
               child: _isAudioVisible
@@ -199,100 +234,79 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const BackButton(),
-          Text(
-            AppConstants.holyQuran,
-            style: TextStyle(
-              fontFamily: AppPalette.amiriFontFamily,
-              fontWeight: FontWeight.bold,
-              fontSize: 20.sp,
+          Expanded(
+            child: Center(
+              child: Text(
+                AppConstants.holyQuran,
+                style: TextStyle(
+                  fontFamily: AppPalette.amiriFontFamily,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20.sp,
+                ),
+              ),
             ),
           ),
-          const SizedBox(width: 40),
+          SizedBox(
+            width: 40.w,
+          )
         ],
       ),
     );
   }
 
-  Widget _buildBottomControls(
-      BuildContext context, QuranProvider provider, int surahNumber) {
-    return Container(
-      height: 65.h,
-      decoration: BoxDecoration(
-        color:
-            Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.98),
-        borderRadius: BorderRadius.circular(35.r),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, -2))
-        ],
-        border: Border.all(color: AppPalette.mainColor.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildControlIcon(
-              icon: Icons.format_size_rounded,
-              onTap: () {
-                showModalBottomSheet(
-                  isScrollControlled: true,
-                  context: context,
-                  builder: (context) => const QuranFontSheet(),
-                );
-              }),
-          _bookmark(provider, surahNumber),
-          _buildControlIcon(
-            icon: CupertinoIcons.headphones,
-            color: _isAudioVisible ? AppPalette.mainColor : null,
-            onTap: () => setState(() {
-              _isAudioVisible = !_isAudioVisible;
-              _showControls = false;
-            }),
-          ),
-          _buildControlIcon(
-            icon: CupertinoIcons.list_bullet,
-            onTap: () => _showSurahPicker(context),
-          ),
-        ],
-      ),
+  void _goToNextPage() {
+    if (_currentIndex == _virtualPages.length - 1) return;
+
+    _pageController.nextPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
     );
   }
 
-  Widget _bookmark(QuranProvider provider, int surahNumber) {
-    // int index = _virtualPages.indexWhere((page) =>
-    //     page.globalPageNumber ==
-    //         _virtualPages[_currentIndex].globalPageNumber &&
-    //     page.surahSegments.first['surah'] == surahNumber);
-    final targetPage = _virtualPages[_currentIndex];
-    int targetSurah = targetPage.surahSegments.first['surah'];
+  void _goToPreviousPage() {
+    if (_currentIndex == 0) return;
 
-    bool isBookmarked = provider.savedLatestQuranSurahNumber == targetSurah &&
-        provider.savedLatestQuranPageNumber == targetPage.globalPageNumber;
-    return _buildControlIcon(
-      icon:
-          isBookmarked ? CupertinoIcons.bookmark_fill : CupertinoIcons.bookmark,
-      color: Colors.amber,
-      onTap: () {
-        if (isBookmarked) {
-          provider.clearSavedPosition();
-        } else {
-          provider.saveQuranPageNumber(targetPage.globalPageNumber);
-          provider.saveLatestQuranSurahNumber(targetSurah);
-        }
-      },
+    _pageController.previousPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
     );
   }
 
-  Widget _buildControlIcon(
-      {required IconData icon, Color? color, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
-      child: Padding(
-        padding: EdgeInsets.all(12.w),
-        child: Icon(icon, size: 22.h, color: color),
-      ),
+  void _goToNextSurah() {
+    final currentSurah =
+        _virtualPages[_currentIndex].surahSegments.first['surah'];
+
+    final targetIndex = _virtualPages.indexWhere(
+      (page) => page.surahSegments.first['surah'] > currentSurah,
+    );
+
+    if (targetIndex == -1) return;
+
+    _pageController.animateToPage(
+      targetIndex,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _goToPreviousSurah() {
+    final currentSurah =
+        _virtualPages[_currentIndex].surahSegments.first['surah'];
+
+    if (currentSurah <= 1) return;
+
+    final previousSurah = currentSurah - 1;
+
+    final targetIndex = _virtualPages.indexWhere(
+      (page) => page.surahSegments.first['surah'] == previousSurah,
+    );
+
+    if (targetIndex == -1) return;
+
+    _pageController.animateToPage(
+      targetIndex,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
     );
   }
 
@@ -472,45 +486,4 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
           fontWeight: FontWeight.bold),
     );
   }
-
-  void _showSurahPicker(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      useSafeArea: true,
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.9,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        builder: (context, scrollController) {
-          return QuranList(
-            selectedSurahNumber:
-                _virtualPages[_currentIndex].surahSegments.first['surah'],
-            onSurahSelected: (int surahNum) {
-              Navigator.pop(context);
-              int firstPageOfSurah = quran.getPageNumber(surahNum, 1);
-
-              // الانتقال إلى أول صفحة افتراضية تحتوي على هذه السورة
-              int targetIndex = _virtualPages.indexWhere((page) =>
-                  page.globalPageNumber == firstPageOfSurah &&
-                  page.surahSegments.first['surah'] == surahNum);
-
-              if (targetIndex != -1) {
-                _pageController.jumpToPage(targetIndex);
-              }
-            },
-          );
-        },
-      ),
-    );
-  }
 }
-
-// تعديل بسيط لتسهيل استدعاء الميثود بـ الكود المحدث
-// extension on _QuranDetailPageState {
-//   Widget _buildSurahNameCard(BuildContext context,
-//       {required int currentSurah}) {
-//     return _buildSurahNameCard(context, currentSurah: currentSurah);
-//   }
-// }

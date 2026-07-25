@@ -15,6 +15,7 @@ import 'package:azkar_app/features/names_of_allah/presentation/widgets/names_of_
 import 'package:azkar_app/features/qibla/presentation/pages/qibla_screen.dart';
 import 'package:azkar_app/features/quran/presentation/pages/quran_details_page.dart';
 import 'package:azkar_app/features/tasbeh/presentation/pages/tasbeh_page.dart';
+import 'package:azkar_app/features/widget_guide/widget_guide_helper.dart';
 import 'package:azkar_app/pages/contact_us_page.dart';
 import 'package:azkar_app/pages/settings_page.dart';
 import 'package:azkar_app/widgets/component.dart';
@@ -42,6 +43,9 @@ class _HomePageState extends State<HomePage> {
     if (namesList.isNotEmpty) {
       _randomNameIndex = Random().nextInt(namesList.length);
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetGuideHelper.showIfNeeded(context);
+  });
   }
 
   @override

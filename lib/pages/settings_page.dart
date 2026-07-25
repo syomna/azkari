@@ -7,6 +7,7 @@ import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
+import 'package:azkar_app/features/widget_guide/presentation/widget_guide_page.dart';
 import 'package:azkar_app/pages/prayer_times_settings_page.dart';
 import 'package:azkar_app/widgets/switch_tile.dart';
 import 'package:flutter/material.dart';
@@ -50,6 +51,15 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             _buildSectionHeader('مواقيت الصلاة'),
             _buildSettingsCard([
+              _buildListTile(
+                  'كيفية إضافة ويدجيت مواقيت الصلاة', Icons.widgets_rounded,
+                  () {
+                WidgetGuidePage.open(
+                  context,
+                  openedFromSettings: true,
+                );
+              }),
+              _divider(),
               _buildListTile('ضبط مواقيت الصلاة', Icons.access_time_rounded,
                   () {
                 Navigator.of(context).push(MaterialPageRoute(
