@@ -1,40 +1,48 @@
-// lib/core/presentation/providers/theme_provider.dart
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider extends ChangeNotifier {
   final SharedPreferences prefs;
-  ThemeProvider({required this.prefs}) {
-    {
-      _isLight = prefs.getBool(_isLightKey) ?? true;
-      _textScaleFactor = prefs.getDouble(_textScaleFactorKey) ?? 1.0;
-    }
-  }
-  static const String _isLightKey = 'isLight';
+  ThemeProvider({required this.prefs});
+  static const String _themeModeKey = 'themeMode';
   static const String _textScaleFactorKey = 'textScaleFactor';
 
-  bool _isLight = true;
-  bool get isLight => _isLight;
+  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode get themeMode => _themeMode;
 
   double _textScaleFactor = 1.0;
   double get textScaleFactor => _textScaleFactor;
 
+  bool get isLight {
+    if (_themeMode == ThemeMode.light) return true;
+    if (_themeMode == ThemeMode.dark) return false;
+    return PlatformDispatcher.instance.platformBrightness != Brightness.dark;
+  }
+
   Future<void> loadTheme() async {
-    _isLight = prefs.getBool(_isLightKey) ?? true;
+    final raw = prefs.getString(_themeModeKey);
+    _themeMode = _themeModeFromString(raw);
     _textScaleFactor = prefs.getDouble(_textScaleFactorKey) ?? 1.0;
-    // notifyListeners();
   }
 
   Future<void> _savePreferences() async {
-    await prefs.setBool(_isLightKey, _isLight);
+    await prefs.setString(_themeModeKey, _themeModeString(_themeMode));
     await prefs.setDouble(_textScaleFactorKey, _textScaleFactor);
   }
 
-  void toggleTheme() {
-    _isLight = !_isLight;
+  void setThemeMode(ThemeMode mode) {
+    if (_themeMode == mode) return;
+    _themeMode = mode;
     _savePreferences();
     notifyListeners();
+  }
+
+  void cycleThemeMode() {
+    final next =
+        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    setThemeMode(next);
   }
 
   void setTextScaleFactor(double newFactor) {
@@ -45,5 +53,21 @@ class ThemeProvider extends ChangeNotifier {
       _savePreferences();
       notifyListeners();
     }
+  }
+
+  static ThemeMode _themeModeFromString(String? value) {
+    return switch (value) {
+      'light' => ThemeMode.light,
+      'dark' => ThemeMode.dark,
+      _ => ThemeMode.system,
+    };
+  }
+
+  static String _themeModeString(ThemeMode mode) {
+    return switch (mode) {
+      ThemeMode.system => 'auto',
+      ThemeMode.light => 'light',
+      ThemeMode.dark => 'dark',
+    };
   }
 }

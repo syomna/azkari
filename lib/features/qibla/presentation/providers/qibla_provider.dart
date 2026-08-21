@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'dart:developer';
 
+import 'package:azkar_app/core/constants/app_strings.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
+import 'package:azkar_app/core/usecases/usecase.dart';
 import 'package:azkar_app/features/qibla/domain/usecases/get_qibla_direction_usecase.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_compass/flutter_compass.dart';
@@ -37,24 +38,20 @@ class QiblaProvider extends ChangeNotifier {
 
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
-      log('serviceEnabled: $serviceEnabled');
       if (!serviceEnabled) {
         _isLoading = false;
-        _errorMessage =
-            'خدمات الموقع معطلة. يرجى تفعيل نظام تحديد المواقع (GPS).';
+        _errorMessage = AppStrings.locationDisabled;
         notifyListeners();
         return;
       }
 
-      // 2. Check Permissions (The App Dialog)
       LocationPermission permission = await Geolocator.checkPermission();
 
-      log('permission: $permission');
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           _isLoading = false;
-          _errorMessage = 'تم رفض الوصول إلى الموقع.';
+          _errorMessage = AppStrings.locationDenied;
           notifyListeners();
           return;
         }
@@ -62,32 +59,43 @@ class QiblaProvider extends ChangeNotifier {
 
       if (permission == LocationPermission.deniedForever) {
         _isLoading = false;
-        _errorMessage =
-            'صلاحيات الموقع مرفوضة نهائياً\n. يرجى تفعيلها من إعدادات التطبيق.';
+        _errorMessage = AppStrings.locationPermanentlyDenied;
         notifyListeners();
         return;
       }
 
-      // Clean Arch: Provider doesn't know about Geolocator, only the Repo
-      _qiblaDirection = await getQiblaDirectionUseCase.call();
+      final result = await getQiblaDirectionUseCase(const NoParams());
+      final success = result.fold(
+        (failure) {
+          _isLoading = false;
+          _errorMessage = failure.message;
+          return false;
+        },
+        (direction) {
+          _qiblaDirection = direction;
+          return true;
+        },
+      );
 
-      if (FlutterCompass.events != null) {
-        _compassSubscription = FlutterCompass.events!
-            .distinct((prev, next) {
-              final prevHeading = prev.heading;
-              final nextHeading = next.heading;
-              if (prevHeading == null || nextHeading == null) return false;
-              return (prevHeading - nextHeading).abs() < 0.5;
-            })
-            .listen((event) {
-          _currentHeading = event.heading ?? 0;
-          notifyListeners();
-        });
+      if (success) {
+        _compassSubscription?.cancel();
+        if (FlutterCompass.events != null) {
+          _compassSubscription = FlutterCompass.events!
+              .distinct((prev, next) {
+                final prevHeading = prev.heading;
+                final nextHeading = next.heading;
+                if (prevHeading == null || nextHeading == null) return false;
+                return (prevHeading - nextHeading).abs() < 0.5;
+              })
+              .listen((event) {
+            _currentHeading = event.heading ?? 0;
+            notifyListeners();
+          });
+        }
+
+        _isLoading = false;
+        _errorMessage = null;
       }
-
-      _isLoading = false;
-      _errorMessage = null;
-      // notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
       _isLoading = false;

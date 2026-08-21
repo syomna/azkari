@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:azkar_app/core/constants/app_strings.dart';
+import 'package:azkar_app/core/usecases/usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/check_surah_downloaded_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/clear_all_saved_quran_values_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/clear_saved_position_usecase.dart';
@@ -12,11 +14,11 @@ import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
 
 class QuranProvider with ChangeNotifier {
-  final GetSavedQuranPageNumberUsecase getQuranPageNumberUseCase;
-  final SaveQuranPageNumberUsecase saveQuranPageNumberUseCase;
+  final GetSavedQuranPageNumberUseCase getQuranPageNumberUseCase;
+  final SaveQuranPageNumberUseCase saveQuranPageNumberUseCase;
   final GetLatestQuranSurahNumberUseCase getLatestSurahNumberUseCase;
   final SaveLatestQuranSurahNumberUseCase saveLatestSurahNumberUseCase;
-  final ClearAllSavedQuranValuesUseCase clearAllSavedQuranValuesUsecase;
+  final ClearAllSavedQuranValuesUseCase clearAllSavedQuranValuesUseCase;
   final ClearSavedPositionUseCase clearSavedPositionUseCase;
   final GetSurahAudioUseCase getSurahAudioUseCase;
   final CheckSurahDownloadedUseCase checkSurahDownloadedUseCase;
@@ -26,7 +28,7 @@ class QuranProvider with ChangeNotifier {
       required this.saveQuranPageNumberUseCase,
       required this.getLatestSurahNumberUseCase,
       required this.saveLatestSurahNumberUseCase,
-      required this.clearAllSavedQuranValuesUsecase,
+      required this.clearAllSavedQuranValuesUseCase,
       required this.clearSavedPositionUseCase,
       required this.getSurahAudioUseCase,
       required this.checkSurahDownloadedUseCase}) {
@@ -34,10 +36,11 @@ class QuranProvider with ChangeNotifier {
       (event) => notifyListeners(),
       onError: (Object e, StackTrace st) {
         _isDownloading = false;
-        _errorMessage = 'حدث خطأ في مشغل الصوت';
+        _errorMessage = AppStrings.audioError;
         notifyListeners();
       },
     );
+    loadSavedPositions();
   }
 
   late final StreamSubscription<PlaybackEvent> _playerSubscription;
@@ -49,59 +52,77 @@ class QuranProvider with ChangeNotifier {
     super.dispose();
   }
 
-  int? get savedLatestQuranSurahNumber => getLatestSurahNumberUseCase();
-  int? get savedLatestQuranPageNumber => getQuranPageNumberUseCase();
+  int? _savedLatestQuranSurahNumber;
+  int? _savedLatestQuranPageNumber;
 
-  // QuranPositionEntity getSavedPosition(int surahNumber) {
-  //   return getSavedPositionUseCase(surahNumber);
-  // }
+  int? get savedLatestQuranSurahNumber => _savedLatestQuranSurahNumber;
+  int? get savedLatestQuranPageNumber => _savedLatestQuranPageNumber;
 
-  // Future<void> saveQuranPosition(int surahNumber, int ayahNumber) async {
-  //   await savePositionUseCase(surahNumber, ayahNumber);
-  //   notifyListeners();
-  // }
-  Future<void> saveQuranPageNumber(int pageNumber) async {
-    await saveQuranPageNumberUseCase(pageNumber);
+  Future<void> loadSavedPositions() async {
+    final surahResult = await getLatestSurahNumberUseCase(const NoParams());
+    surahResult.fold(
+      (_) {},
+      (value) => _savedLatestQuranSurahNumber = value,
+    );
+    final pageResult = await getQuranPageNumberUseCase(const NoParams());
+    pageResult.fold(
+      (_) {},
+      (value) => _savedLatestQuranPageNumber = value,
+    );
     notifyListeners();
   }
 
-  // Future<void> clearSavedPosition(int surahNumber) async {
-  //   await clearPositionUseCase(surahNumber);
-  //   notifyListeners();
-  // }
+  Future<void> saveQuranPageNumber(int pageNumber) async {
+    final result = await saveQuranPageNumberUseCase(pageNumber);
+    result.fold(
+      (_) {},
+      (_) => _savedLatestQuranPageNumber = pageNumber,
+    );
+    notifyListeners();
+  }
 
   Future<void> clearAllSavedQuranValues() async {
-    await clearAllSavedQuranValuesUsecase();
+    final result = await clearAllSavedQuranValuesUseCase(const NoParams());
+    result.fold(
+      (_) {},
+      (_) {
+        _savedLatestQuranSurahNumber = null;
+        _savedLatestQuranPageNumber = null;
+      },
+    );
     notifyListeners();
   }
 
   Future<void> clearSavedPosition() async {
-    await clearSavedPositionUseCase();
+    final result = await clearSavedPositionUseCase(const NoParams());
+    result.fold(
+      (_) {},
+      (_) {
+        _savedLatestQuranSurahNumber = null;
+        _savedLatestQuranPageNumber = null;
+      },
+    );
     notifyListeners();
   }
 
   Future<void> saveLatestQuranSurahNumber(int surahNumber) async {
-    await saveLatestSurahNumberUseCase(surahNumber);
+    final result = await saveLatestSurahNumberUseCase(surahNumber);
+    result.fold(
+      (_) {},
+      (_) => _savedLatestQuranSurahNumber = surahNumber,
+    );
     notifyListeners();
   }
 
   final AudioPlayer _player = AudioPlayer();
   AudioPlayer get player => _player;
-  double _progress = 0;
   bool _isDownloading = false;
-  // bool _isPlaying = false;
 
-  double get progress => _progress;
   bool get isDownloading => _isDownloading;
-  // bool get isPlaying => _isPlaying;
 
-// Inside QuranProvider class
-
-// Stream for the current position/duration/buffered state
   Stream<Duration?> get positionStream => _player.positionStream;
   Stream<Duration?> get durationStream => _player.durationStream;
 
-// Use the player's native playing state instead of a manual bool
   bool get isActuallyPlaying => _player.playing;
 
   int? _currentPlayingSurah;
@@ -110,7 +131,6 @@ class QuranProvider with ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  // Helper to clear error after showing toast
   void clearError() {
     _errorMessage = null;
     notifyListeners();
@@ -121,11 +141,9 @@ class QuranProvider with ChangeNotifier {
   }
 
   Future<void> toggleAudio(int surahNumber, String url) async {
-    _errorMessage = null; // Clear previous errors
+    _errorMessage = null;
     _currentPlayingSurah = surahNumber;
 
-    // Check if we are interacting with the same surah already loaded
-    // Note: Better to check if the path/surah matches specifically
     final bool isSameSurah =
         _player.audioSource != null && _currentPlayingSurah == surahNumber;
 
@@ -144,17 +162,25 @@ class QuranProvider with ChangeNotifier {
     }
 
     try {
-      final bool alreadyExists = await checkSurahDownloadedUseCase(surahNumber);
+      final checkResult =
+          await checkSurahDownloadedUseCase(surahNumber);
+      final bool alreadyExists = checkResult.fold(
+        (_) => false,
+        (downloaded) => downloaded,
+      );
 
       if (!alreadyExists) {
         _isDownloading = true;
         notifyListeners();
       }
 
-      // getSurahAudioUseCase calls the Repository's downloadSurah internally
-      final String path = await getSurahAudioUseCase(
-        surahNumber: surahNumber,
-        url: url,
+      final audioResult = await getSurahAudioUseCase(
+        SurahAudioParams(surahNumber: surahNumber, url: url),
+      );
+
+      final String path = audioResult.fold(
+        (failure) => throw Exception(failure.message),
+        (path) => path,
       );
 
       _isDownloading = false;
@@ -162,21 +188,16 @@ class QuranProvider with ChangeNotifier {
       await _player.play();
     } catch (e) {
       _isDownloading = false;
-      // This catches the string thrown by your RepositoryImpl
       _errorMessage = e.toString();
       notifyListeners();
     }
   }
 
   void resetAudio() {
-    // Stop playing and move the playhead back to the start
     _player.stop();
     _player.seek(Duration.zero);
 
-    // If you were in the middle of a download, you might want to cancel it
-    // depending on your preference. For now, we just reset the UI state.
     _isDownloading = false;
-    _progress = 0;
     _currentPlayingSurah = null;
 
     notifyListeners();

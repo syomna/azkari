@@ -1,4 +1,6 @@
+import 'package:azkar_app/core/constants/app_strings.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -16,11 +18,11 @@ class AddAzkarBottomSheet extends StatefulWidget {
 class _AddAzkarBottomSheetState extends State<AddAzkarBottomSheet> {
   final TextEditingController titleController = TextEditingController();
 
-  // Kept synchronized to handle both the text content and the targeted execution count smoothly
   List<TextEditingController> zikrControllers = [TextEditingController()];
   List<TextEditingController> countControllers = [
     TextEditingController(text: '1')
   ];
+  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -52,19 +54,8 @@ class _AddAzkarBottomSheetState extends State<AddAzkarBottomSheet> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Center(
-                  child: Container(
-                    width: 40.w,
-                    height: 4.h,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16.h),
                 Text(
-                  'إضافة أذكار جديدة',
+                  AppStrings.newAzkarTitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16.sp,
@@ -77,7 +68,7 @@ class _AddAzkarBottomSheetState extends State<AddAzkarBottomSheet> {
                   controller: titleController,
                   textAlign: TextAlign.right,
                   decoration: InputDecoration(
-                    hintText: 'عنوان الأذكار (مثال: أذكار السفر)',
+                    hintText: AppStrings.azkarExampleHint,
                     hintStyle: TextStyle(fontSize: 13.sp, color: Colors.grey),
                     filled: true,
                     fillColor: isDark ? Colors.black12 : Colors.grey[100],
@@ -92,7 +83,7 @@ class _AddAzkarBottomSheetState extends State<AddAzkarBottomSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'النصوص والأدعية',
+                      AppStrings.prayersAndDuaas,
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
@@ -108,7 +99,7 @@ class _AddAzkarBottomSheetState extends State<AddAzkarBottomSheet> {
                         });
                       },
                       icon: const Icon(Icons.add_circle_outline, size: 18),
-                      label: const Text('إضافة نص آخر'),
+                      label: const Text(AppStrings.addAnotherText),
                       style: TextButton.styleFrom(
                           foregroundColor: AppPalette.mainColor),
                     ),
@@ -123,12 +114,10 @@ class _AddAzkarBottomSheetState extends State<AddAzkarBottomSheet> {
                       return Padding(
                         padding: EdgeInsets.only(bottom: 12.h),
                         child: Row(
-                          // Changed to .start so both fields align smoothly from the top boundary
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             if (zikrControllers.length > 1)
                               Padding(
-                                // Added top padding to align the delete button perfectly with the inputs
                                 padding: EdgeInsets.only(top: 4.h),
                                 child: IconButton(
                                   onPressed: () {
@@ -143,7 +132,6 @@ class _AddAzkarBottomSheetState extends State<AddAzkarBottomSheet> {
                                       color: Colors.redAccent),
                                 ),
                               ),
-                            // Counter Input Field Container
                             SizedBox(
                               width: 60.w,
                               child: TextField(
@@ -153,13 +141,12 @@ class _AddAzkarBottomSheetState extends State<AddAzkarBottomSheet> {
                                 style: TextStyle(fontSize: 13.sp),
                                 decoration: InputDecoration(
                                   hintText: '1',
-                                  labelText: 'المرات',
+                                  labelText: AppStrings.repeatCount,
                                   floatingLabelBehavior:
                                       FloatingLabelBehavior.always,
                                   labelStyle: TextStyle(
                                       fontSize: 11.sp,
                                       color: AppPalette.mainColor),
-                                  // Added explicit content padding matching the main text field's structural height
                                   contentPadding: EdgeInsets.symmetric(
                                       vertical: 14.h, horizontal: 4.w),
                                   filled: true,
@@ -174,7 +161,6 @@ class _AddAzkarBottomSheetState extends State<AddAzkarBottomSheet> {
                               ),
                             ),
                             SizedBox(width: 8.w),
-                            // Zikr Text Input Field
                             Expanded(
                               child: TextField(
                                 controller: zikrControllers[index],
@@ -206,38 +192,51 @@ class _AddAzkarBottomSheetState extends State<AddAzkarBottomSheet> {
                 ),
                 SizedBox(height: 20.h),
                 ElevatedButton(
-                  onPressed: () async {
-                    final title = titleController.text.trim();
+                  onPressed: _isSaving
+                      ? null
+                      : () async {
+                          final title = titleController.text.trim();
 
-                    // Match pairs safely together
-                    final List<Map<String, dynamic>> structuredAzkar = [];
-                    for (int i = 0; i < zikrControllers.length; i++) {
-                      final text = zikrControllers[i].text.trim();
-                      final countVal =
-                          int.tryParse(countControllers[i].text.trim()) ?? 1;
-                      if (text.isNotEmpty) {
-                        structuredAzkar.add({
-                          'text': text,
-                          'count': countVal,
-                        });
-                      }
-                    }
+                          final List<Map<String, dynamic>> structuredAzkar = [];
+                          for (int i = 0; i < zikrControllers.length; i++) {
+                            final text = zikrControllers[i].text.trim();
+                            final countVal =
+                                int.tryParse(countControllers[i].text.trim()) ??
+                                    1;
+                            if (text.isNotEmpty) {
+                              structuredAzkar.add({
+                                'text': text,
+                                'count': countVal,
+                              });
+                            }
+                          }
 
-                    if (title.isNotEmpty && structuredAzkar.isNotEmpty) {
-                      // 👈 Pass structured data down to provider
-                      await context
-                          .read<AzkarProvider>()
-                          .saveCustomAzkarCategory(
-                            categoryTitle: title,
-                            azkarItems: structuredAzkar,
-                          );
+                          if (title.isEmpty || structuredAzkar.isEmpty) {
+                            if (context.mounted) {
+                              AppHelpers.showToast(AppStrings.fillAllFields,
+                                  status: ToastStatus.error);
+                            }
+                            return;
+                          }
 
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        widget.onChangeFilter();
-                      }
-                    }
-                  },
+                          setState(() => _isSaving = true);
+
+                          try {
+                            await context
+                                .read<AzkarProvider>()
+                                .saveCustomAzkarCategory(
+                                  categoryTitle: title,
+                                  azkarItems: structuredAzkar,
+                                );
+
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              widget.onChangeFilter();
+                            }
+                          } finally {
+                            if (mounted) setState(() => _isSaving = false);
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppPalette.mainColor,
                     padding: EdgeInsets.symmetric(vertical: 12.h),
@@ -245,13 +244,20 @@ class _AddAzkarBottomSheetState extends State<AddAzkarBottomSheet> {
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                   ),
-                  child: Text(
-                    'حفظ الكل',
-                    style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                  ),
+                  child: _isSaving
+                      ? SizedBox(
+                          height: 14.sp,
+                          width: 14.sp,
+                          child: const CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
+                        )
+                      : Text(
+                          AppStrings.saveAll,
+                          style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
+                        ),
                 ),
                 SizedBox(height: 20.h),
               ],

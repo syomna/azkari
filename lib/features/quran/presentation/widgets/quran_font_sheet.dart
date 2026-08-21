@@ -1,3 +1,4 @@
+import 'package:azkar_app/core/constants/app_strings.dart';
 import 'package:azkar_app/core/providers/theme_provider.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
@@ -19,9 +20,8 @@ class QuranFontSheet extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // Sheet only takes needed space
+        mainAxisSize: MainAxisSize.min, 
         children: [
-          // Drag Handle
           Container(
             width: 40.w,
             height: 4.h,
@@ -33,7 +33,7 @@ class QuranFontSheet extends StatelessWidget {
           ),
 
           Text(
-            'تخصيص القراءة',
+            AppStrings.customizeReading,
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.bold,
@@ -42,7 +42,6 @@ class QuranFontSheet extends StatelessWidget {
           ),
           SizedBox(height: 25.h),
 
-          // Preview Area (Very important for Quranic script)
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(20.w),
@@ -58,7 +57,7 @@ class QuranFontSheet extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: AppPalette.amiriFontFamily,
-                  fontSize: 18.sp * theme.textScaleFactor, // Real-time preview
+                  fontSize: 18.sp,
                   color: isDark ? Colors.white : Colors.black87,
                 ),
               ),
@@ -66,7 +65,6 @@ class QuranFontSheet extends StatelessWidget {
           ),
           SizedBox(height: 25.h),
 
-          // Stepper-style Font Control
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -79,7 +77,6 @@ class QuranFontSheet extends StatelessWidget {
                 },
               ),
 
-              // Visual progress dots
               Expanded(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -106,7 +103,7 @@ class QuranFontSheet extends StatelessWidget {
           ),
           SizedBox(height: 10.h),
           Text(
-            'حجم الخط: ${(theme.textScaleFactor * 100).toInt()}%',
+            '${AppStrings.fontSize}: ${(theme.textScaleFactor * 100).toInt()}%',
             style: TextStyle(color: Colors.grey, fontSize: 12.sp),
           ),
           SizedBox(height: 20.h),

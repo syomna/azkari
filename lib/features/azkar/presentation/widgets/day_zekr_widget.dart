@@ -19,15 +19,18 @@ class DayZekrWidget extends StatefulWidget {
 
 class _DayZekrWidgetState extends State<DayZekrWidget> {
   int _currentZekrIndex = 0;
+  bool _initialized = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final azkarProvider = Provider.of<AzkarProvider>(context, listen: false);
-    if (azkarProvider.azkarStatus == AppLoadingStatus.loaded &&
-        _currentZekrIndex == 0 &&
-        azkarProvider.azkarList.isNotEmpty) {
-      _currentZekrIndex = Random().nextInt(azkarProvider.azkarList.length);
+    if (!_initialized) {
+      final azkarProvider = Provider.of<AzkarProvider>(context, listen: false);
+      if (azkarProvider.azkarStatus == AppLoadingStatus.loaded &&
+          azkarProvider.azkarList.isNotEmpty) {
+        _currentZekrIndex = Random().nextInt(azkarProvider.azkarList.length);
+        _initialized = true;
+      }
     }
   }
 
@@ -40,10 +43,8 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
 
     ZekrEntity currentZekr = azkarProvider
         .azkarList[_currentZekrIndex % azkarProvider.azkarList.length];
-    // String dateString = DateFormat.yMMMMd('ar').format(DateTime.now());
     HijriDate.setLocal('ar');
     HijriDate fromGregorian = HijriDate.fromDate(DateTime.now());
-    // String date = fromGregorian.fullDate();
     String dateString =
         '${fromGregorian.dayWeName}، ${AppHelpers.getArabicNumber(fromGregorian.hDay)} ${fromGregorian.longMonthName} ${fromGregorian.hYear}';
 
@@ -54,31 +55,20 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
         gradient: LinearGradient(
           colors: isDark
               ? [
-                  const Color(0xFF1E1E1E),
-                  const Color(0xFF121E1E),
+                  AppPalette.zekrCardDarkGradientStart,
+                  AppPalette.zekrCardDarkGradientEnd,
                 ]
               : [
                   AppPalette.mainColor,
-                  const Color(0xFF3ABB7A),
+                  AppPalette.zekrCardLightGradientEnd,
                 ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         border: isDark
             ? Border.all(
-                color: AppPalette.mainColor.withValues(alpha: 0.15),
-                width: 1) // Subtle border for definition
+                color: AppPalette.mainColor.withValues(alpha: 0.15), width: 1)
             : null,
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.3)
-                : AppPalette.mainColor.withValues(alpha: 0.25),
-            blurRadius: 20,
-            spreadRadius: 2,
-            offset: const Offset(0, 10),
-          )
-        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(25.r),
@@ -91,8 +81,7 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
                 Icons.format_quote,
                 size: 100.sp,
                 color: isDark
-                    ? AppPalette.mainColor
-                        .withValues(alpha: 0.03) // Even subtler in dark mode
+                    ? AppPalette.mainColor.withValues(alpha: 0.03)
                     : Colors.white.withValues(alpha: 0.05),
               ),
             ),
@@ -104,19 +93,24 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Icon(CupertinoIcons.calendar,
-                              color: isDark ? Colors.grey : Colors.white,
-                              size: 14.sp),
-                          SizedBox(width: 5.w),
-                          Text(dateString,
-                              style: TextStyle(
+                      Flexible(
+                        child: Row(
+                          children: [
+                            Icon(CupertinoIcons.calendar,
                                 color: isDark ? Colors.grey : Colors.white,
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w500,
-                              )),
-                        ],
+                                size: 14.sp),
+                            SizedBox(width: 5.w),
+                            Flexible(
+                              child: Text(dateString,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: isDark ? Colors.grey : Colors.white,
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w500,
+                                  )),
+                            ),
+                          ],
+                        ),
                       ),
                       _buildHeaderIcon(
                         isDark: isDark,
@@ -139,8 +133,6 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
                       fontWeight: FontWeight.w600,
                       height: 1.6,
                     ),
-                    // maxLines: 5,
-                    // overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: 5.h),
                   Row(
@@ -164,7 +156,6 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
     );
   }
 
-// Update the icon builder to handle dark mode colors
   Widget _buildHeaderIcon(
       {required bool isDark,
       required IconData icon,

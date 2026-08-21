@@ -1,3 +1,4 @@
+import 'package:azkar_app/core/constants/app_strings.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:flutter/material.dart';
@@ -9,17 +10,20 @@ class QuranList extends StatefulWidget {
     super.key,
     required this.selectedSurahNumber,
     required this.onSurahSelected,
+    this.scrollController,
   });
 
   final int selectedSurahNumber;
   final Function(int) onSurahSelected;
+  final ScrollController? scrollController;
 
   @override
   State<QuranList> createState() => _QuranListState();
 }
 
 class _QuranListState extends State<QuranList> {
-  final ScrollController _scrollController = ScrollController();
+  late final ScrollController _scrollController =
+      widget.scrollController ?? ScrollController();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -41,14 +45,14 @@ class _QuranListState extends State<QuranList> {
       _scrollController.animateTo(
         targetOffset,
         duration: const Duration(milliseconds: 700),
-        curve: Curves.easeOutCubic, // Smoother curve
+        curve: Curves.easeOutCubic, 
       );
     });
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    if (widget.scrollController == null) _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -57,7 +61,6 @@ class _QuranListState extends State<QuranList> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Filter list based on search
     final List<int> filteredIndices = List.generate(114, (i) => i + 1)
         .where((n) => quran.getSurahNameArabic(n).contains(_searchQuery))
         .toList();
@@ -69,7 +72,6 @@ class _QuranListState extends State<QuranList> {
       ),
       child: Column(
         children: [
-          // 1. Elegant Header with Handle
           Container(
             padding: EdgeInsets.only(top: 12.h, bottom: 20.h),
             child: Column(
@@ -84,7 +86,7 @@ class _QuranListState extends State<QuranList> {
                 ),
                 SizedBox(height: 15.h),
                 Text(
-                  'فهرس السور',
+                  AppStrings.quranIndex,
                   style: TextStyle(
                     fontFamily: AppPalette.amiriFontFamily,
                     fontSize: 24.sp,
@@ -96,7 +98,6 @@ class _QuranListState extends State<QuranList> {
             ),
           ),
 
-          // 2. Modern Search Bar
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 20.w),
             child: TextField(
@@ -104,7 +105,7 @@ class _QuranListState extends State<QuranList> {
               onChanged: (v) => setState(() => _searchQuery = v),
               textAlign: TextAlign.right,
               decoration: InputDecoration(
-                hintText: 'ابحث عن سورة...',
+                hintText: AppStrings.searchSurah,
                 prefixIcon: const Icon(Icons.search_rounded,
                     color: AppPalette.mainColor),
                 filled: true,
@@ -120,7 +121,6 @@ class _QuranListState extends State<QuranList> {
           ),
           SizedBox(height: 15.h),
 
-          // 3. The List
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
@@ -163,7 +163,6 @@ class _QuranListState extends State<QuranList> {
                       ),
                       child: Row(
                         children: [
-                          // Left Side: Number Circle
                           Container(
                             width: 40.h,
                             height: 40.h,
@@ -189,18 +188,17 @@ class _QuranListState extends State<QuranList> {
                           ),
                           SizedBox(width: 15.w),
 
-                          // Center: Details
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'الجزء ${AppHelpers.getArabicNumber(quran.getJuzNumber(surahNumber, 1))}',
+                                  '${AppStrings.juzLabel} ${AppHelpers.getArabicNumber(quran.getJuzNumber(surahNumber, 1))}',
                                   style: TextStyle(
                                       fontSize: 12.sp, color: Colors.grey),
                                 ),
                                 Text(
-                                  '${quran.getPlaceOfRevelation(surahNumber) == 'Makkah' ? 'مكية' : 'مدنية'} • ${AppHelpers.getArabicNumber(quran.getVerseCount(surahNumber))} آية',
+                                  '${quran.getPlaceOfRevelation(surahNumber) == 'Makkah' ? AppStrings.meccan : AppStrings.medinan} • ${AppHelpers.getArabicNumber(quran.getVerseCount(surahNumber))} ${AppStrings.verseLabel}',
                                   style: TextStyle(
                                       fontSize: 12.sp, color: Colors.grey),
                                 ),
@@ -208,7 +206,6 @@ class _QuranListState extends State<QuranList> {
                             ),
                           ),
 
-                          // Right Side: Surah Name
                           Text(
                             quran.getSurahNameArabic(surahNumber),
                             style: TextStyle(

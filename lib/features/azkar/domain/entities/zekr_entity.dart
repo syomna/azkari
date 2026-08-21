@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 class ZekrEntity extends Equatable {
   final String category;
-  final String count;
+  final int count;
   final String description;
   final String reference;
   final String zekr;

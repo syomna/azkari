@@ -1,3 +1,4 @@
+import 'package:azkar_app/core/constants/app_strings.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/widget_guide/models/widget_guide_step.dart';
 import 'package:azkar_app/features/widget_guide/widgets/screenshot_container.dart';
@@ -97,7 +98,7 @@ class WidgetGuideStepView extends StatelessWidget {
           ),
           SizedBox(width: 6),
           Text(
-            'ميزة جديدة',
+            AppStrings.newFeature,
             style: TextStyle(
               color: AppPalette.mainColor,
               fontWeight: FontWeight.w800,

@@ -1,6 +1,6 @@
+import 'package:azkar_app/core/providers/favorites_provider.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
-import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/zekr_action_button.dart';
 import 'package:azkar_app/features/surah/domain/entities/surah_entity.dart';
 import 'package:flutter/material.dart';
@@ -15,14 +15,13 @@ class SurahItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isFav = context.select<AzkarProvider, bool>(
+    final isFav = context.select<FavoritesProvider, bool>(
       (p) => p.isItemFav(surah.surah),
     );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Green Badge (Surah Name)
         Container(
           padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
           decoration: BoxDecoration(
@@ -42,7 +41,6 @@ class SurahItem extends StatelessWidget {
           ),
         ),
 
-        // Main Content Card
         GestureDetector(
           onLongPress: () => AppHelpers.copyText(surah.surah),
           child: Container(
@@ -75,7 +73,7 @@ class SurahItem extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: AppPalette.amiriFontFamily,
-                    fontSize: 18.sp, // Traditional font size for Quranic text
+                    fontSize: 18.sp, 
                     fontWeight: FontWeight.w600,
                     height: 1.9,
                     color: isDark
@@ -93,11 +91,10 @@ class SurahItem extends StatelessWidget {
                     ),
                     SizedBox(width: 6.w),
 
-                    // Favorite button
                     ZekrActionButton(
                       isDark: isDark,
                       onTap: () => context
-                          .read<AzkarProvider>()
+                          .read<FavoritesProvider>()
                           .toggleItemFavorite(surah.surah),
                       child: Icon(
                         isFav
@@ -105,7 +102,7 @@ class SurahItem extends StatelessWidget {
                             : Icons.star_outline_rounded,
                         size: 22.sp,
                         color: isFav
-                            ? const Color(0xFFF59E0B)
+                            ? AppPalette.favoriteColor
                             : (isDark ? Colors.white38 : Colors.black26),
                       ),
                     ),

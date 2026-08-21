@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:azkar_app/core/constants/app_strings.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
@@ -9,9 +10,11 @@ import 'package:fluttertoast/fluttertoast.dart';
 enum ToastStatus { success, warning, error }
 
 class AppHelpers {
+  static final _digitRegex = RegExp(r'(\d)');
+
   static String getArabicNumber(int number) {
     return number.toString().replaceAllMapped(
-      RegExp(r'(\d)'),
+      _digitRegex,
       (match) {
         const map = {
           '0': '٠',
@@ -34,7 +37,7 @@ class AppHelpers {
   static void copyText(String text) {
     FlutterClipboard.copy(text).then((value) {
       showToast(
-        'تم النسخ',
+        AppStrings.copiedSuccessfully,
       );
     });
   }
@@ -43,7 +46,6 @@ class AppHelpers {
       {ToastStatus status = ToastStatus.success}) {
     Color backgroundColor;
 
-    // Use your AppPalette for a cohesive look
     switch (status) {
       case ToastStatus.success:
         backgroundColor = AppPalette.mainColor;
@@ -52,7 +54,7 @@ class AppHelpers {
         backgroundColor = Colors.amber.shade700;
         break;
       case ToastStatus.error:
-        backgroundColor = const Color(0xFFD32F2F); // A softer, premium red
+        backgroundColor = const Color(0xFFD32F2F); 
         break;
     }
 
@@ -60,12 +62,12 @@ class AppHelpers {
         msg: msg,
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity
-            .SNACKBAR, // Slightly higher than BOTTOM to avoid the home indicator
+            .SNACKBAR, 
         timeInSecForIosWeb: 2,
         backgroundColor: backgroundColor.withValues(
-            alpha: 0.9), // Subtle transparency feels more modern
+            alpha: 0.9), 
         textColor: Colors.white,
-        fontSize: 14.sp); // Slightly smaller font is often more elegant
+        fontSize: 14.sp); 
   }
 
   static double calculateQiblaDirection(
@@ -92,12 +94,11 @@ class AppHelpers {
   }
 
   static Map<String, String> prayerNames = {
-      'fajr': 'صلاة الفجر',
-      'dhuhr': 'صلاة الظهر',
-      'asr': 'صلاة العصر',
-      'maghrib': 'صلاة المغرب',
-      'isha': 'صلاة العشاء',
-    };
-
-    
+    'fajr': AppStrings.prayerFajr,
+    'sunrise': AppStrings.sunrise,
+    'dhuhr': AppStrings.prayerDhuhr,
+    'asr': AppStrings.prayerAsr,
+    'maghrib': AppStrings.prayerMaghrib,
+    'isha': AppStrings.prayerIsha,
+  };
 }

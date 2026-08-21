@@ -25,7 +25,7 @@ class _MesbahaWidgetState extends State<MesbahaWidget>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 60), // Fast snap
+      duration: const Duration(milliseconds: 60), 
     );
 
     _scale = Tween<double>(begin: 1.0, end: 0.92).animate(
@@ -42,15 +42,11 @@ class _MesbahaWidgetState extends State<MesbahaWidget>
     super.dispose();
   }
 
-  // This handles the "Tap" logic: Shrink -> Wait -> Grow -> Count
   void _handleTap(TasbehProvider provider) async {
-    // 1. Shrink down immediately
     await _controller.forward();
 
-    // 2. Pop back up
     await _controller.reverse();
 
-    // 3. Trigger haptics and count only AFTER the animation/release
     HapticFeedback.lightImpact();
     provider.addCount();
   }
@@ -61,7 +57,6 @@ class _MesbahaWidgetState extends State<MesbahaWidget>
 
     return Column(
       children: [
-        // LCD Screen
         Container(
           width: 220.w,
           height: 110.h,
@@ -94,14 +89,11 @@ class _MesbahaWidgetState extends State<MesbahaWidget>
 
         SizedBox(height: 60.h),
 
-        // Animated Button
         AnimatedBuilder(
           animation: _controller,
           builder: (context, child) {
             return GestureDetector(
-              // Using onTap to ensure the logic runs on finger release
               onTap: () => _handleTap(provider),
-              // We still use TapDown/Cancel just to manage visual state if finger stays held
               onTapDown: (_) => _controller.forward(),
               onTapCancel: () => _controller.reverse(),
               child: Transform.scale(

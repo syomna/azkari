@@ -1,13 +1,15 @@
-import 'package:azkar_app/core/error/failures.dart';
+import 'package:azkar_app/features/surah/data/datasources/surah_local_data_source.dart';
 import 'package:azkar_app/features/surah/data/models/surah_model.dart';
 import 'package:azkar_app/features/surah/data/repositories/surah_repository_impl.dart';
 import 'package:azkar_app/features/surah/domain/entities/surah_entity.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import 'surah_repository_impl_test.mocks.mocks.dart';
+import 'surah_repository_impl_test.mocks.dart';
 
+@GenerateMocks([SurahLocalDataSource])
 void main() {
   late SurahRepositoryImpl surahRepositoryImpl;
   late MockSurahLocalDataSource mockSurahLocalDataSource;
@@ -24,10 +26,11 @@ void main() {
       const SurahModel(name: 'Surah 2', surah: 'Surah 2'),
     ];
     final List<SurahEntity> surahEntityList = surahModelList;
-    test('should return list<SurahModel> when the call completes successfully',
+
+    test('should return list<SurahEntity> when the call completes successfully',
         () async {
       when(mockSurahLocalDataSource.getSurah())
-          .thenAnswer((_) async => Right(surahModelList));
+          .thenAnswer((_) async => surahModelList);
       final result = await surahRepositoryImpl.getSurah();
       expect(result, Right(surahEntityList));
       verify(mockSurahLocalDataSource.getSurah());
@@ -35,11 +38,10 @@ void main() {
     });
 
     test('should return failure when the call throws an exception', () async {
-      const tFailure = JsonParsingFailure();
       when(mockSurahLocalDataSource.getSurah())
-          .thenAnswer((_) async => const Left(tFailure));
+          .thenThrow(Exception('test'));
       final result = await surahRepositoryImpl.getSurah();
-      expect(result, const Left(tFailure));
+      expect(result.isLeft(), true);
       verify(mockSurahLocalDataSource.getSurah());
       verifyNoMoreInteractions(mockSurahLocalDataSource);
     });

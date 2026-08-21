@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:azkar_app/core/error/failures.dart';
 import 'package:azkar_app/features/quran/data/datasources/quran_local_data_source.dart';
 import 'package:azkar_app/features/quran/domain/repositories/quran_repository.dart';
+import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 
 class QuranRepositoryImpl implements QuranRepository {
@@ -12,27 +14,48 @@ class QuranRepositoryImpl implements QuranRepository {
       : _dio = dio;
 
   @override
-  Future<void> saveLatestQuranSurahNumber(int surahNumber) async {
-    await quranLocalDataSource.saveLatestQuranSurahNumber(surahNumber);
+  Future<Either<Failure, void>> saveLatestQuranSurahNumber(
+      int surahNumber) async {
+    try {
+      await quranLocalDataSource.saveLatestQuranSurahNumber(surahNumber);
+      return const Right(null);
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
   }
 
   @override
-  int? getLatestQuranSurahNumber() {
-    return quranLocalDataSource.getLatestQuranSurahNumber();
+  Future<Either<Failure, int?>> getLatestQuranSurahNumber() async {
+    try {
+      return Right(quranLocalDataSource.getLatestQuranSurahNumber());
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
   }
 
   @override
-  Future<void> clearSavedPosition() async {
-    await quranLocalDataSource.clearSavedPosition();
+  Future<Either<Failure, void>> clearSavedPosition() async {
+    try {
+      await quranLocalDataSource.clearSavedPosition();
+      return const Right(null);
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
   }
 
   @override
-  Future<void> clearAllSavedQuranValues() async {
-    await quranLocalDataSource.clearAllSavedQuranValues();
+  Future<Either<Failure, void>> clearAllSavedQuranValues() async {
+    try {
+      await quranLocalDataSource.clearAllSavedQuranValues();
+      return const Right(null);
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
   }
 
   @override
-  Future<void> downloadSurah(String url, String savePath) async {
+  Future<Either<Failure, void>> downloadSurah(
+      String url, String savePath) async {
     final tempPath = '$savePath.tmp';
     try {
       await _dio.download(
@@ -44,18 +67,18 @@ class QuranRepositoryImpl implements QuranRepository {
         ),
       );
       await moveTempFile(tempPath, savePath);
+      return const Right(null);
     } on DioException catch (e) {
       await _deleteTempFile(tempPath);
-      String errorMessage = 'حدث خطأ أثناء التحميل';
       if (e.type == DioExceptionType.connectionTimeout) {
-        errorMessage = 'انتهت مهلة الاتصال، تحقق من الشبكة';
+        return Left(NetworkFailure(e.message ?? 'Connection timeout'));
       } else if (e.type == DioExceptionType.badResponse) {
-        errorMessage = 'الملف غير موجود على الخادم';
+        return Left(ServerFailure(e.message ?? 'Bad response'));
       }
-      throw errorMessage;
+      return Left(ServerFailure(e.message ?? 'Download failed'));
     } catch (e) {
       await _deleteTempFile(tempPath);
-      throw 'فشل التحميل، تأكد من وجود مساحة كافية';
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -71,22 +94,39 @@ class QuranRepositoryImpl implements QuranRepository {
   }
 
   @override
-  Future<String> getSurahPath(int surahNumber) {
-    return quranLocalDataSource.getSurahPath(surahNumber);
+  Future<Either<Failure, String>> getSurahPath(int surahNumber) async {
+    try {
+      return Right(await quranLocalDataSource.getSurahPath(surahNumber));
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
   }
 
   @override
-  Future<bool> isSurahDownloaded(int surahNumber) {
-    return quranLocalDataSource.isDownloaded(surahNumber);
+  Future<Either<Failure, bool>> isSurahDownloaded(int surahNumber) async {
+    try {
+      return Right(await quranLocalDataSource.isDownloaded(surahNumber));
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
   }
 
   @override
-  int? getSavedQuranPageNumber() {
-    return quranLocalDataSource.getSavedQuranPageNumber();
+  Future<Either<Failure, int?>> getSavedQuranPageNumber() async {
+    try {
+      return Right(quranLocalDataSource.getSavedQuranPageNumber());
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
   }
 
   @override
-  Future<void> saveQuranPageNumber(int pageNumber) async {
-    await quranLocalDataSource.saveQuranPageNumber(pageNumber);
+  Future<Either<Failure, void>> saveQuranPageNumber(int pageNumber) async {
+    try {
+      await quranLocalDataSource.saveQuranPageNumber(pageNumber);
+      return const Right(null);
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
   }
 }

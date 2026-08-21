@@ -9,7 +9,6 @@ class QuranLocalDataSourceImpl implements QuranLocalDataSource {
 
   QuranLocalDataSourceImpl({required this.sharedPreferences});
 
-  static const String _kSavedAyahNumberKey = 'latest_ayah_Number_key';
   static const String _kSavedLatestQuranSurahNumberKey =
       'latest_quran_surah_number_key';
   static const String _kSavedQuranPageNumberKey = 'quran_page_number_key';
@@ -33,7 +32,6 @@ class QuranLocalDataSourceImpl implements QuranLocalDataSource {
 
   @override
   Future<void> clearAllSavedQuranValues() async {
-    await sharedPreferences.remove(_kSavedAyahNumberKey);
     await sharedPreferences.remove(_kSavedLatestQuranSurahNumberKey);
     await sharedPreferences.remove(_kSavedQuranPageNumberKey);
   }

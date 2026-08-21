@@ -1,5 +1,6 @@
+import 'package:azkar_app/core/constants/app_strings.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
-import 'package:azkar_app/features/quran/presentation/pages/quran_details_page.dart';
+import 'package:azkar_app/features/quran/presentation/screens/quran_details_screen.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/quran_font_sheet.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/quran_list.dart';
@@ -60,7 +61,7 @@ class SideTools extends StatelessWidget {
           _buildSideToolButton(
             context: context,
             icon: CupertinoIcons.list_bullet,
-            tooltip: 'قائمة السور',
+            tooltip: AppStrings.surahList,
             onTap: () => _showSurahPicker(context),
           ),
           _buildSideDivider(context),
@@ -69,7 +70,7 @@ class SideTools extends StatelessWidget {
           _buildSideToolButton(
             context: context,
             icon: Icons.format_size_rounded,
-            tooltip: 'حجم الخط',
+            tooltip: AppStrings.fontSize,
             onTap: () {
               showModalBottomSheet<void>(
                 context: context,
@@ -82,7 +83,7 @@ class SideTools extends StatelessWidget {
           _buildSideToolButton(
             context: context,
             icon: CupertinoIcons.headphones,
-            tooltip: 'الاستماع',
+            tooltip: AppStrings.audioListen,
             color: isAudioVisible ? AppPalette.mainColor : null,
             onTap: onAudioToggle,
           ),
@@ -145,6 +146,7 @@ class SideTools extends StatelessWidget {
             onSurahSelected: (int surahNum) {
               onSurahSelected(surahNum);
             },
+            scrollController: scrollController,
           );
         },
       ),
@@ -153,11 +155,6 @@ class SideTools extends StatelessWidget {
 
   Widget _bookmark(
       BuildContext context, QuranProvider provider, int surahNumber) {
-    // int index = _virtualPages.indexWhere((page) =>
-    //     page.globalPageNumber ==
-    //         _virtualPages[_currentIndex].globalPageNumber &&
-    //     page.surahSegments.first['surah'] == surahNumber);
-    // final targetPage = _virtualPages[_currentIndex];
     int targetSurah = targetPage.surahSegments.first['surah'];
 
     bool isBookmarked = provider.savedLatestQuranSurahNumber == targetSurah &&
@@ -166,7 +163,7 @@ class SideTools extends StatelessWidget {
       context: context,
       icon:
           isBookmarked ? CupertinoIcons.bookmark_fill : CupertinoIcons.bookmark,
-      tooltip: isBookmarked ? 'إزالة من المفضلة' : 'أضف إلى المفضلة',
+      tooltip: isBookmarked ? AppStrings.removeFromFavorites : AppStrings.addToFavorites,
       color: Colors.amber,
       onTap: () {
         if (isBookmarked) {

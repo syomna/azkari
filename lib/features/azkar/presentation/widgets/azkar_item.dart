@@ -1,5 +1,7 @@
+import 'package:azkar_app/core/constants/app_strings.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
+import 'package:azkar_app/widgets/app_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -13,7 +15,7 @@ class AzkarItem extends StatelessWidget {
     required this.onFavoriteTap,
     required this.isDark,
     this.itemLabel,
-    this.isCustom = false, // 👈 NEW: Flag to detect custom user azkar
+    this.isCustom = false,
   });
 
   final String title;
@@ -23,99 +25,95 @@ class AzkarItem extends StatelessWidget {
   final VoidCallback onFavoriteTap;
   final bool isDark;
   final String? itemLabel;
-  final bool isCustom; // 👈 Explicit declaration
+  final bool isCustom;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+    final countLabel = count != null ? '$count items' : '';
+    final favLabel = isFavorite ? ', favorited' : '';
+    return Semantics(
+      label: '$title, $countLabel$favLabel',
+      button: true,
+      child: AppCard(
+        margin: EdgeInsets.only(bottom: 12.h),
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.2)
-                : Colors.grey.withValues(alpha: 0.06),
-            blurRadius: 10.w,
-            offset: Offset(0, 4.h),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16.r),
-          onTap: onTap,
-          child: Padding(
-            padding: EdgeInsets.all(14.w),
-            child: Row(
-              children: [
-                // Right Side: Context Icon + Title Info
-                _buildCategoryIcon(),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.95)
-                              : Colors.black.withValues(alpha: 0.85),
-                        ),
-                      ),
-                      if (count != null) ...[
-                        SizedBox(height: 4.h),
+        shadowColor: isDark
+            ? Colors.black.withValues(alpha: 0.2)
+            : Colors.grey.withValues(alpha: 0.06),
+        blurRadius: 10,
+        borderColor: null,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16.r),
+            onTap: onTap,
+            child: Padding(
+              padding: EdgeInsets.all(14.w),
+              child: Row(
+                children: [
+                  _buildCategoryIcon(),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          '${AppHelpers.getArabicNumber(count!)} ${itemLabel ?? _itemLabel(count!)}',
+                          title,
                           style: TextStyle(
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w700,
                             color: isDark
-                                ? Colors.white.withValues(alpha: 0.4)
-                                : Colors.black45,
+                                ? Colors.white.withValues(alpha: 0.95)
+                                : Colors.black.withValues(alpha: 0.85),
                           ),
                         ),
+                        if (count != null) ...[
+                          SizedBox(height: 4.h),
+                          Text(
+                            '${AppHelpers.getArabicNumber(count!)} ${itemLabel ?? _itemLabel(count!)}',
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w500,
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.4)
+                                  : Colors.black45,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-
-                // Left Side: Interactive Components (Favorite + Optional Drag Handle)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    GestureDetector(
-                      onTap: onFavoriteTap,
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        padding: EdgeInsets.all(6.w),
-                        decoration: BoxDecoration(
-                          color: isFavorite
-                              ? AppPalette.favoriteColor.withValues(alpha: 0.1)
-                              : Colors.transparent,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isFavorite
-                              ? Icons.star_rounded
-                              : Icons.star_border_rounded,
-                          size: 22.sp,
-                          color: isFavorite
-                              ? AppPalette.favoriteColor
-                              : (isDark
-                                  ? Colors.white.withValues(alpha: 0.3)
-                                  : Colors.black.withValues(alpha: 0.25)),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        onTap: onFavoriteTap,
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          padding: EdgeInsets.all(6.w),
+                          decoration: BoxDecoration(
+                            color: isFavorite
+                                ? AppPalette.favoriteColor.withValues(alpha: 0.1)
+                                : Colors.transparent,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isFavorite
+                                ? Icons.star_rounded
+                                : Icons.star_border_rounded,
+                            size: 22.sp,
+                            color: isFavorite
+                                ? AppPalette.favoriteColor
+                                : (isDark
+                                    ? Colors.white.withValues(alpha: 0.3)
+                                    : Colors.black.withValues(alpha: 0.25)),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -123,25 +121,26 @@ class AzkarItem extends StatelessWidget {
     );
   }
 
-  // Dynamic context-based decorative icons matching dashboard layout language
   Widget _buildCategoryIcon() {
     IconData iconData = Icons.layers_outlined;
     Color iconColor = AppPalette.mainColor;
 
-    if (title.contains('الصباح')) {
+    if (title.contains(AppStrings.categoryMorning)) {
       iconData = Icons.wb_sunny_rounded;
       iconColor = Colors.orange;
-    } else if (title.contains('المساء') || title.contains('النوم')) {
+    } else if (title.contains(AppStrings.categoryEvening) ||
+        title.contains(AppStrings.categorySleep)) {
       iconData = Icons.nightlight_round;
       iconColor = Colors.indigo;
-    } else if (title.contains('صلاة') ||
-        title.contains('الآذان') ||
-        title.contains('المسجد')) {
+    } else if (title.contains(AppStrings.categoryPrayer) ||
+        title.contains(AppStrings.categoryAdhan) ||
+        title.contains(AppStrings.categoryMosque)) {
       iconData = Icons.mosque_rounded;
-    } else if (title.contains('المحفوظة') || title.contains('المفضلة')) {
+    } else if (title.contains(AppStrings.categorySaved) ||
+        title.contains(AppStrings.categoryFavorite)) {
       iconData = Icons.folder_special_rounded;
       iconColor = AppPalette.favoriteColor;
-    } else if (title.contains('سورة')) {
+    } else if (title.contains(AppStrings.categorySurah)) {
       iconData = Icons.menu_book_rounded;
       iconColor = Colors.teal;
     }
@@ -162,9 +161,9 @@ class AzkarItem extends StatelessWidget {
   }
 
   String _itemLabel(int count) {
-    if (count == 1) return 'ذكر';
-    if (count == 2) return 'ذكران';
-    if (count >= 3 && count <= 10) return 'أذكار';
-    return 'ذكراً';
+    if (count == 1) return AppStrings.zikrSingular;
+    if (count == 2) return AppStrings.zikrDual;
+    if (count >= 3 && count <= 10) return AppStrings.zikrPlural;
+    return AppStrings.zikrPlural11;
   }
 }

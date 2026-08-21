@@ -1,11 +1,12 @@
+import 'package:azkar_app/core/error/failures.dart';
 import 'package:azkar_app/features/quran/data/datasources/quran_local_data_source.dart';
 import 'package:azkar_app/features/quran/data/repositories/quran_repository_impl.dart';
+import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-// سيتم إنشاء هذا الملف بعد تشغيل build_runner
 import 'quran_repository_impl_test.mocks.dart';
 
 @GenerateMocks([QuranLocalDataSource, Dio])
@@ -34,54 +35,46 @@ void main() {
   });
 
   group('QuranRepositoryImpl - Local Data', () {
-    test('should return page number from local data source', () {
-      // Arrange
+    test('should return page number from local data source', () async {
       const tPageNumber = 50;
-      when(mockLocalDataSource.getSavedQuranPageNumber()).thenReturn(tPageNumber);
+      when(mockLocalDataSource.getSavedQuranPageNumber())
+          .thenReturn(tPageNumber);
 
-      // Act
-      final result = repository.getSavedQuranPageNumber();
+      final result = await repository.getSavedQuranPageNumber();
 
-      // Assert
-      expect(result, tPageNumber);
+      expect(result, const Right(tPageNumber));
       verify(mockLocalDataSource.getSavedQuranPageNumber()).called(1);
     });
 
     test('should call local data source to save page number', () async {
-      // Arrange
       const tPageNumber = 100;
       when(mockLocalDataSource.saveQuranPageNumber(tPageNumber))
           .thenAnswer((_) async => {});
 
-      // Act
-      await repository.saveQuranPageNumber(tPageNumber);
+      final result = await repository.saveQuranPageNumber(tPageNumber);
 
-      // Assert
+      expect(result, const Right(null));
       verify(mockLocalDataSource.saveQuranPageNumber(tPageNumber)).called(1);
     });
 
-    test('should return latest surah number from local data source', () {
-      // Arrange
+    test('should return latest surah number from local data source', () async {
       const tSurahNumber = 18;
-      when(mockLocalDataSource.getLatestQuranSurahNumber()).thenReturn(tSurahNumber);
+      when(mockLocalDataSource.getLatestQuranSurahNumber())
+          .thenReturn(tSurahNumber);
 
-      // Act
-      final result = repository.getLatestQuranSurahNumber();
+      final result = await repository.getLatestQuranSurahNumber();
 
-      // Assert
-      expect(result, tSurahNumber);
+      expect(result, const Right(tSurahNumber));
       verify(mockLocalDataSource.getLatestQuranSurahNumber()).called(1);
     });
 
     test('should call local data source to clear all saved values', () async {
-      // Arrange
       when(mockLocalDataSource.clearAllSavedQuranValues())
           .thenAnswer((_) async => {});
 
-      // Act
-      await repository.clearAllSavedQuranValues();
+      final result = await repository.clearAllSavedQuranValues();
 
-      // Assert
+      expect(result, const Right(null));
       verify(mockLocalDataSource.clearAllSavedQuranValues()).called(1);
     });
   });
@@ -90,36 +83,42 @@ void main() {
     const tUrl = 'https://example.com/audio.mp3';
     const tPath = '/storage/emulated/0/audio.mp3';
 
-    test('should complete download successfully when Dio returns success', () async {
-      // Arrange
+    test(
+        'should complete download successfully when Dio returns success',
+        () async {
       when(mockDio.download(
         any,
         any,
         options: anyNamed('options'),
-      )).thenAnswer((_) async => Response(requestOptions: RequestOptions(path: tUrl)));
+      )).thenAnswer(
+          (_) async => Response(requestOptions: RequestOptions(path: tUrl)));
 
-      // Act & Assert
-      await expectLater(repository.downloadSurah(tUrl, tPath), completes);
-      verify(mockDio.download(tUrl, '$tPath.tmp', options: anyNamed('options'))).called(1);
+      final result = await repository.downloadSurah(tUrl, tPath);
+      expect(result, isA<Right<Failure, void>>());
+      verify(mockDio.download(tUrl, '$tPath.tmp', options: anyNamed('options')))
+          .called(1);
     });
 
-    test('should throw connection timeout message when DioException is timeout', () async {
-      // Arrange
+    test(
+        'should return Left with NetworkFailure when DioException is timeout',
+        () async {
       when(mockDio.download(any, any, options: anyNamed('options')))
           .thenThrow(DioException(
         type: DioExceptionType.connectionTimeout,
         requestOptions: RequestOptions(path: tUrl),
       ));
 
-      // Act & Assert
-      expect(
-        () => repository.downloadSurah(tUrl, tPath),
-        throwsA('انتهت مهلة الاتصال، تحقق من الشبكة'),
+      final result = await repository.downloadSurah(tUrl, tPath);
+      expect(result.isLeft(), true);
+      result.fold(
+        (failure) => expect(failure, isA<NetworkFailure>()),
+        (_) => fail('Expected Left'),
       );
     });
 
-    test('should throw bad response message when server returns error (404/500)', () async {
-      // Arrange
+    test(
+        'should return Left with ServerFailure when server returns error (404/500)',
+        () async {
       when(mockDio.download(any, any, options: anyNamed('options')))
           .thenThrow(DioException(
         type: DioExceptionType.badResponse,
@@ -130,22 +129,24 @@ void main() {
         ),
       ));
 
-      // Act & Assert
-      expect(
-        () => repository.downloadSurah(tUrl, tPath),
-        throwsA('الملف غير موجود على الخادم'),
+      final result = await repository.downloadSurah(tUrl, tPath);
+      expect(result.isLeft(), true);
+      result.fold(
+        (failure) => expect(failure, isA<ServerFailure>()),
+        (_) => fail('Expected Left'),
       );
     });
 
-    test('should throw default failure message on generic exception', () async {
-      // Arrange
+    test(
+        'should return Left with ServerFailure on generic exception', () async {
       when(mockDio.download(any, any, options: anyNamed('options')))
           .thenThrow(Exception());
 
-      // Act & Assert
-      expect(
-        () => repository.downloadSurah(tUrl, tPath),
-        throwsA('فشل التحميل، تأكد من وجود مساحة كافية'),
+      final result = await repository.downloadSurah(tUrl, tPath);
+      expect(result.isLeft(), true);
+      result.fold(
+        (failure) => expect(failure, isA<ServerFailure>()),
+        (_) => fail('Expected Left'),
       );
     });
   });

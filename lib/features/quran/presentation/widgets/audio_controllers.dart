@@ -1,7 +1,8 @@
 
+import 'package:azkar_app/core/constants/app_strings.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
-import 'package:azkar_app/features/quran/presentation/widgets/infinate_download_icon.dart';
+import 'package:azkar_app/features/quran/presentation/widgets/infinite_download_icon.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -28,11 +29,18 @@ class _AudioControllersState extends State<AudioControllers> {
   }
 
   Future<bool> _checkDownloaded() async {
+    if (!mounted) return false;
     final provider = Provider.of<QuranProvider>(context, listen: false);
-    return provider.checkSurahDownloadedUseCase(widget.surahNumber);
+    final result = await provider.checkSurahDownloadedUseCase(widget.surahNumber);
+    if (!mounted) return false;
+    return result.fold(
+      (_) => false,
+      (downloaded) => downloaded,
+    );
   }
 
   void _refreshDownloadStatus() {
+    if (!mounted) return;
     setState(() {
       _isDownloadedFuture = _checkDownloaded();
     });
@@ -42,7 +50,9 @@ class _AudioControllersState extends State<AudioControllers> {
   Widget build(BuildContext context) {
         final provider = Provider.of<QuranProvider>(context);
 
-    return Row(
+    return Semantics(
+      label: 'Surah ${quran.getSurahName(widget.surahNumber)} audio controls',
+      child: Row(
       children: [
         GestureDetector(
           onTap: () async {
@@ -75,14 +85,17 @@ class _AudioControllersState extends State<AudioControllers> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('سورة ${quran.getSurahNameArabic(widget.surahNumber)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16.sp,
                       color: AppPalette.mainColor)),
               Text(
-                provider.isDownloading
-                    ? 'جاري التحميل...'
-                    : 'اضغط للاستماع للقارئ',
+                (provider.isDownloading &&
+                        provider.currentPlayingSurah == widget.surahNumber)
+                    ? AppStrings.loading
+                    : AppStrings.listenToReader,
                 style: TextStyle(fontSize: 11.sp, color: Colors.grey),
               ),
             ],
@@ -104,7 +117,8 @@ class _AudioControllersState extends State<AudioControllers> {
             );
           },
         ),
-      ],
-    );
+      ],       // Row children
+      ),       // Row
+    );         // Semantics + return
   }
 }

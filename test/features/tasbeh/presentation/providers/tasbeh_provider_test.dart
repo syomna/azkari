@@ -1,9 +1,12 @@
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'tasbeh_provider_test.mocks.mocks.dart';
+import 'tasbeh_provider_test.mocks.dart';
 
+@GenerateMocks([SharedPreferences])
 void main() {
   late TasbehProvider tasbehProvider;
   late MockSharedPreferences mockSharedPreferences;

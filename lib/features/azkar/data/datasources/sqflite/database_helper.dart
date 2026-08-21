@@ -50,7 +50,6 @@ class DatabaseHelper {
     ''');
   }
 
-  // Insert a list of custom items inside a transaction for performance
   Future<void> insertCustomAzkar(List<AzkarModel> items) async {
     final db = await instance.database;
     final batch = db.batch();
@@ -62,7 +61,6 @@ class DatabaseHelper {
     await batch.commit(noResult: true);
   }
 
-  // Fetch all user-generated custom entries
   Future<List<AzkarModel>> getCustomAzkar() async {
     final db = await instance.database;
     final result = await db.query('custom_azkar');

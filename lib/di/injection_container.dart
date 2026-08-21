@@ -46,12 +46,10 @@ Future<void> init() async {
     () async => await SharedPreferences.getInstance(),
   );
 
-  // Make sure to await its initialization before other dependencies that depend on it
   await sl.allReady();
   sl.registerLazySingleton<NotificationService>(
       () => NotificationService.instance);
   sl.registerLazySingleton<PrayerTimeService>(() => PrayerTimeService());
-  // Azkar
   sl.registerLazySingleton<DatabaseHelper>(() => DatabaseHelper.instance);
   sl.registerLazySingleton<AzkarLocalDataSource>(
       () => AzkarLocalDataSourceImpl(dbHelper: sl()));
@@ -60,9 +58,9 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetAzkarUseCase(azkarRepository: sl()));
   sl.registerLazySingleton(() => GetCustomAzkarUseCase(azkarRepository: sl()));
   sl.registerLazySingleton(() => SaveCustomAzkarUseCase(azkarRepository: sl()));
-  sl.registerLazySingleton(() => DeleteCustomAzkarUseCase(azkarRepository: sl()));
+  sl.registerLazySingleton(
+      () => DeleteCustomAzkarUseCase(azkarRepository: sl()));
 
-  // Names of allah
   sl.registerLazySingleton<NamesOfAllahLocalDataSource>(
       () => NamesOfAllahLocalDataSourceImpl());
   sl.registerLazySingleton<NamesOfAllahRepository>(
@@ -70,29 +68,27 @@ Future<void> init() async {
   sl.registerLazySingleton(
       () => GetNamesOfAllahUseCase(namesOfAllahRepository: sl()));
 
-  // Surah
   sl.registerLazySingleton<SurahLocalDataSource>(
       () => SurahLocalDataSourceImpl());
   sl.registerLazySingleton<SurahRepository>(
       () => SurahRepositoryImpl(surahLocalDataSource: sl()));
   sl.registerLazySingleton(() => GetSurahUseCase(surahRepository: sl()));
-// Register Dio as a Singleton here
+
   sl.registerLazySingleton<Dio>(() => Dio(
         BaseOptions(
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 10),
         ),
       ));
-  // Quran
   sl.registerLazySingleton<QuranLocalDataSource>(() => QuranLocalDataSourceImpl(
         sharedPreferences: sl(),
       ));
   sl.registerLazySingleton<QuranRepository>(
       () => QuranRepositoryImpl(quranLocalDataSource: sl(), dio: sl()));
   sl.registerLazySingleton(
-      () => SaveQuranPageNumberUsecase(quranRepository: sl()));
+      () => SaveQuranPageNumberUseCase(quranRepository: sl()));
   sl.registerLazySingleton(
-      () => GetSavedQuranPageNumberUsecase(quranRepository: sl()));
+      () => GetSavedQuranPageNumberUseCase(quranRepository: sl()));
   sl.registerLazySingleton(
       () => GetLatestQuranSurahNumberUseCase(quranRepository: sl()));
   sl.registerLazySingleton(
@@ -106,9 +102,7 @@ Future<void> init() async {
 
   sl.registerLazySingleton<QiblaRepository>(() => QiblaRepositoryImpl());
 
-  // 2. Use Cases
   sl.registerLazySingleton(() => GetQiblaDirectionUseCase(sl()));
 
-  // 3. Provider (Factory because we want a fresh state when opening the screen)
   sl.registerFactory(() => QiblaProvider(getQiblaDirectionUseCase: sl()));
 }

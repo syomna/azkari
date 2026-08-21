@@ -1,4 +1,5 @@
 import 'package:adhan/adhan.dart';
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,7 +12,7 @@ class PrayerTimeService {
 
   static const _timePrefix = 'prayer_time_';
   static const _overridePrefix = 'prayer_override_';
-  static const prayerKeys = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
+  static final prayerKeys = AppHelpers.prayerNames.keys.toList();
 
   Future<Position?>? _ongoingLocationFetch;
 
@@ -56,12 +57,12 @@ class PrayerTimeService {
     final coordinates = Coordinates(lat, lng);
     final params = CalculationMethod.egyptian.getParameters();
     params.madhab = Madhab.shafi;
-    return PrayerTimes(coordinates, DateComponents.from(DateTime.now()), params);
+    return PrayerTimes(
+        coordinates, DateComponents.from(DateTime.now()), params);
   }
 
-  /// Calculate from package and persist calculated times to prefs.
-  /// Call once on app start or when location changes.
-  Future<void> calculateAndStore(double lat, double lng, SharedPreferences prefs) async {
+  Future<void> calculateAndStore(
+      double lat, double lng, SharedPreferences prefs) async {
     final times = getTimes(lat, lng);
     final map = _prayerTimesToMap(times);
     for (final key in prayerKeys) {
@@ -71,16 +72,14 @@ class PrayerTimeService {
   }
 
   Map<String, DateTime> _prayerTimesToMap(PrayerTimes times) => {
-    'fajr':    times.fajr,
-    'sunrise': times.sunrise,
-    'dhuhr':   times.dhuhr,
-    'asr':     times.asr,
-    'maghrib': times.maghrib,
-    'isha':    times.isha,
-  };
+        'fajr': times.fajr,
+        'sunrise': times.sunrise,
+        'dhuhr': times.dhuhr,
+        'asr': times.asr,
+        'maghrib': times.maghrib,
+        'isha': times.isha,
+      };
 
-  /// Returns the effective TimeOfDay for each prayer.
-  /// Override wins over calculated; falls back to calculated if no override.
   Map<String, TimeOfDay> getEffectiveTimes(SharedPreferences prefs) {
     final result = <String, TimeOfDay>{};
     for (final key in prayerKeys) {
@@ -124,4 +123,30 @@ class PrayerTimeService {
   }
 
   String getNextPrayerName(PrayerTimes times) => times.nextPrayer().name;
+
+  Future<(double lat, double lng)?> resolveLocation(
+      SharedPreferences prefs) async {
+    double? lat = prefs.getDouble('lat');
+    double? lng = prefs.getDouble('lng');
+    final cachedAt = prefs.getInt('location_cached_at');
+    final isStale = cachedAt == null ||
+        DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(cachedAt))
+                .inHours >
+            24;
+
+    if (lat == null || lng == null || isStale) {
+      final position = await getCurrentLocation();
+      lat = position?.latitude;
+      lng = position?.longitude;
+      if (lat != null && lng != null) {
+        await prefs.setDouble('lat', lat);
+        await prefs.setDouble('lng', lng);
+        await prefs.setInt(
+            'location_cached_at', DateTime.now().millisecondsSinceEpoch);
+      }
+    }
+
+    if (lat != null && lng != null) return (lat, lng);
+    return null;
+  }
 }

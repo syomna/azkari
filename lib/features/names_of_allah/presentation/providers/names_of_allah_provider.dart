@@ -1,4 +1,5 @@
 import 'package:azkar_app/core/enums/app_loading_status.dart';
+import 'package:azkar_app/core/usecases/usecase.dart';
 import 'package:azkar_app/features/names_of_allah/domain/entities/names_of_allah_entity.dart';
 import 'package:azkar_app/features/names_of_allah/domain/usecases/get_names_of_allah_usecase.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +11,7 @@ class NamesOfAllahProvider extends ChangeNotifier {
       required this.getNamesOfAllahUseCase,
     });
 
-// Names of allah
+
   List<NamesOfAllahEntity> _namesOfAllahList = [];
   AppLoadingStatus _namesOfAllahStatus = AppLoadingStatus.initial;
   String? _namesOfAllahErrorMessage;
@@ -20,12 +21,12 @@ class NamesOfAllahProvider extends ChangeNotifier {
 
   Future<void> loadNamesOfAllah() async {
     if (_namesOfAllahStatus == AppLoadingStatus.loading) {
-      // Prevent multiple concurrent calls if already loading
       return;
     }
     _namesOfAllahStatus = AppLoadingStatus.loading;
     _namesOfAllahErrorMessage = null;
-    final result = await getNamesOfAllahUseCase();
+    notifyListeners();
+    final result = await getNamesOfAllahUseCase(const NoParams());
     result.fold((failure) {
       _namesOfAllahStatus = AppLoadingStatus.error;
       _namesOfAllahErrorMessage = failure.message;

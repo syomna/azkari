@@ -1,21 +1,25 @@
+import 'package:azkar_app/core/error/failures.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/qibla/domain/repositories/qibla_repository.dart';
+import 'package:dartz/dartz.dart';
 import 'package:geolocator/geolocator.dart';
 
 class QiblaRepositoryImpl implements QiblaRepository {
   @override
-  Future<double> getQiblaDirection() async {
-    // 1. Check/Request Permissions
-    await _handleLocationPermission();
+  Future<Either<Failure, double>> getQiblaDirection() async {
+    try {
+      await _handleLocationPermission();
 
-    // 2. Get Position
-    final position = await Geolocator.getCurrentPosition();
+      final position = await Geolocator.getCurrentPosition();
 
-    // 3. Return the calculated angle
-    return AppHelpers.calculateQiblaDirection(
-      position.latitude,
-      position.longitude,
-    );
+      final direction = AppHelpers.calculateQiblaDirection(
+        position.latitude,
+        position.longitude,
+      );
+      return Right(direction);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 
   Future<void> _handleLocationPermission() async {

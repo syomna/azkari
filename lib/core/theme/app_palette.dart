@@ -21,9 +21,17 @@ class AppPalette {
 
   static const Color favoriteColor = Color(0xFFF59E0B);
 
+  static const Color lightScaffoldGradientStart = Color(0xFFFDFDFD);
+  static const Color lightScaffoldGradientEnd = Color(0xFFF5F5F5);
+  static const Color darkScaffoldGradientStart = Color(0xFF1A1A1A);
+  static const Color darkScaffoldGradientEnd = Color(0xFF121212);
+
+  static const Color zekrCardDarkGradientStart = Color(0xFF1E1E1E);
+  static const Color zekrCardDarkGradientEnd = Color(0xFF121E1E);
+  static const Color zekrCardLightGradientEnd = Color(0xFF3ABB7A);
+
   static const String tajawalFontFamily = 'Tajawal';
   static const String amiriFontFamily = 'Amiri';
-
   static final ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
     useMaterial3: true,

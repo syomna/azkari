@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'presentation/widget_guide_page.dart';
+import 'presentation/screens/widget_guide_screen.dart';
 
 class WidgetGuideHelper {
   const WidgetGuideHelper._();
@@ -13,19 +13,18 @@ class WidgetGuideHelper {
         await SharedPreferences.getInstance();
 
     final hasSeenGuide = preferences.getBool(
-          WidgetGuidePage.seenPreferenceKey,
+          WidgetGuideScreen.seenPreferenceKey,
         ) ??
         false;
 
     if (hasSeenGuide || !context.mounted) return;
 
-    // ننتظر قليلًا حتى تظهر الصفحة الرئيسية أولًا.
     await Future<void>.delayed(
       const Duration(milliseconds: 700),
     );
 
     if (!context.mounted) return;
 
-    await WidgetGuidePage.open(context);
+    await WidgetGuideScreen.open(context);
   }
 }

@@ -33,7 +33,9 @@ class AudioSlider extends StatelessWidget {
                 thumbColor: AppPalette.mainColor,
               ),
               child: Slider(
-                value: position.inMilliseconds.toDouble(),
+                value: position.inMilliseconds
+                    .toDouble()
+                    .clamp(0.0, duration.inMilliseconds.toDouble() > 0 ? duration.inMilliseconds.toDouble() : 1.0),
                 max: duration.inMilliseconds.toDouble() > 0
                     ? duration.inMilliseconds.toDouble()
                     : 1.0,
@@ -62,6 +64,9 @@ class AudioSlider extends StatelessWidget {
 
   String _formatDuration(Duration d) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
+    if (d.inHours > 0) {
+      return '${twoDigits(d.inHours)}:${twoDigits(d.inMinutes.remainder(60))}:${twoDigits(d.inSeconds.remainder(60))}';
+    }
     return '${twoDigits(d.inMinutes.remainder(60))}:${twoDigits(d.inSeconds.remainder(60))}';
   }
 }

@@ -1,5 +1,6 @@
+import 'package:azkar_app/core/constants/app_strings.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
-import 'package:azkar_app/features/quran/presentation/pages/quran_details_page.dart';
+import 'package:azkar_app/features/quran/presentation/screens/quran_details_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -19,8 +20,8 @@ class BottomNavigationControls extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final currentSurah =
-        virtualPages[currentIndex].surahSegments.first['surah'];
+    final segments = virtualPages[currentIndex].surahSegments;
+    final currentSurah = segments.isEmpty ? 1 : (segments.first['surah'] as int?) ?? 1;
 
     final canGoPreviousPage = currentIndex > 0;
     final canGoNextPage = currentIndex < virtualPages.length - 1;
@@ -28,7 +29,9 @@ class BottomNavigationControls extends StatelessWidget {
     final canGoPreviousSurah = currentSurah > 1;
     final canGoNextSurah = currentSurah < 114;
 
-    return Container(
+    return Semantics(
+      label: 'Quran page navigation',
+      child: Container(
       height: 62.h,
       padding: EdgeInsets.symmetric(horizontal: 10.w),
       decoration: BoxDecoration(
@@ -55,14 +58,14 @@ class BottomNavigationControls extends StatelessWidget {
           _buildNavigationButton(
             context: context,
             icon: CupertinoIcons.forward_end_alt,
-            tooltip: 'السورة السابقة',
+            tooltip: AppStrings.previousSurah,
             enabled: canGoPreviousSurah,
             onTap: onPreviousSurah,
           ),
           _buildNavigationButton(
             context: context,
             icon: CupertinoIcons.forward_end,
-            tooltip: 'الصفحة السابقة',
+            tooltip: AppStrings.previousPage,
             enabled: canGoPreviousPage,
             onTap: onPreviousPage,
           ),
@@ -74,20 +77,21 @@ class BottomNavigationControls extends StatelessWidget {
           _buildNavigationButton(
             context: context,
             icon: CupertinoIcons.backward_end,
-            tooltip: 'الصفحة التالية',
+            tooltip: AppStrings.nextPage,
             enabled: canGoNextPage,
             onTap: onNextPage,
           ),
           _buildNavigationButton(
             context: context,
             icon: CupertinoIcons.backward_end_alt,
-            tooltip: 'السورة التالية',
+            tooltip: AppStrings.nextSurah,
             enabled: canGoNextSurah,
             onTap: onNextSurah,
           ),
-        ],
-      ),
-    );
+        ],       // Row children
+      ),         // Row
+      ),         // Container
+    );           // Semantics + return
   }
 
     Widget _buildNavigationButton({

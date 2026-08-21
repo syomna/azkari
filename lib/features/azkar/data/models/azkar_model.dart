@@ -11,7 +11,7 @@ class AzkarModel extends ZekrEntity {
   factory AzkarModel.fromJson(Map<String, dynamic> json) {
     return AzkarModel(
       category: json['category'],
-      count: json['count'].toString(),
+      count: int.tryParse(json['count'].toString()) ?? 0,
       description: json['description'],
       reference: json['reference'],
       zekr: json['zekr'],

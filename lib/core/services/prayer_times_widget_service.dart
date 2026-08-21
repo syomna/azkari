@@ -1,4 +1,5 @@
 import 'package:adhan/adhan.dart';
+import 'package:azkar_app/core/constants/app_strings.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hijri_date/hijri_date.dart';
 import 'package:home_widget/home_widget.dart';
@@ -17,13 +18,13 @@ class PrayerTimesWidgetService {
     'maghrib',
     'isha'
   ];
-  static const _arabicNames = {
-    'fajr': 'الفجر',
-    'sunrise': 'الشروق',
-    'dhuhr': 'الظهر',
-    'asr': 'العصر',
-    'maghrib': 'المغرب',
-    'isha': 'العشاء',
+  static final _arabicNames = {
+    'fajr': AppStrings.fajr,
+    'sunrise': AppStrings.sunrise,
+    'dhuhr': AppStrings.dhuhr,
+    'asr': AppStrings.asr,
+    'maghrib': AppStrings.maghrib,
+    'isha': AppStrings.isha,
   };
 
   static Future<void> updateWidget({
@@ -66,7 +67,10 @@ class PrayerTimesWidgetService {
         iOSName: _iosWidgetName,
       );
     } catch (e) {
-      debugPrint('Error updating widget: $e');
+      assert(() {
+        debugPrint('Error updating widget: $e');
+        return true;
+      }());
     }
   }
 
@@ -79,40 +83,15 @@ class PrayerTimesWidgetService {
     if (hour == null || minute == null) return raw;
     final isAm = hour < 12;
     final h = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
-    final suffix = isAm ? 'ص' : 'م';
+    final suffix = isAm ? AppStrings.amSuffix : AppStrings.pmSuffix;
     return '$h:${minute.toString().padLeft(2, '0')} $suffix';
   }
 
   static String _getArabicDay(int weekday) {
-    const days = [
-      '',
-      'الإثنين',
-      'الثلاثاء',
-      'الأربعاء',
-      'الخميس',
-      'الجمعة',
-      'السبت',
-      'الأحد'
-    ];
-    return days[weekday];
+    return AppStrings.arabicWeekdays[weekday];
   }
 
   static String _getArabicGregorianMonth(int month) {
-    const months = [
-      '',
-      'يناير',
-      'فبراير',
-      'مارس',
-      'أبريل',
-      'مايو',
-      'يونيو',
-      'يوليو',
-      'أغسطس',
-      'سبتمبر',
-      'أكتوبر',
-      'نوفمبر',
-      'ديسمبر'
-    ];
-    return months[month];
+    return AppStrings.gregorianMonths[month - 1];
   }
 }
