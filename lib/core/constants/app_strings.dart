@@ -60,6 +60,26 @@ class AppStrings {
   static const String tapToCount = 'اضغط للعد، ومطولاً للنسخ.';
   static const String completeLabel = 'اكتمل ✓';
   static const String percentSign = '٪';
+  static const String azkarCompletedTitle = 'أكملت جميع الأذكار';
+  static const String azkarCompletedSubtitle =
+      'تقبّل الله منك، وجعله في ميزان حسناتك.';
+  static const String azkarCompletedButton = 'الحمد لله';
+
+  // ─── City Picker ──────────────────────────────────────
+  static const String selectCity = 'اختر المدينة';
+  static const String searchCityHint = 'ابحث عن مدينة...';
+  static const String autoLocationOption = 'حسب موقعي الحالي';
+  static const String autoChipLabel = 'تلقائي';
+  static const String arabCitiesSection = 'الدول العربية';
+  static const String worldCitiesSection = 'مدن أخرى';
+  static const String manualAdjustmentsTitle = 'تعديلات يدوية';
+  static const String manualAdjustmentsBody =
+      'لديك تعديلات يدوية على بعض الأوقات. هل تريد الإبقاء عليها بعد تغيير المدينة؟';
+  static const String keepAdjustments = 'الإبقاء عليها';
+  static const String discardAdjustments = 'حذف التعديلات';
+  static const String prayerTimesUpdated = 'تم تحديث مواقيت الصلاة';
+  static const String locationUpdateFailed =
+      'تعذر تحديث الموقع، حاول مرة أخرى';
 
   // ─── Azkar Filter Chips ───────────────────────────────
   static const String filterMorning = 'الصباح';

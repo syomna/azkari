@@ -52,6 +52,34 @@ class AzkarRepositoryImpl extends AzkarRepository {
   }
 
   @override
+  Future<Either<Failure, Unit>> updateCustomCategory({
+    required String originalCategory,
+    required String newCategory,
+    required List<ZekrEntity> items,
+  }) async {
+    try {
+      final List<AzkarModel> modelsToSave = items.map((entity) {
+        return AzkarModel(
+          category: newCategory,
+          count: entity.count,
+          description: entity.description,
+          reference: entity.reference,
+          zekr: entity.zekr,
+        );
+      }).toList();
+
+      await azkarLocalDataSource.updateCustomCategory(
+        originalCategory: originalCategory,
+        newCategory: newCategory,
+        items: modelsToSave,
+      );
+      return const Right(unit);
+    } catch (e) {
+      return Left(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> deleteCustomCategory(
       String categoryName) async {
     try {

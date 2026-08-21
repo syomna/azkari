@@ -3,16 +3,17 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i12;
-import 'dart:ui' as _i13;
+import 'dart:async' as _i13;
+import 'dart:ui' as _i14;
 
-import 'package:azkar_app/core/enums/app_loading_status.dart' as _i11;
-import 'package:azkar_app/core/providers/favorites_provider.dart' as _i18;
-import 'package:azkar_app/core/providers/notification_provider.dart' as _i20;
-import 'package:azkar_app/core/providers/theme_provider.dart' as _i19;
-import 'package:azkar_app/core/services/prayer_times_service.dart' as _i6;
+import 'package:azkar_app/core/enums/app_loading_status.dart' as _i12;
+import 'package:azkar_app/core/models/city.dart' as _i17;
+import 'package:azkar_app/core/providers/favorites_provider.dart' as _i20;
+import 'package:azkar_app/core/providers/notification_provider.dart' as _i22;
+import 'package:azkar_app/core/providers/theme_provider.dart' as _i21;
+import 'package:azkar_app/core/services/prayer_times_service.dart' as _i7;
 import 'package:azkar_app/features/azkar/domain/entities/zekr_entity.dart'
-    as _i10;
+    as _i11;
 import 'package:azkar_app/features/azkar/domain/usecases/delete_custom_azkar_usecase.dart'
     as _i5;
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart'
@@ -21,21 +22,23 @@ import 'package:azkar_app/features/azkar/domain/usecases/get_custom_azkar_usecas
     as _i3;
 import 'package:azkar_app/features/azkar/domain/usecases/save_custom_azkar_usecase.dart'
     as _i4;
+import 'package:azkar_app/features/azkar/domain/usecases/update_custom_azkar_usecase.dart'
+    as _i6;
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart'
-    as _i9;
+    as _i10;
 import 'package:azkar_app/features/names_of_allah/domain/entities/names_of_allah_entity.dart'
-    as _i17;
+    as _i19;
 import 'package:azkar_app/features/names_of_allah/domain/usecases/get_names_of_allah_usecase.dart'
-    as _i8;
+    as _i9;
 import 'package:azkar_app/features/names_of_allah/presentation/providers/names_of_allah_provider.dart'
-    as _i16;
+    as _i18;
 import 'package:azkar_app/features/prayer_times/presentation/providers/prayer_times_provider.dart'
-    as _i14;
+    as _i15;
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart'
-    as _i21;
-import 'package:flutter/material.dart' as _i15;
+    as _i23;
+import 'package:flutter/material.dart' as _i16;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:shared_preferences/shared_preferences.dart' as _i7;
+import 'package:shared_preferences/shared_preferences.dart' as _i8;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -96,9 +99,9 @@ class _FakeDeleteCustomAzkarUseCase_3 extends _i1.SmartFake
         );
 }
 
-class _FakePrayerTimeService_4 extends _i1.SmartFake
-    implements _i6.PrayerTimeService {
-  _FakePrayerTimeService_4(
+class _FakeUpdateCustomAzkarUseCase_4 extends _i1.SmartFake
+    implements _i6.UpdateCustomAzkarUseCase {
+  _FakeUpdateCustomAzkarUseCase_4(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -107,9 +110,9 @@ class _FakePrayerTimeService_4 extends _i1.SmartFake
         );
 }
 
-class _FakeSharedPreferences_5 extends _i1.SmartFake
-    implements _i7.SharedPreferences {
-  _FakeSharedPreferences_5(
+class _FakePrayerTimeService_5 extends _i1.SmartFake
+    implements _i7.PrayerTimeService {
+  _FakePrayerTimeService_5(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -118,9 +121,20 @@ class _FakeSharedPreferences_5 extends _i1.SmartFake
         );
 }
 
-class _FakeGetNamesOfAllahUseCase_6 extends _i1.SmartFake
-    implements _i8.GetNamesOfAllahUseCase {
-  _FakeGetNamesOfAllahUseCase_6(
+class _FakeSharedPreferences_6 extends _i1.SmartFake
+    implements _i8.SharedPreferences {
+  _FakeSharedPreferences_6(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeGetNamesOfAllahUseCase_7 extends _i1.SmartFake
+    implements _i9.GetNamesOfAllahUseCase {
+  _FakeGetNamesOfAllahUseCase_7(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -132,7 +146,7 @@ class _FakeGetNamesOfAllahUseCase_6 extends _i1.SmartFake
 /// A class which mocks [AzkarProvider].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockAzkarProvider extends _i1.Mock implements _i9.AzkarProvider {
+class MockAzkarProvider extends _i1.Mock implements _i10.AzkarProvider {
   MockAzkarProvider() {
     _i1.throwOnMissingStub(this);
   }
@@ -175,22 +189,32 @@ class MockAzkarProvider extends _i1.Mock implements _i9.AzkarProvider {
       ) as _i5.DeleteCustomAzkarUseCase);
 
   @override
-  List<_i10.ZekrEntity> get azkarList => (super.noSuchMethod(
+  _i6.UpdateCustomAzkarUseCase get updateCustomAzkarUseCase =>
+      (super.noSuchMethod(
+        Invocation.getter(#updateCustomAzkarUseCase),
+        returnValue: _FakeUpdateCustomAzkarUseCase_4(
+          this,
+          Invocation.getter(#updateCustomAzkarUseCase),
+        ),
+      ) as _i6.UpdateCustomAzkarUseCase);
+
+  @override
+  List<_i11.ZekrEntity> get azkarList => (super.noSuchMethod(
         Invocation.getter(#azkarList),
-        returnValue: <_i10.ZekrEntity>[],
-      ) as List<_i10.ZekrEntity>);
+        returnValue: <_i11.ZekrEntity>[],
+      ) as List<_i11.ZekrEntity>);
 
   @override
-  _i11.AppLoadingStatus get azkarStatus => (super.noSuchMethod(
+  _i12.AppLoadingStatus get azkarStatus => (super.noSuchMethod(
         Invocation.getter(#azkarStatus),
-        returnValue: _i11.AppLoadingStatus.initial,
-      ) as _i11.AppLoadingStatus);
+        returnValue: _i12.AppLoadingStatus.initial,
+      ) as _i12.AppLoadingStatus);
 
   @override
-  List<_i10.ZekrEntity> get customAzkarList => (super.noSuchMethod(
+  List<_i11.ZekrEntity> get customAzkarList => (super.noSuchMethod(
         Invocation.getter(#customAzkarList),
-        returnValue: <_i10.ZekrEntity>[],
-      ) as List<_i10.ZekrEntity>);
+        returnValue: <_i11.ZekrEntity>[],
+      ) as List<_i11.ZekrEntity>);
 
   @override
   List<String> get customCategories => (super.noSuchMethod(
@@ -217,27 +241,27 @@ class MockAzkarProvider extends _i1.Mock implements _i9.AzkarProvider {
       ) as bool);
 
   @override
-  _i12.Future<void> loadAzkar() => (super.noSuchMethod(
+  _i13.Future<void> loadAzkar() => (super.noSuchMethod(
         Invocation.method(
           #loadAzkar,
           [],
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  _i12.Future<void> loadCustomAzkar() => (super.noSuchMethod(
+  _i13.Future<void> loadCustomAzkar() => (super.noSuchMethod(
         Invocation.method(
           #loadCustomAzkar,
           [],
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  _i12.Future<void> saveCustomAzkarCategory({
+  _i13.Future<void> saveCustomAzkarCategory({
     required String? categoryTitle,
     required List<Map<String, dynamic>>? azkarItems,
   }) =>
@@ -250,23 +274,43 @@ class MockAzkarProvider extends _i1.Mock implements _i9.AzkarProvider {
             #azkarItems: azkarItems,
           },
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  _i12.Future<void> deleteCustomCategory(String? categoryName) =>
+  _i13.Future<void> updateCustomAzkarCategory({
+    required String? originalCategory,
+    required String? categoryTitle,
+    required List<Map<String, dynamic>>? azkarItems,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateCustomAzkarCategory,
+          [],
+          {
+            #originalCategory: originalCategory,
+            #categoryTitle: categoryTitle,
+            #azkarItems: azkarItems,
+          },
+        ),
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
+
+  @override
+  _i13.Future<void> deleteCustomCategory(String? categoryName) =>
       (super.noSuchMethod(
         Invocation.method(
           #deleteCustomCategory,
           [categoryName],
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  void addListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i14.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
           [listener],
@@ -275,7 +319,7 @@ class MockAzkarProvider extends _i1.Mock implements _i9.AzkarProvider {
       );
 
   @override
-  void removeListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i14.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #removeListener,
           [listener],
@@ -306,37 +350,49 @@ class MockAzkarProvider extends _i1.Mock implements _i9.AzkarProvider {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockPrayerTimesProvider extends _i1.Mock
-    implements _i14.PrayerTimesProvider {
+    implements _i15.PrayerTimesProvider {
   MockPrayerTimesProvider() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i6.PrayerTimeService get prayerTimeService => (super.noSuchMethod(
+  _i7.PrayerTimeService get prayerTimeService => (super.noSuchMethod(
         Invocation.getter(#prayerTimeService),
-        returnValue: _FakePrayerTimeService_4(
+        returnValue: _FakePrayerTimeService_5(
           this,
           Invocation.getter(#prayerTimeService),
         ),
-      ) as _i6.PrayerTimeService);
+      ) as _i7.PrayerTimeService);
 
   @override
-  _i7.SharedPreferences get sharedPreferences => (super.noSuchMethod(
+  _i8.SharedPreferences get sharedPreferences => (super.noSuchMethod(
         Invocation.getter(#sharedPreferences),
-        returnValue: _FakeSharedPreferences_5(
+        returnValue: _FakeSharedPreferences_6(
           this,
           Invocation.getter(#sharedPreferences),
         ),
-      ) as _i7.SharedPreferences);
+      ) as _i8.SharedPreferences);
 
   @override
-  Map<String, _i15.TimeOfDay> get allDisplayTimes => (super.noSuchMethod(
+  bool get isAutoLocation => (super.noSuchMethod(
+        Invocation.getter(#isAutoLocation),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  bool get hasAnyOverrides => (super.noSuchMethod(
+        Invocation.getter(#hasAnyOverrides),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  Map<String, _i16.TimeOfDay> get allDisplayTimes => (super.noSuchMethod(
         Invocation.getter(#allDisplayTimes),
-        returnValue: <String, _i15.TimeOfDay>{},
-      ) as Map<String, _i15.TimeOfDay>);
+        returnValue: <String, _i16.TimeOfDay>{},
+      ) as Map<String, _i16.TimeOfDay>);
 
   @override
-  set onOverrideChanged(_i13.VoidCallback? value) => super.noSuchMethod(
+  set onOverrideChanged(_i14.VoidCallback? value) => super.noSuchMethod(
         Invocation.setter(
           #onOverrideChanged,
           value,
@@ -351,21 +407,32 @@ class MockPrayerTimesProvider extends _i1.Mock
       ) as bool);
 
   @override
-  _i12.Future<void> loadPrayerTimes() => (super.noSuchMethod(
+  _i13.Future<void> loadPrayerTimes({bool? forceRecalc = false}) =>
+      (super.noSuchMethod(
         Invocation.method(
           #loadPrayerTimes,
           [],
+          {#forceRecalc: forceRecalc},
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  _i15.TimeOfDay? getDisplayTime(String? key) =>
+  _i13.Future<bool> selectCity(_i17.City? city) => (super.noSuchMethod(
+        Invocation.method(
+          #selectCity,
+          [city],
+        ),
+        returnValue: _i13.Future<bool>.value(false),
+      ) as _i13.Future<bool>);
+
+  @override
+  _i16.TimeOfDay? getDisplayTime(String? key) =>
       (super.noSuchMethod(Invocation.method(
         #getDisplayTime,
         [key],
-      )) as _i15.TimeOfDay?);
+      )) as _i16.TimeOfDay?);
 
   @override
   bool isOverridden(String? key) => (super.noSuchMethod(
@@ -379,7 +446,7 @@ class MockPrayerTimesProvider extends _i1.Mock
   @override
   void setOverride(
     String? key,
-    _i15.TimeOfDay? time,
+    _i16.TimeOfDay? time,
   ) =>
       super.noSuchMethod(
         Invocation.method(
@@ -411,7 +478,7 @@ class MockPrayerTimesProvider extends _i1.Mock
       );
 
   @override
-  void addListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i14.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
           [listener],
@@ -420,7 +487,7 @@ class MockPrayerTimesProvider extends _i1.Mock
       );
 
   @override
-  void removeListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i14.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #removeListener,
           [listener],
@@ -451,31 +518,31 @@ class MockPrayerTimesProvider extends _i1.Mock
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockNamesOfAllahProvider extends _i1.Mock
-    implements _i16.NamesOfAllahProvider {
+    implements _i18.NamesOfAllahProvider {
   MockNamesOfAllahProvider() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i8.GetNamesOfAllahUseCase get getNamesOfAllahUseCase => (super.noSuchMethod(
+  _i9.GetNamesOfAllahUseCase get getNamesOfAllahUseCase => (super.noSuchMethod(
         Invocation.getter(#getNamesOfAllahUseCase),
-        returnValue: _FakeGetNamesOfAllahUseCase_6(
+        returnValue: _FakeGetNamesOfAllahUseCase_7(
           this,
           Invocation.getter(#getNamesOfAllahUseCase),
         ),
-      ) as _i8.GetNamesOfAllahUseCase);
+      ) as _i9.GetNamesOfAllahUseCase);
 
   @override
-  List<_i17.NamesOfAllahEntity> get namesOfAllahList => (super.noSuchMethod(
+  List<_i19.NamesOfAllahEntity> get namesOfAllahList => (super.noSuchMethod(
         Invocation.getter(#namesOfAllahList),
-        returnValue: <_i17.NamesOfAllahEntity>[],
-      ) as List<_i17.NamesOfAllahEntity>);
+        returnValue: <_i19.NamesOfAllahEntity>[],
+      ) as List<_i19.NamesOfAllahEntity>);
 
   @override
-  _i11.AppLoadingStatus get namesOfAllahStatus => (super.noSuchMethod(
+  _i12.AppLoadingStatus get namesOfAllahStatus => (super.noSuchMethod(
         Invocation.getter(#namesOfAllahStatus),
-        returnValue: _i11.AppLoadingStatus.initial,
-      ) as _i11.AppLoadingStatus);
+        returnValue: _i12.AppLoadingStatus.initial,
+      ) as _i12.AppLoadingStatus);
 
   @override
   bool get hasListeners => (super.noSuchMethod(
@@ -484,17 +551,17 @@ class MockNamesOfAllahProvider extends _i1.Mock
       ) as bool);
 
   @override
-  _i12.Future<void> loadNamesOfAllah() => (super.noSuchMethod(
+  _i13.Future<void> loadNamesOfAllah() => (super.noSuchMethod(
         Invocation.method(
           #loadNamesOfAllah,
           [],
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  void addListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i14.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
           [listener],
@@ -503,7 +570,7 @@ class MockNamesOfAllahProvider extends _i1.Mock
       );
 
   @override
-  void removeListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i14.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #removeListener,
           [listener],
@@ -533,19 +600,19 @@ class MockNamesOfAllahProvider extends _i1.Mock
 /// A class which mocks [FavoritesProvider].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockFavoritesProvider extends _i1.Mock implements _i18.FavoritesProvider {
+class MockFavoritesProvider extends _i1.Mock implements _i20.FavoritesProvider {
   MockFavoritesProvider() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i7.SharedPreferences get sharedPreferences => (super.noSuchMethod(
+  _i8.SharedPreferences get sharedPreferences => (super.noSuchMethod(
         Invocation.getter(#sharedPreferences),
-        returnValue: _FakeSharedPreferences_5(
+        returnValue: _FakeSharedPreferences_6(
           this,
           Invocation.getter(#sharedPreferences),
         ),
-      ) as _i7.SharedPreferences);
+      ) as _i8.SharedPreferences);
 
   @override
   List<String> get favCategories => (super.noSuchMethod(
@@ -566,36 +633,36 @@ class MockFavoritesProvider extends _i1.Mock implements _i18.FavoritesProvider {
       ) as bool);
 
   @override
-  _i12.Future<void> loadFavorites() => (super.noSuchMethod(
+  _i13.Future<void> loadFavorites() => (super.noSuchMethod(
         Invocation.method(
           #loadFavorites,
           [],
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  _i12.Future<void> toggleCategoryFavorite(String? categoryName) =>
+  _i13.Future<void> toggleCategoryFavorite(String? categoryName) =>
       (super.noSuchMethod(
         Invocation.method(
           #toggleCategoryFavorite,
           [categoryName],
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  _i12.Future<void> toggleItemFavorite(String? itemIdentifier) =>
+  _i13.Future<void> toggleItemFavorite(String? itemIdentifier) =>
       (super.noSuchMethod(
         Invocation.method(
           #toggleItemFavorite,
           [itemIdentifier],
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
   bool isCategoryFav(String? name) => (super.noSuchMethod(
@@ -616,7 +683,7 @@ class MockFavoritesProvider extends _i1.Mock implements _i18.FavoritesProvider {
       ) as bool);
 
   @override
-  _i12.Future<void> renameCategory(
+  _i13.Future<void> renameCategory(
     String? oldName,
     String? newName,
   ) =>
@@ -628,12 +695,12 @@ class MockFavoritesProvider extends _i1.Mock implements _i18.FavoritesProvider {
             newName,
           ],
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  void addListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i14.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
           [listener],
@@ -642,7 +709,7 @@ class MockFavoritesProvider extends _i1.Mock implements _i18.FavoritesProvider {
       );
 
   @override
-  void removeListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i14.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #removeListener,
           [listener],
@@ -672,25 +739,25 @@ class MockFavoritesProvider extends _i1.Mock implements _i18.FavoritesProvider {
 /// A class which mocks [ThemeProvider].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockThemeProvider extends _i1.Mock implements _i19.ThemeProvider {
+class MockThemeProvider extends _i1.Mock implements _i21.ThemeProvider {
   MockThemeProvider() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i7.SharedPreferences get prefs => (super.noSuchMethod(
+  _i8.SharedPreferences get prefs => (super.noSuchMethod(
         Invocation.getter(#prefs),
-        returnValue: _FakeSharedPreferences_5(
+        returnValue: _FakeSharedPreferences_6(
           this,
           Invocation.getter(#prefs),
         ),
-      ) as _i7.SharedPreferences);
+      ) as _i8.SharedPreferences);
 
   @override
-  _i15.ThemeMode get themeMode => (super.noSuchMethod(
+  _i16.ThemeMode get themeMode => (super.noSuchMethod(
         Invocation.getter(#themeMode),
-        returnValue: _i15.ThemeMode.system,
-      ) as _i15.ThemeMode);
+        returnValue: _i16.ThemeMode.system,
+      ) as _i16.ThemeMode);
 
   @override
   double get textScaleFactor => (super.noSuchMethod(
@@ -711,17 +778,17 @@ class MockThemeProvider extends _i1.Mock implements _i19.ThemeProvider {
       ) as bool);
 
   @override
-  _i12.Future<void> loadTheme() => (super.noSuchMethod(
+  _i13.Future<void> loadTheme() => (super.noSuchMethod(
         Invocation.method(
           #loadTheme,
           [],
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  void setThemeMode(_i15.ThemeMode? mode) => super.noSuchMethod(
+  void setThemeMode(_i16.ThemeMode? mode) => super.noSuchMethod(
         Invocation.method(
           #setThemeMode,
           [mode],
@@ -748,7 +815,7 @@ class MockThemeProvider extends _i1.Mock implements _i19.ThemeProvider {
       );
 
   @override
-  void addListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i14.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
           [listener],
@@ -757,7 +824,7 @@ class MockThemeProvider extends _i1.Mock implements _i19.ThemeProvider {
       );
 
   @override
-  void removeListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i14.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #removeListener,
           [listener],
@@ -788,7 +855,7 @@ class MockThemeProvider extends _i1.Mock implements _i19.ThemeProvider {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockNotificationProvider extends _i1.Mock
-    implements _i20.NotificationProvider {
+    implements _i22.NotificationProvider {
   MockNotificationProvider() {
     _i1.throwOnMissingStub(this);
   }
@@ -842,17 +909,17 @@ class MockNotificationProvider extends _i1.Mock
       ) as bool);
 
   @override
-  _i12.Future<String?> toggleAllNotifications(bool? newValue) =>
+  _i13.Future<String?> toggleAllNotifications(bool? newValue) =>
       (super.noSuchMethod(
         Invocation.method(
           #toggleAllNotifications,
           [newValue],
         ),
-        returnValue: _i12.Future<String?>.value(),
-      ) as _i12.Future<String?>);
+        returnValue: _i13.Future<String?>.value(),
+      ) as _i13.Future<String?>);
 
   @override
-  _i12.Future<void> toggleNotificationType(
+  _i13.Future<void> toggleNotificationType(
     String? key,
     bool? value,
   ) =>
@@ -864,32 +931,32 @@ class MockNotificationProvider extends _i1.Mock
             value,
           ],
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  _i12.Future<void> refreshNotifications() => (super.noSuchMethod(
+  _i13.Future<void> refreshNotifications() => (super.noSuchMethod(
         Invocation.method(
           #refreshNotifications,
           [],
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  _i12.Future<void> applyNotificationStates() => (super.noSuchMethod(
+  _i13.Future<void> applyNotificationStates() => (super.noSuchMethod(
         Invocation.method(
           #applyNotificationStates,
           [],
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  void addListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i14.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
           [listener],
@@ -898,7 +965,7 @@ class MockNotificationProvider extends _i1.Mock
       );
 
   @override
-  void removeListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i14.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #removeListener,
           [listener],
@@ -928,19 +995,19 @@ class MockNotificationProvider extends _i1.Mock
 /// A class which mocks [TasbehProvider].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockTasbehProvider extends _i1.Mock implements _i21.TasbehProvider {
+class MockTasbehProvider extends _i1.Mock implements _i23.TasbehProvider {
   MockTasbehProvider() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i7.SharedPreferences get sharedPreferences => (super.noSuchMethod(
+  _i8.SharedPreferences get sharedPreferences => (super.noSuchMethod(
         Invocation.getter(#sharedPreferences),
-        returnValue: _FakeSharedPreferences_5(
+        returnValue: _FakeSharedPreferences_6(
           this,
           Invocation.getter(#sharedPreferences),
         ),
-      ) as _i7.SharedPreferences);
+      ) as _i8.SharedPreferences);
 
   @override
   int get count => (super.noSuchMethod(
@@ -961,47 +1028,47 @@ class MockTasbehProvider extends _i1.Mock implements _i21.TasbehProvider {
       ) as bool);
 
   @override
-  _i12.Future<void> loadCount() => (super.noSuchMethod(
+  _i13.Future<void> loadCount() => (super.noSuchMethod(
         Invocation.method(
           #loadCount,
           [],
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  _i12.Future<void> addCount() => (super.noSuchMethod(
+  _i13.Future<void> addCount() => (super.noSuchMethod(
         Invocation.method(
           #addCount,
           [],
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  _i12.Future<void> reset() => (super.noSuchMethod(
+  _i13.Future<void> reset() => (super.noSuchMethod(
         Invocation.method(
           #reset,
           [],
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  _i12.Future<void> resetAll() => (super.noSuchMethod(
+  _i13.Future<void> resetAll() => (super.noSuchMethod(
         Invocation.method(
           #resetAll,
           [],
         ),
-        returnValue: _i12.Future<void>.value(),
-        returnValueForMissingStub: _i12.Future<void>.value(),
-      ) as _i12.Future<void>);
+        returnValue: _i13.Future<void>.value(),
+        returnValueForMissingStub: _i13.Future<void>.value(),
+      ) as _i13.Future<void>);
 
   @override
-  void addListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i14.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
           [listener],
@@ -1010,7 +1077,7 @@ class MockTasbehProvider extends _i1.Mock implements _i21.TasbehProvider {
       );
 
   @override
-  void removeListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i14.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #removeListener,
           [listener],

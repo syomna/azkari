@@ -61,6 +61,35 @@ class DatabaseHelper {
     await batch.commit(noResult: true);
   }
 
+  Future<void> updateCustomCategory({
+    required String originalCategory,
+    required String newCategory,
+    required List<AzkarModel> items,
+  }) async {
+    final db = await instance.database;
+    final batch = db.batch();
+
+    batch.delete(
+      'custom_azkar',
+      where: 'category = ?',
+      whereArgs: [originalCategory],
+    );
+
+    if (newCategory != originalCategory) {
+      batch.delete(
+        'custom_azkar',
+        where: 'category = ?',
+        whereArgs: [newCategory],
+      );
+    }
+
+    for (var item in items) {
+      batch.insert('custom_azkar', item.toJson());
+    }
+
+    await batch.commit(noResult: true);
+  }
+
   Future<List<AzkarModel>> getCustomAzkar() async {
     final db = await instance.database;
     final result = await db.query('custom_azkar');

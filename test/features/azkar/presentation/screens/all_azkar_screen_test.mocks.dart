@@ -3,13 +3,13 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i11;
-import 'dart:ui' as _i12;
+import 'dart:async' as _i12;
+import 'dart:ui' as _i13;
 
-import 'package:azkar_app/core/enums/app_loading_status.dart' as _i10;
-import 'package:azkar_app/core/providers/favorites_provider.dart' as _i13;
+import 'package:azkar_app/core/enums/app_loading_status.dart' as _i11;
+import 'package:azkar_app/core/providers/favorites_provider.dart' as _i14;
 import 'package:azkar_app/features/azkar/domain/entities/zekr_entity.dart'
-    as _i9;
+    as _i10;
 import 'package:azkar_app/features/azkar/domain/usecases/delete_custom_azkar_usecase.dart'
     as _i5;
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart'
@@ -18,16 +18,18 @@ import 'package:azkar_app/features/azkar/domain/usecases/get_custom_azkar_usecas
     as _i3;
 import 'package:azkar_app/features/azkar/domain/usecases/save_custom_azkar_usecase.dart'
     as _i4;
+import 'package:azkar_app/features/azkar/domain/usecases/update_custom_azkar_usecase.dart'
+    as _i6;
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart'
-    as _i8;
+    as _i9;
 import 'package:azkar_app/features/surah/domain/entities/surah_entity.dart'
-    as _i15;
+    as _i16;
 import 'package:azkar_app/features/surah/domain/usecases/get_surah_usecase.dart'
-    as _i7;
+    as _i8;
 import 'package:azkar_app/features/surah/presentation/providers/surah_provider.dart'
-    as _i14;
+    as _i15;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:shared_preferences/shared_preferences.dart' as _i6;
+import 'package:shared_preferences/shared_preferences.dart' as _i7;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -88,9 +90,9 @@ class _FakeDeleteCustomAzkarUseCase_3 extends _i1.SmartFake
         );
 }
 
-class _FakeSharedPreferences_4 extends _i1.SmartFake
-    implements _i6.SharedPreferences {
-  _FakeSharedPreferences_4(
+class _FakeUpdateCustomAzkarUseCase_4 extends _i1.SmartFake
+    implements _i6.UpdateCustomAzkarUseCase {
+  _FakeUpdateCustomAzkarUseCase_4(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -99,9 +101,20 @@ class _FakeSharedPreferences_4 extends _i1.SmartFake
         );
 }
 
-class _FakeGetSurahUseCase_5 extends _i1.SmartFake
-    implements _i7.GetSurahUseCase {
-  _FakeGetSurahUseCase_5(
+class _FakeSharedPreferences_5 extends _i1.SmartFake
+    implements _i7.SharedPreferences {
+  _FakeSharedPreferences_5(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeGetSurahUseCase_6 extends _i1.SmartFake
+    implements _i8.GetSurahUseCase {
+  _FakeGetSurahUseCase_6(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -113,7 +126,7 @@ class _FakeGetSurahUseCase_5 extends _i1.SmartFake
 /// A class which mocks [AzkarProvider].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockAzkarProvider extends _i1.Mock implements _i8.AzkarProvider {
+class MockAzkarProvider extends _i1.Mock implements _i9.AzkarProvider {
   MockAzkarProvider() {
     _i1.throwOnMissingStub(this);
   }
@@ -156,22 +169,32 @@ class MockAzkarProvider extends _i1.Mock implements _i8.AzkarProvider {
       ) as _i5.DeleteCustomAzkarUseCase);
 
   @override
-  List<_i9.ZekrEntity> get azkarList => (super.noSuchMethod(
+  _i6.UpdateCustomAzkarUseCase get updateCustomAzkarUseCase =>
+      (super.noSuchMethod(
+        Invocation.getter(#updateCustomAzkarUseCase),
+        returnValue: _FakeUpdateCustomAzkarUseCase_4(
+          this,
+          Invocation.getter(#updateCustomAzkarUseCase),
+        ),
+      ) as _i6.UpdateCustomAzkarUseCase);
+
+  @override
+  List<_i10.ZekrEntity> get azkarList => (super.noSuchMethod(
         Invocation.getter(#azkarList),
-        returnValue: <_i9.ZekrEntity>[],
-      ) as List<_i9.ZekrEntity>);
+        returnValue: <_i10.ZekrEntity>[],
+      ) as List<_i10.ZekrEntity>);
 
   @override
-  _i10.AppLoadingStatus get azkarStatus => (super.noSuchMethod(
+  _i11.AppLoadingStatus get azkarStatus => (super.noSuchMethod(
         Invocation.getter(#azkarStatus),
-        returnValue: _i10.AppLoadingStatus.initial,
-      ) as _i10.AppLoadingStatus);
+        returnValue: _i11.AppLoadingStatus.initial,
+      ) as _i11.AppLoadingStatus);
 
   @override
-  List<_i9.ZekrEntity> get customAzkarList => (super.noSuchMethod(
+  List<_i10.ZekrEntity> get customAzkarList => (super.noSuchMethod(
         Invocation.getter(#customAzkarList),
-        returnValue: <_i9.ZekrEntity>[],
-      ) as List<_i9.ZekrEntity>);
+        returnValue: <_i10.ZekrEntity>[],
+      ) as List<_i10.ZekrEntity>);
 
   @override
   List<String> get customCategories => (super.noSuchMethod(
@@ -198,27 +221,27 @@ class MockAzkarProvider extends _i1.Mock implements _i8.AzkarProvider {
       ) as bool);
 
   @override
-  _i11.Future<void> loadAzkar() => (super.noSuchMethod(
+  _i12.Future<void> loadAzkar() => (super.noSuchMethod(
         Invocation.method(
           #loadAzkar,
           [],
         ),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+        returnValue: _i12.Future<void>.value(),
+        returnValueForMissingStub: _i12.Future<void>.value(),
+      ) as _i12.Future<void>);
 
   @override
-  _i11.Future<void> loadCustomAzkar() => (super.noSuchMethod(
+  _i12.Future<void> loadCustomAzkar() => (super.noSuchMethod(
         Invocation.method(
           #loadCustomAzkar,
           [],
         ),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+        returnValue: _i12.Future<void>.value(),
+        returnValueForMissingStub: _i12.Future<void>.value(),
+      ) as _i12.Future<void>);
 
   @override
-  _i11.Future<void> saveCustomAzkarCategory({
+  _i12.Future<void> saveCustomAzkarCategory({
     required String? categoryTitle,
     required List<Map<String, dynamic>>? azkarItems,
   }) =>
@@ -231,23 +254,43 @@ class MockAzkarProvider extends _i1.Mock implements _i8.AzkarProvider {
             #azkarItems: azkarItems,
           },
         ),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+        returnValue: _i12.Future<void>.value(),
+        returnValueForMissingStub: _i12.Future<void>.value(),
+      ) as _i12.Future<void>);
 
   @override
-  _i11.Future<void> deleteCustomCategory(String? categoryName) =>
+  _i12.Future<void> updateCustomAzkarCategory({
+    required String? originalCategory,
+    required String? categoryTitle,
+    required List<Map<String, dynamic>>? azkarItems,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateCustomAzkarCategory,
+          [],
+          {
+            #originalCategory: originalCategory,
+            #categoryTitle: categoryTitle,
+            #azkarItems: azkarItems,
+          },
+        ),
+        returnValue: _i12.Future<void>.value(),
+        returnValueForMissingStub: _i12.Future<void>.value(),
+      ) as _i12.Future<void>);
+
+  @override
+  _i12.Future<void> deleteCustomCategory(String? categoryName) =>
       (super.noSuchMethod(
         Invocation.method(
           #deleteCustomCategory,
           [categoryName],
         ),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+        returnValue: _i12.Future<void>.value(),
+        returnValueForMissingStub: _i12.Future<void>.value(),
+      ) as _i12.Future<void>);
 
   @override
-  void addListener(_i12.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i13.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
           [listener],
@@ -256,7 +299,7 @@ class MockAzkarProvider extends _i1.Mock implements _i8.AzkarProvider {
       );
 
   @override
-  void removeListener(_i12.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i13.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #removeListener,
           [listener],
@@ -286,19 +329,19 @@ class MockAzkarProvider extends _i1.Mock implements _i8.AzkarProvider {
 /// A class which mocks [FavoritesProvider].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockFavoritesProvider extends _i1.Mock implements _i13.FavoritesProvider {
+class MockFavoritesProvider extends _i1.Mock implements _i14.FavoritesProvider {
   MockFavoritesProvider() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i6.SharedPreferences get sharedPreferences => (super.noSuchMethod(
+  _i7.SharedPreferences get sharedPreferences => (super.noSuchMethod(
         Invocation.getter(#sharedPreferences),
-        returnValue: _FakeSharedPreferences_4(
+        returnValue: _FakeSharedPreferences_5(
           this,
           Invocation.getter(#sharedPreferences),
         ),
-      ) as _i6.SharedPreferences);
+      ) as _i7.SharedPreferences);
 
   @override
   List<String> get favCategories => (super.noSuchMethod(
@@ -319,36 +362,36 @@ class MockFavoritesProvider extends _i1.Mock implements _i13.FavoritesProvider {
       ) as bool);
 
   @override
-  _i11.Future<void> loadFavorites() => (super.noSuchMethod(
+  _i12.Future<void> loadFavorites() => (super.noSuchMethod(
         Invocation.method(
           #loadFavorites,
           [],
         ),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+        returnValue: _i12.Future<void>.value(),
+        returnValueForMissingStub: _i12.Future<void>.value(),
+      ) as _i12.Future<void>);
 
   @override
-  _i11.Future<void> toggleCategoryFavorite(String? categoryName) =>
+  _i12.Future<void> toggleCategoryFavorite(String? categoryName) =>
       (super.noSuchMethod(
         Invocation.method(
           #toggleCategoryFavorite,
           [categoryName],
         ),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+        returnValue: _i12.Future<void>.value(),
+        returnValueForMissingStub: _i12.Future<void>.value(),
+      ) as _i12.Future<void>);
 
   @override
-  _i11.Future<void> toggleItemFavorite(String? itemIdentifier) =>
+  _i12.Future<void> toggleItemFavorite(String? itemIdentifier) =>
       (super.noSuchMethod(
         Invocation.method(
           #toggleItemFavorite,
           [itemIdentifier],
         ),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+        returnValue: _i12.Future<void>.value(),
+        returnValueForMissingStub: _i12.Future<void>.value(),
+      ) as _i12.Future<void>);
 
   @override
   bool isCategoryFav(String? name) => (super.noSuchMethod(
@@ -369,7 +412,7 @@ class MockFavoritesProvider extends _i1.Mock implements _i13.FavoritesProvider {
       ) as bool);
 
   @override
-  _i11.Future<void> renameCategory(
+  _i12.Future<void> renameCategory(
     String? oldName,
     String? newName,
   ) =>
@@ -381,12 +424,12 @@ class MockFavoritesProvider extends _i1.Mock implements _i13.FavoritesProvider {
             newName,
           ],
         ),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+        returnValue: _i12.Future<void>.value(),
+        returnValueForMissingStub: _i12.Future<void>.value(),
+      ) as _i12.Future<void>);
 
   @override
-  void addListener(_i12.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i13.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
           [listener],
@@ -395,7 +438,7 @@ class MockFavoritesProvider extends _i1.Mock implements _i13.FavoritesProvider {
       );
 
   @override
-  void removeListener(_i12.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i13.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #removeListener,
           [listener],
@@ -425,31 +468,31 @@ class MockFavoritesProvider extends _i1.Mock implements _i13.FavoritesProvider {
 /// A class which mocks [SurahProvider].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockSurahProvider extends _i1.Mock implements _i14.SurahProvider {
+class MockSurahProvider extends _i1.Mock implements _i15.SurahProvider {
   MockSurahProvider() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i7.GetSurahUseCase get getSurahUseCase => (super.noSuchMethod(
+  _i8.GetSurahUseCase get getSurahUseCase => (super.noSuchMethod(
         Invocation.getter(#getSurahUseCase),
-        returnValue: _FakeGetSurahUseCase_5(
+        returnValue: _FakeGetSurahUseCase_6(
           this,
           Invocation.getter(#getSurahUseCase),
         ),
-      ) as _i7.GetSurahUseCase);
+      ) as _i8.GetSurahUseCase);
 
   @override
-  List<_i15.SurahEntity> get surahList => (super.noSuchMethod(
+  List<_i16.SurahEntity> get surahList => (super.noSuchMethod(
         Invocation.getter(#surahList),
-        returnValue: <_i15.SurahEntity>[],
-      ) as List<_i15.SurahEntity>);
+        returnValue: <_i16.SurahEntity>[],
+      ) as List<_i16.SurahEntity>);
 
   @override
-  _i10.AppLoadingStatus get surahStatus => (super.noSuchMethod(
+  _i11.AppLoadingStatus get surahStatus => (super.noSuchMethod(
         Invocation.getter(#surahStatus),
-        returnValue: _i10.AppLoadingStatus.initial,
-      ) as _i10.AppLoadingStatus);
+        returnValue: _i11.AppLoadingStatus.initial,
+      ) as _i11.AppLoadingStatus);
 
   @override
   bool get hasListeners => (super.noSuchMethod(
@@ -458,17 +501,17 @@ class MockSurahProvider extends _i1.Mock implements _i14.SurahProvider {
       ) as bool);
 
   @override
-  _i11.Future<void> loadSurah() => (super.noSuchMethod(
+  _i12.Future<void> loadSurah() => (super.noSuchMethod(
         Invocation.method(
           #loadSurah,
           [],
         ),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+        returnValue: _i12.Future<void>.value(),
+        returnValueForMissingStub: _i12.Future<void>.value(),
+      ) as _i12.Future<void>);
 
   @override
-  void addListener(_i12.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i13.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
           [listener],
@@ -477,7 +520,7 @@ class MockSurahProvider extends _i1.Mock implements _i14.SurahProvider {
       );
 
   @override
-  void removeListener(_i12.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i13.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #removeListener,
           [listener],

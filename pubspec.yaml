@@ -98,6 +98,7 @@ flutter:
     - assets/images/
     - assets/db/
     - assets/audio/
+    - assets/data/
     - assets/images/widget_guide/
   #   - images/a_dot_ham.jpeg
 

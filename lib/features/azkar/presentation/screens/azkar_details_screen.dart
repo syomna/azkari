@@ -7,6 +7,7 @@ import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/azkar/domain/entities/zekr_entity.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/display_azkar.dart';
+import 'package:azkar_app/features/azkar/presentation/widgets/zekr_completion_dialog.dart';
 import 'package:azkar_app/widgets/app_empty_state.dart';
 import 'package:azkar_app/widgets/app_error_widget.dart';
 import 'package:azkar_app/widgets/app_loading_widget.dart';
@@ -217,6 +218,16 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen> {
                                       if (_countedIndex <
                                           currentDisplayedAzkar.length) {
                                         _countedIndex++;
+                                      }
+                                      if (currentDisplayedAzkar.isNotEmpty &&
+                                          _countedIndex ==
+                                              currentDisplayedAzkar.length) {
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                          if (mounted) {
+                                            ZekrCompletionDialog.show(context);
+                                          }
+                                        });
                                       }
                                     });
                                   }

@@ -6,6 +6,7 @@ import 'package:azkar_app/features/azkar/domain/usecases/delete_custom_azkar_use
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/get_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/save_custom_azkar_usecase.dart';
+import 'package:azkar_app/features/azkar/domain/usecases/update_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,6 +20,7 @@ import 'azkar_provider_test.mocks.dart';
   GetCustomAzkarUseCase,
   SaveCustomAzkarUseCase,
   DeleteCustomAzkarUseCase,
+  UpdateCustomAzkarUseCase,
 ])
 void main() {
   late AzkarProvider provider;
@@ -26,17 +28,20 @@ void main() {
   late MockGetCustomAzkarUseCase mockGetCustomAzkar;
   late MockSaveCustomAzkarUseCase mockSaveCustomAzkar;
   late MockDeleteCustomAzkarUseCase mockDeleteCustomAzkar;
+  late MockUpdateCustomAzkarUseCase mockUpdateCustomAzkar;
 
   setUp(() {
     mockGetAzkar = MockGetAzkarUseCase();
     mockGetCustomAzkar = MockGetCustomAzkarUseCase();
     mockSaveCustomAzkar = MockSaveCustomAzkarUseCase();
     mockDeleteCustomAzkar = MockDeleteCustomAzkarUseCase();
+    mockUpdateCustomAzkar = MockUpdateCustomAzkarUseCase();
     provider = AzkarProvider(
       getAzkarUseCase: mockGetAzkar,
       getCustomAzkarUseCase: mockGetCustomAzkar,
       saveCustomAzkarUseCase: mockSaveCustomAzkar,
       deleteCustomAzkarUseCase: mockDeleteCustomAzkar,
+      updateCustomAzkarUseCase: mockUpdateCustomAzkar,
     );
   });
 
@@ -166,6 +171,106 @@ void main() {
 
       verify(mockDeleteCustomAzkar('My Duas')).called(1);
       verify(mockGetCustomAzkar(const NoParams())).called(1);
+    });
+  });
+
+  group('updateCustomAzkarCategory', () {
+    test('updates category and reloads custom azkar', () async {
+      when(mockUpdateCustomAzkar(any))
+          .thenAnswer((_) async => const Right(null));
+      when(mockGetCustomAzkar(const NoParams()))
+          .thenAnswer((_) async => Right(tCustomAzkarList));
+
+      await provider.updateCustomAzkarCategory(
+        originalCategory: 'My Duas',
+        categoryTitle: 'My Renamed Duas',
+        azkarItems: [
+          {'text': 'Dua 1', 'count': 2},
+        ],
+      );
+
+      final captured = verify(mockUpdateCustomAzkar(captureAny)).captured.single
+          as UpdateCustomAzkarParams;
+      expect(captured.originalCategory, 'My Duas');
+      expect(captured.newCategory, 'My Renamed Duas');
+      expect(captured.items.single.zekr, 'Dua 1');
+      expect(captured.items.single.count, 2);
+      expect(provider.customAzkarList, tCustomAzkarList);
+    });
+
+    test('does not call usecase if list is empty', () async {
+      await provider.updateCustomAzkarCategory(
+        originalCategory: 'My Duas',
+        categoryTitle: 'My Duas',
+        azkarItems: [],
+      );
+
+      verifyNever(mockUpdateCustomAzkar(any));
+    });
+
+    test('failure does not reload custom azkar', () async {
+      when(mockUpdateCustomAzkar(any))
+          .thenAnswer((_) async => const Left(DatabaseFailure('DB error')));
+
+      await provider.updateCustomAzkarCategory(
+        originalCategory: 'My Duas',
+        categoryTitle: 'My Duas',
+        azkarItems: [
+          {'text': 'Dua 1', 'count': 1},
+        ],
+      );
+
+      verifyNever(mockGetCustomAzkar(const NoParams()));
+    });
+  });
+
+  group('categoryCounts', () {
+    test('counts every custom zekr per category', () async {
+      when(mockGetCustomAzkar(const NoParams())).thenAnswer((_) async =>
+          const Right([
+            ZekrEntity(
+                category: 'My Duas',
+                zekr: 'Dua 1',
+                count: 1,
+                description: '',
+                reference: ''),
+            ZekrEntity(
+                category: 'My Duas',
+                zekr: 'Dua 2',
+                count: 3,
+                description: '',
+                reference: ''),
+            ZekrEntity(
+                category: 'Other',
+                zekr: 'Zekr 1',
+                count: 1,
+                description: '',
+                reference: ''),
+          ]));
+
+      await provider.loadCustomAzkar();
+
+      expect(provider.categoryCounts['My Duas'], 2);
+      expect(provider.categoryCounts['Other'], 1);
+    });
+
+    test('merges counts when custom category shares an asset name', () async {
+      when(mockGetAzkar(const NoParams()))
+          .thenAnswer((_) async => Right(tAzkarList));
+      when(mockGetCustomAzkar(const NoParams())).thenAnswer((_) async =>
+          const Right([
+            ZekrEntity(
+                category: 'Morning',
+                zekr: 'Extra zekr',
+                count: 1,
+                description: '',
+                reference: ''),
+          ]));
+
+      await provider.loadAzkar();
+      await provider.loadCustomAzkar();
+
+      expect(provider.categoryCounts['Morning'], 3);
     });
   });
 

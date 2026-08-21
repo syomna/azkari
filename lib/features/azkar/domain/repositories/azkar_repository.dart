@@ -6,5 +6,10 @@ abstract class AzkarRepository {
   Future<Either<Failure, List<ZekrEntity>>> getAzkar();
   Future<Either<Failure, List<ZekrEntity>>> getCustomAzkar();
   Future<Either<Failure, Unit>> saveCustomAzkar(List<ZekrEntity> items);
+  Future<Either<Failure, Unit>> updateCustomCategory({
+    required String originalCategory,
+    required String newCategory,
+    required List<ZekrEntity> items,
+  });
   Future<Either<Failure, void>> deleteCustomCategory(String categoryName);
 }

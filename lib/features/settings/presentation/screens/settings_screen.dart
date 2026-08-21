@@ -14,7 +14,6 @@ import 'package:azkar_app/features/settings/presentation/widgets/settings_card.d
 import 'package:azkar_app/features/settings/presentation/widgets/settings_list_tile.dart';
 import 'package:azkar_app/features/settings/presentation/widgets/settings_section_header.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
-import 'package:azkar_app/features/widget_guide/presentation/screens/widget_guide_screen.dart';
 import 'package:azkar_app/widgets/switch_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -59,17 +58,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SettingsSectionHeader(title: AppStrings.prayerTimes),
             SettingsCard(
               children: [
-                SettingsListTile(
-                  title: AppStrings.widgetGuideTitle,
-                  icon: Icons.widgets_rounded,
-                  onTap: () {
-                    WidgetGuideScreen.open(
-                      context,
-                      openedFromSettings: true,
-                    );
-                  },
-                ),
-                _divider(),
                 SettingsListTile(
                   title: AppStrings.prayerTimesSettings,
                   icon: Icons.access_time_rounded,
@@ -131,6 +119,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
                   ),
+                  _divider(),
                   const FontSliderTile(),
                 ],
               ),

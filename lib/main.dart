@@ -8,6 +8,7 @@ import 'package:azkar_app/features/azkar/domain/usecases/delete_custom_azkar_use
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/get_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/save_custom_azkar_usecase.dart';
+import 'package:azkar_app/features/azkar/domain/usecases/update_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:azkar_app/features/names_of_allah/domain/usecases/get_names_of_allah_usecase.dart';
 import 'package:azkar_app/features/names_of_allah/presentation/providers/names_of_allah_provider.dart';
@@ -64,6 +65,7 @@ void main() async {
             getCustomAzkarUseCase: di.sl<GetCustomAzkarUseCase>(),
             saveCustomAzkarUseCase: di.sl<SaveCustomAzkarUseCase>(),
             deleteCustomAzkarUseCase: di.sl<DeleteCustomAzkarUseCase>(),
+            updateCustomAzkarUseCase: di.sl<UpdateCustomAzkarUseCase>(),
           ),
         ),
         ChangeNotifierProvider<FavoritesProvider>(

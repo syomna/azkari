@@ -15,12 +15,14 @@ import 'package:azkar_app/features/names_of_allah/presentation/providers/names_o
 import 'package:azkar_app/features/names_of_allah/presentation/screens/names_of_allah_screen.dart';
 import 'package:azkar_app/features/names_of_allah/presentation/widgets/names_of_allah_card.dart';
 import 'package:azkar_app/features/prayer_times/presentation/providers/prayer_times_provider.dart';
+import 'package:azkar_app/features/prayer_times/presentation/widgets/city_selector_chip.dart';
 import 'package:azkar_app/features/prayer_times/presentation/widgets/prayer_times_card.dart';
 import 'package:azkar_app/features/qibla/presentation/screens/qibla_screen.dart';
 import 'package:azkar_app/features/quran/presentation/screens/quran_details_screen.dart';
 import 'package:azkar_app/features/settings/presentation/screens/settings_screen.dart';
 import 'package:azkar_app/features/tasbeh/presentation/screens/tasbeh_screen.dart';
 import 'package:azkar_app/features/widget_guide/widget_guide_helper.dart';
+import 'package:azkar_app/features/widget_guide/widgets/widget_promo_card.dart';
 import 'package:azkar_app/widgets/app_error_widget.dart';
 import 'package:azkar_app/widgets/app_loading_widget.dart';
 import 'package:azkar_app/widgets/fade_slide_page_route.dart';
@@ -114,154 +116,155 @@ class _HomeContent extends StatelessWidget {
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   SizedBox(height: 5.h),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      mainAxisSize: MainAxisSize.min,
+                  Row(
+                    children: [
+                      const CitySelectorChip(),
+                      const Spacer(),
+                      Semantics(
+                        label: 'Toggle theme',
+                        child: _buildHeaderAction(
+                            context,
+                            _themeModeIcon(
+                                context.read<ThemeProvider>().themeMode),
+                            () => context
+                                .read<ThemeProvider>()
+                                .cycleThemeMode()),
+                      ),
+                      SizedBox(width: 16.w),
+                      Semantics(
+                        label: 'Contact us',
+                        child: _buildHeaderAction(
+                            context,
+                            CupertinoIcons.bubble_left_bubble_right,
+                            () => Navigator.push(
+                                context,
+                                FadeSlidePageRoute(
+                                    page: const ContactUsScreen()))),
+                      ),
+                      SizedBox(width: 16.w),
+                      Semantics(
+                        label: 'Settings',
+                        child: _buildHeaderAction(
+                            context,
+                            CupertinoIcons.settings,
+                            () => Navigator.push(
+                                context,
+                                FadeSlidePageRoute(
+                                    page: const SettingsScreen()))),
+                      ),
+                    ],
+                  ),
+                    SizedBox(height: 10.h),
+                    const WelcomingWidget(),
+                    SizedBox(height: 15.h),
+                    Consumer<PrayerTimesProvider>(
+                      builder: (context, provider, _) {
+                        if (provider.errorMessage != null) {
+                          return Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16.w),
+                            child: AppErrorWidget(
+                              errorMessage: provider.errorMessage!,
+                              onRetry: () => provider.loadPrayerTimes(),
+                            ),
+                          );
+                        }
+                        if (provider.prayerTimes == null) {
+                          return const SizedBox.shrink();
+                        }
+                        return PrayerTimesCard(
+                          times: provider.prayerTimes!,
+                          displayTimes: provider.allDisplayTimes,
+                        );
+                      },
+                    ),
+                    SizedBox(height: 10.h),
+                    const WidgetPromoCard(),
+                    SizedBox(height: 10.h),
+                    _buildTitle(AppStrings.dayOfZikr),
+                    SizedBox(height: 15.h),
+                    const DayZekrWidget(),
+                    SizedBox(height: 10.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Semantics(
-                          label: 'Toggle theme',
-                          child: _buildHeaderAction(
-                              context,
-                              _themeModeIcon(
-                                  context.read<ThemeProvider>().themeMode),
-                              () => context
-                                  .read<ThemeProvider>()
-                                  .cycleThemeMode()),
-                        ),
-                        SizedBox(width: 16.w),
-                        Semantics(
-                          label: 'Contact us',
-                          child: _buildHeaderAction(
-                              context,
-                              CupertinoIcons.bubble_left_bubble_right,
-                              () => Navigator.push(
-                                  context,
-                                  FadeSlidePageRoute(
-                                      page: const ContactUsScreen()))),
-                        ),
-                        SizedBox(width: 16.w),
-                        Semantics(
-                          label: 'Settings',
-                          child: _buildHeaderAction(
-                              context,
-                              CupertinoIcons.settings,
-                              () => Navigator.push(
-                                  context,
-                                  FadeSlidePageRoute(
-                                      page: const SettingsScreen()))),
+                        Flexible(child: _buildTitle(AppStrings.azkarAndDuaas)),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                FadeSlidePageRoute(
+                                    page: const AllAzkarScreen()));
+                          },
+                          child: Text(
+                            AppStrings.viewAll,
+                            style: TextStyle(
+                                fontSize: 14.sp,
+                                color: AppPalette.mainColor,
+                                fontWeight: FontWeight.w600),
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                  SizedBox(height: 10.h),
-                  const WelcomingWidget(),
-                  SizedBox(height: 15.h),
-                  Consumer<PrayerTimesProvider>(
-                    builder: (context, provider, _) {
-                      if (provider.errorMessage != null) {
-                        return Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16.w),
-                          child: AppErrorWidget(
-                            errorMessage: provider.errorMessage!,
-                            onRetry: () => provider.loadPrayerTimes(),
+                    SizedBox(height: 5.h),
+                    GridView(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        childAspectRatio: 1,
+                      ),
+                      children: _azkarList,
+                    ),
+                    if (Platform.isAndroid) SizedBox(height: 10.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(child: _buildTitle(AppStrings.namesOfAllah)),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                FadeSlidePageRoute(
+                                    page: const NamesOfAllahScreen()));
+                          },
+                          child: Text(
+                            AppStrings.viewAll,
+                            style: TextStyle(
+                                fontSize: 14.sp,
+                                color: AppPalette.mainColor,
+                                fontWeight: FontWeight.w600),
                           ),
-                        );
-                      }
-                      if (provider.prayerTimes == null) {
-                        return const SizedBox.shrink();
-                      }
-                      return PrayerTimesCard(
-                        times: provider.prayerTimes!,
-                        displayTimes: provider.allDisplayTimes,
-                      );
-                    },
-                  ),
-                  SizedBox(height: 15.h),
-                  _buildTitle(AppStrings.dayOfZikr),
-                  SizedBox(height: 15.h),
-                  const DayZekrWidget(),
-                  SizedBox(height: 10.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(child: _buildTitle(AppStrings.azkarAndDuaas)),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(context,
-                              FadeSlidePageRoute(page: const AllAzkarScreen()));
-                        },
-                        child: Text(
-                          AppStrings.viewAll,
-                          style: TextStyle(
-                              fontSize: 14.sp,
-                              color: AppPalette.mainColor,
-                              fontWeight: FontWeight.w600),
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 5.h),
-                  GridView(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      childAspectRatio: 1,
+                      ],
                     ),
-                    children: _azkarList,
-                  ),
-                  if (Platform.isAndroid) SizedBox(height: 10.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(child: _buildTitle(AppStrings.namesOfAllah)),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                              context,
-                              FadeSlidePageRoute(
-                                  page: const NamesOfAllahScreen()));
-                        },
-                        child: Text(
-                          AppStrings.viewAll,
-                          style: TextStyle(
-                              fontSize: 14.sp,
-                              color: AppPalette.mainColor,
-                              fontWeight: FontWeight.w600),
-                        ),
+                    SizedBox(height: 10.h),
+                    if (context
+                            .read<NamesOfAllahProvider>()
+                            .namesOfAllahList
+                            .isNotEmpty &&
+                        randomNameIndex <
+                            context
+                                .read<NamesOfAllahProvider>()
+                                .namesOfAllahList
+                                .length)
+                      NamesOfAllahCard(
+                        item: context
+                            .read<NamesOfAllahProvider>()
+                            .namesOfAllahList[randomNameIndex],
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 10.h),
-                  if (context
-                          .read<NamesOfAllahProvider>()
-                          .namesOfAllahList
-                          .isNotEmpty &&
-                      randomNameIndex <
-                          context
-                              .read<NamesOfAllahProvider>()
-                              .namesOfAllahList
-                              .length)
-                    NamesOfAllahCard(
-                      item: context
-                          .read<NamesOfAllahProvider>()
-                          .namesOfAllahList[randomNameIndex],
-                    ),
-                  SizedBox(height: 40.h),
-                ],
+                    SizedBox(height: 40.h),
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
       ),
     );
   }

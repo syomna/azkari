@@ -1,4 +1,5 @@
 import 'package:adhan/adhan.dart';
+import 'package:azkar_app/core/models/city.dart';
 import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:azkar_app/core/services/prayer_times_widget_service.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,19 @@ class PrayerTimesProvider extends ChangeNotifier {
 
   VoidCallback? onOverrideChanged;
 
-  Future<void> loadPrayerTimes() async {
+  String? get selectedCityId =>
+      sharedPreferences.getString(PrayerTimeService.selectedCityIdKey);
+
+  String? get selectedCityName =>
+      prayerTimeService.getSelectedCityDisplayName(sharedPreferences);
+
+  bool get isAutoLocation =>
+      !prayerTimeService.hasSelectedCity(sharedPreferences);
+
+  bool get hasAnyOverrides => PrayerTimeService.prayerKeys
+      .any((key) => prayerTimeService.hasOverride(key, sharedPreferences));
+
+  Future<void> loadPrayerTimes({bool forceRecalc = false}) async {
     try {
       final location = await prayerTimeService.resolveLocation(sharedPreferences);
       final lat = location?.$1;
@@ -31,8 +44,9 @@ class PrayerTimesProvider extends ChangeNotifier {
         final storedDate = sharedPreferences.getString('prayer_time_date');
         final today = DateTime.now().toIso8601String().substring(0, 10);
 
-        if (storedDate != today) {
-          await prayerTimeService.calculateAndStore(lat, lng, sharedPreferences);
+        if (forceRecalc || storedDate != today) {
+          await prayerTimeService.calculateAndStore(
+              lat, lng, sharedPreferences);
           await sharedPreferences.setString('prayer_time_date', today);
         }
 
@@ -49,6 +63,31 @@ class PrayerTimesProvider extends ChangeNotifier {
       }());
       _errorMessage = 'Failed to load prayer times';
       notifyListeners();
+    }
+  }
+
+  Future<bool> selectCity(City? city) async {
+    try {
+      if (city != null) {
+        await prayerTimeService.saveSelectedCity(city, sharedPreferences);
+        await loadPrayerTimes(forceRecalc: true);
+        return true;
+      }
+
+      final position = await prayerTimeService.getCurrentLocation();
+      if (position == null) return false;
+
+      await prayerTimeService.clearSelectedCity(sharedPreferences);
+      await prayerTimeService.storeCurrentLocation(
+          position, sharedPreferences);
+      await loadPrayerTimes(forceRecalc: true);
+      return true;
+    } catch (e) {
+      assert(() {
+        debugPrint('[PrayerTimesProvider] selectCity failed: $e');
+        return true;
+      }());
+      return false;
     }
   }
 

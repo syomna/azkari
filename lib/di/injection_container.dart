@@ -9,6 +9,7 @@ import 'package:azkar_app/features/azkar/domain/usecases/delete_custom_azkar_use
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/get_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/save_custom_azkar_usecase.dart';
+import 'package:azkar_app/features/azkar/domain/usecases/update_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/names_of_allah/data/datasources/names_of_allah_local_data_source.dart';
 import 'package:azkar_app/features/names_of_allah/data/datasources/names_of_allah_local_data_source_impl.dart';
 import 'package:azkar_app/features/names_of_allah/data/repositories/names_of_allah_repository_impl.dart';
@@ -60,6 +61,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SaveCustomAzkarUseCase(azkarRepository: sl()));
   sl.registerLazySingleton(
       () => DeleteCustomAzkarUseCase(azkarRepository: sl()));
+  sl.registerLazySingleton(
+      () => UpdateCustomAzkarUseCase(azkarRepository: sl()));
 
   sl.registerLazySingleton<NamesOfAllahLocalDataSource>(
       () => NamesOfAllahLocalDataSourceImpl());

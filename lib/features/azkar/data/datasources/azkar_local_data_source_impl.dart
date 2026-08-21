@@ -36,6 +36,19 @@ class AzkarLocalDataSourceImpl extends AzkarLocalDataSource {
   }
 
   @override
+  Future<void> updateCustomCategory({
+    required String originalCategory,
+    required String newCategory,
+    required List<AzkarModel> items,
+  }) async {
+    await dbHelper.updateCustomCategory(
+      originalCategory: originalCategory,
+      newCategory: newCategory,
+      items: items,
+    );
+  }
+
+  @override
   Future<void> deleteCustomCategory(String categoryName) async {
     await dbHelper.deleteCustomCategory(categoryName);
   }

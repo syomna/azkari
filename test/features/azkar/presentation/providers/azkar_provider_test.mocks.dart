@@ -19,6 +19,8 @@ import 'package:azkar_app/features/azkar/domain/usecases/get_custom_azkar_usecas
     as _i9;
 import 'package:azkar_app/features/azkar/domain/usecases/save_custom_azkar_usecase.dart'
     as _i10;
+import 'package:azkar_app/features/azkar/domain/usecases/update_custom_azkar_usecase.dart'
+    as _i12;
 import 'package:dartz/dartz.dart' as _i3;
 import 'package:mockito/mockito.dart' as _i1;
 
@@ -190,6 +192,43 @@ class MockDeleteCustomAzkarUseCase extends _i1.Mock
 
   @override
   _i5.Future<_i3.Either<_i6.Failure, void>> call(String? params) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #call,
+          [params],
+        ),
+        returnValue: _i5.Future<_i3.Either<_i6.Failure, void>>.value(
+            _FakeEither_1<_i6.Failure, void>(
+          this,
+          Invocation.method(
+            #call,
+            [params],
+          ),
+        )),
+      ) as _i5.Future<_i3.Either<_i6.Failure, void>>);
+}
+
+/// A class which mocks [UpdateCustomAzkarUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockUpdateCustomAzkarUseCase extends _i1.Mock
+    implements _i12.UpdateCustomAzkarUseCase {
+  MockUpdateCustomAzkarUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i2.AzkarRepository get azkarRepository => (super.noSuchMethod(
+        Invocation.getter(#azkarRepository),
+        returnValue: _FakeAzkarRepository_0(
+          this,
+          Invocation.getter(#azkarRepository),
+        ),
+      ) as _i2.AzkarRepository);
+
+  @override
+  _i5.Future<_i3.Either<_i6.Failure, void>> call(
+          _i12.UpdateCustomAzkarParams? params) =>
       (super.noSuchMethod(
         Invocation.method(
           #call,

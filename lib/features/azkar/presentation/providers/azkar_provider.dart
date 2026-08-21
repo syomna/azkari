@@ -5,6 +5,7 @@ import 'package:azkar_app/features/azkar/domain/usecases/delete_custom_azkar_use
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/get_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/save_custom_azkar_usecase.dart';
+import 'package:azkar_app/features/azkar/domain/usecases/update_custom_azkar_usecase.dart';
 import 'package:flutter/material.dart';
 
 class AzkarProvider extends ChangeNotifier {
@@ -12,12 +13,14 @@ class AzkarProvider extends ChangeNotifier {
   final GetCustomAzkarUseCase getCustomAzkarUseCase;
   final SaveCustomAzkarUseCase saveCustomAzkarUseCase;
   final DeleteCustomAzkarUseCase deleteCustomAzkarUseCase;
+  final UpdateCustomAzkarUseCase updateCustomAzkarUseCase;
 
   AzkarProvider({
     required this.getAzkarUseCase,
     required this.getCustomAzkarUseCase,
     required this.saveCustomAzkarUseCase,
     required this.deleteCustomAzkarUseCase,
+    required this.updateCustomAzkarUseCase,
   });
 
   List<ZekrEntity> _azkarList = [];
@@ -58,10 +61,8 @@ class AzkarProvider extends ChangeNotifier {
     }
 
     for (final item in _customAzkarList) {
-      if (!_categoryCounts.containsKey(item.category)) {
-        _categoryCounts[item.category] =
-            (_categoryCounts[item.category] ?? 0) + 1;
-      }
+      _categoryCounts[item.category] =
+          (_categoryCounts[item.category] ?? 0) + 1;
     }
   }
 
@@ -122,6 +123,35 @@ class AzkarProvider extends ChangeNotifier {
             await loadCustomAzkar(), 
       );
     }
+  }
+
+  Future<void> updateCustomAzkarCategory({
+    required String originalCategory,
+    required String categoryTitle,
+    required List<Map<String, dynamic>> azkarItems,
+  }) async {
+    final List<ZekrEntity> modelsToUpdate = azkarItems.map((item) {
+      return ZekrEntity(
+        category: categoryTitle,
+        zekr: item['text'] as String,
+        count: item['count'] as int,
+        description: '',
+        reference: '',
+      );
+    }).toList();
+
+    if (modelsToUpdate.isEmpty) return;
+
+    final result = await updateCustomAzkarUseCase(UpdateCustomAzkarParams(
+      originalCategory: originalCategory,
+      newCategory: categoryTitle,
+      items: modelsToUpdate,
+    ));
+
+    await result.fold(
+      (failure) => null,
+      (_) async => await loadCustomAzkar(),
+    );
   }
 
   Future<void> deleteCustomCategory(String categoryName) async {

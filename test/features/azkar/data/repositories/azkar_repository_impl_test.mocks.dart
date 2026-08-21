@@ -64,6 +64,26 @@ class MockAzkarLocalDataSource extends _i1.Mock
       ) as _i3.Future<void>);
 
   @override
+  _i3.Future<void> updateCustomCategory({
+    required String? originalCategory,
+    required String? newCategory,
+    required List<_i4.AzkarModel>? items,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateCustomCategory,
+          [],
+          {
+            #originalCategory: originalCategory,
+            #newCategory: newCategory,
+            #items: items,
+          },
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
   _i3.Future<void> deleteCustomCategory(String? categoryName) =>
       (super.noSuchMethod(
         Invocation.method(

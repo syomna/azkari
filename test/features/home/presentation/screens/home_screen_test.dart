@@ -75,6 +75,8 @@ void main() {
     when(mockPrayerTimesProvider.prayerTimes).thenReturn(null);
     when(mockPrayerTimesProvider.errorMessage).thenReturn(null);
     when(mockPrayerTimesProvider.allDisplayTimes).thenReturn({});
+    when(mockPrayerTimesProvider.selectedCityName).thenReturn(null);
+    when(mockPrayerTimesProvider.isAutoLocation).thenReturn(true);
     when(mockPrayerTimesProvider.loadPrayerTimes()).thenAnswer((_) async {});
     when(mockFavoritesProvider.loadFavorites()).thenAnswer((_) async {});
   });

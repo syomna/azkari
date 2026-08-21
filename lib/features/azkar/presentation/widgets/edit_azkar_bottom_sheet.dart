@@ -242,17 +242,11 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
                             final bool isOriginallyFavorited = favoritesProvider
                                 .isCategoryFav(widget.category);
 
-                            await provider.saveCustomAzkarCategory(
+                            await provider.updateCustomAzkarCategory(
+                              originalCategory: widget.category,
                               categoryTitle: newTitle,
                               azkarItems: structuredAzkar,
                             );
-
-                            if (!mounted) return;
-
-                            if (widget.category != newTitle) {
-                              await provider
-                                  .deleteCustomCategory(widget.category);
-                            }
 
                             if (!mounted) return;
 
