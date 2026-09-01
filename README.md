@@ -30,3 +30,9 @@
 | --- | --- |
 | **Play Store** | [أذكاري](https://play.google.com/store/apps/details?id=com.yomna.azkar_app) |
 | **App Store** | [أذكاري](https://apps.apple.com/eg/app/أذكــــاري-azkari/id6479560831) |
+
+---
+
+### 📄 License & Usage
+
+© 2026 Yomna Salah. Shared for educational use only. You may view and learn from the code, but re-publishing, rebranding, or claiming this app as your own is strictly prohibited.
