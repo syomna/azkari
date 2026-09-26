@@ -9,7 +9,12 @@ class QiblaRepositoryImpl implements QiblaRepository {
     await _handleLocationPermission();
 
     // 2. Get Position
-    final position = await Geolocator.getCurrentPosition();
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        timeLimit: Duration(seconds: 30),
+      ),
+    );
 
     // 3. Return the calculated angle
     return AppHelpers.calculateQiblaDirection(

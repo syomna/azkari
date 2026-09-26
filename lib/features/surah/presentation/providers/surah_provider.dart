@@ -22,6 +22,7 @@ class SurahProvider extends ChangeNotifier {
     }
     _surahStatus = AppLoadingStatus.loading;
     _surahErrorMessage = null;
+    notifyListeners();
     final result = await getSurahUseCase();
     result.fold((failure) {
       _surahStatus = AppLoadingStatus.error;

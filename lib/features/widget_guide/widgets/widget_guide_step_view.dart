@@ -33,25 +33,33 @@ class WidgetGuideStepView extends StatelessWidget {
         children: [
           if (step.isIntro) _buildNewFeatureBadge(context),
           if (step.isIntro) const SizedBox(height: 12),
-          Text(
-            step.title,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w900,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 420,
-            ),
-            child: Text(
-              step.description,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: mutedTextColor,
-                height: 1.65,
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Text(
+                    step.title,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: 420,
+                    ),
+                    child: Text(
+                      step.description,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: mutedTextColor,
+                        height: 1.65,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

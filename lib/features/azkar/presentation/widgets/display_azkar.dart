@@ -10,18 +10,27 @@ class DisplayAzkar extends StatefulWidget {
   const DisplayAzkar({
     super.key,
     required this.zikrEntity,
+    this.remaining,
     this.isFavorite = false,
     this.onFavoriteTap,
     this.onCounted,
+    this.onDecrement,
   });
 
   final ZekrEntity zikrEntity;
+
+  /// Remaining repetitions. Owned by the caller/provider so it survives list
+  /// recycling (scrolling). Falls back to the zekr's total when null.
+  final int? remaining;
+
   final bool isFavorite;
   final VoidCallback? onFavoriteTap;
 
   /// Called when the user finishes all repetitions of this zekr.
-  /// Only passed for the currently active zekr in the list.
   final VoidCallback? onCounted;
+
+  /// Called once for every completed tap (decrement).
+  final VoidCallback? onDecrement;
 
   @override
   State<DisplayAzkar> createState() => _DisplayAzkarState();
@@ -29,7 +38,6 @@ class DisplayAzkar extends StatefulWidget {
 
 class _DisplayAzkarState extends State<DisplayAzkar>
     with SingleTickerProviderStateMixin {
-  late int _remaining;
   late int _total;
   late AnimationController _pulseController;
   late Animation<double> _scaleAnimation;
@@ -38,7 +46,6 @@ class _DisplayAzkarState extends State<DisplayAzkar>
   void initState() {
     super.initState();
     _total = int.tryParse(widget.zikrEntity.count) ?? 1;
-    _remaining = _total;
 
     _pulseController = AnimationController(
       vsync: this,
@@ -55,13 +62,15 @@ class _DisplayAzkarState extends State<DisplayAzkar>
     super.dispose();
   }
 
+  int get _remaining => widget.remaining ?? _total;
+
   bool get _isDone => _total > 0 && _remaining == 0;
 
   void _handleTap() {
     if (_remaining <= 0) return;
     _pulseController.forward().then((_) => _pulseController.reverse());
-    setState(() => _remaining--);
-    if (_remaining == 0) {
+    widget.onDecrement?.call();
+    if (_remaining == 1) {
       AppHelpers.showToast('أكملت الذكر!');
       widget.onCounted?.call();
     }
@@ -143,34 +152,49 @@ class _DisplayAzkarState extends State<DisplayAzkar>
                 child: Row(
                   textDirection: TextDirection.rtl,
                   children: [
-                    // Copy button
-                    ZekrActionButton(
-                      icon: Icons.copy_rounded,
-                      isDark: isDark,
-                      onTap: () => AppHelpers.copyText(widget.zikrEntity.zekr),
-                    ),
-                    SizedBox(width: 6.w),
-
-                    // Favorite button
-                    if (widget.onFavoriteTap != null)
-                      ZekrActionButton(
-                        isDark: isDark,
-                        onTap: widget.onFavoriteTap!,
-                        child: Icon(
-                          widget.isFavorite
-                              ? Icons.star_rounded
-                              : Icons.star_outline_rounded,
-                          size: 22.sp,
-                          color: widget.isFavorite
-                              ? const Color(0xFFF59E0B)
-                              : (isDark ? Colors.white38 : Colors.black26),
+                    // Start: copy + favorite buttons (they shrink when the
+                    // counter pill needs the space on very narrow screens).
+                    Expanded(
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Copy button
+                              ZekrActionButton(
+                                icon: Icons.copy_rounded,
+                                isDark: isDark,
+                                onTap: () =>
+                                    AppHelpers.copyText(widget.zikrEntity.zekr),
+                              ),
+                              if (widget.onFavoriteTap != null) ...[
+                                SizedBox(width: 6.w),
+                                ZekrActionButton(
+                                  isDark: isDark,
+                                  onTap: widget.onFavoriteTap!,
+                                  child: Icon(
+                                    widget.isFavorite
+                                        ? Icons.star_rounded
+                                        : Icons.star_outline_rounded,
+                                    size: 22.sp,
+                                    color: widget.isFavorite
+                                        ? const Color(0xFFF59E0B)
+                                        : (isDark
+                                            ? Colors.white38
+                                            : Colors.black26),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
                       ),
-
-                    const Spacer(),
+                    ),
+                    SizedBox(width: 12.w),
 
                     // Counter pill
-                    // if (hasCount)
                     ZekrCounterPill(
                       remaining: _remaining,
                       total: _total,

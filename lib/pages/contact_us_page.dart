@@ -21,7 +21,6 @@ class _ContactUsPageState extends State<ContactUsPage> {
   PackageInfo? packageInfo;
 
   bool _isLoading = false;
-  bool _emailLaunched = false;
 
   @override
   void initState() {
@@ -42,7 +41,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
   }
 
   Future<void> _sendEmail() async {
-    if (_isLoading || _emailLaunched) return;
+    if (_isLoading) return;
 
     final String subject = _subjectController.text.trim();
     final String userMessage = _messageController.text.trim();
@@ -54,7 +53,6 @@ class _ContactUsPageState extends State<ContactUsPage> {
 
     setState(() {
       _isLoading = true;
-      _emailLaunched = true;
     });
 
     final String appVersion = packageInfo?.version ?? 'Unknown';
@@ -95,7 +93,6 @@ class _ContactUsPageState extends State<ContactUsPage> {
       }
     } catch (e) {
       log(e.toString());
-      _emailLaunched = false;
       if (mounted) {
         AppHelpers.showToast('تعذر فتح تطبيق البريد الإلكتروني',
             status: ToastStatus.error);

@@ -4,6 +4,7 @@ import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/azkar/presentation/pages/azkar_details_page.dart';
 import 'package:azkar_app/features/azkar/presentation/pages/favorite_items_page.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
+import 'package:azkar_app/features/azkar/presentation/providers/favorites_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/add_azkar_bottom_sheet.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/azkar_item.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/edit_azkar_bottom_sheet.dart';
@@ -30,7 +31,7 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
   String _selectedFilter = 'الكل';
 
   final List<String> _filters = [
-    'المفضلة',
+    AppConstants.favoriteCategory,
     'أذكاري',
     'الكل',
     'الصباح',
@@ -45,9 +46,12 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
     'الحج',
   ];
 
-  bool _matchesFilter(String category, AzkarProvider provider) {
+  bool _matchesFilter(
+      String category, AzkarProvider provider, FavoritesProvider favorites) {
     if (_selectedFilter == 'الكل') return true;
-    if (_selectedFilter == 'المفضلة') return provider.isCategoryFav(category);
+    if (_selectedFilter == AppConstants.favoriteCategory) {
+      return favorites.isCategoryFav(category);
+    }
 
     final isCustom = provider.customCategories.contains(category);
     if (_selectedFilter == 'أذكاري') return isCustom;
@@ -56,10 +60,13 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
   }
 
   int _categoryCount(AzkarProvider provider, String category) {
-    final assetCount =
-        provider.azkarList.where((e) => e.category == category).length;
-    if (assetCount > 0) return assetCount;
-    return provider.customAzkarList.where((e) => e.category == category).length;
+    // Match the source the details page actually displays: a category with any
+    // custom entries (even one sharing an asset category's name) is shown as
+    // custom, so report the custom count for it.
+    final customCount =
+        provider.customAzkarList.where((e) => e.category == category).length;
+    if (customCount > 0) return customCount;
+    return provider.azkarList.where((e) => e.category == category).length;
   }
 
   @override
@@ -69,7 +76,7 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<AzkarProvider>().loadFavorites();
+        context.read<FavoritesProvider>().loadFavorites();
         context.read<AzkarProvider>().loadCustomAzkar();
       }
     });
@@ -153,6 +160,7 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final azkarProvider = Provider.of<AzkarProvider>(context);
+    final favoritesProvider = Provider.of<FavoritesProvider>(context);
 
     final List<String> assetCategories =
         azkarProvider.azkarList.map((e) => e.category).toSet().toList();
@@ -164,10 +172,12 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
     };
 
     List<String> dynamicCategories = [];
-    if (_selectedFilter == 'المفضلة') {
-      dynamicCategories = List.from(azkarProvider.favCategories);
+    if (_selectedFilter == AppConstants.favoriteCategory) {
+      dynamicCategories = List<String>.from(favoritesProvider.favCategories)
+          .where((cat) => allUniqueCategories.contains(cat))
+          .toList();
       for (var cat in customCategories) {
-        if (azkarProvider.isCategoryFav(cat) &&
+        if (favoritesProvider.isCategoryFav(cat) &&
             !dynamicCategories.contains(cat)) {
           dynamicCategories.add(cat);
         }
@@ -181,7 +191,7 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
     final List<String> filteredCategories = dynamicCategories.where((cat) {
       final matchesSearch =
           cat.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesTab = _matchesFilter(cat, azkarProvider);
+      final matchesTab = _matchesFilter(cat, azkarProvider, favoritesProvider);
       final isNotShortSurah = cat != AppConstants.shortSurahsTitle;
 
       return matchesSearch && matchesTab && isNotShortSurah;
@@ -189,8 +199,8 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
 
     if (_selectedFilter == 'الكل') {
       filteredCategories.sort((a, b) {
-        final aFav = azkarProvider.isCategoryFav(a) ? 0 : 1;
-        final bFav = azkarProvider.isCategoryFav(b) ? 0 : 1;
+        final aFav = favoritesProvider.isCategoryFav(a) ? 0 : 1;
+        final bFav = favoritesProvider.isCategoryFav(b) ? 0 : 1;
         if (aFav != bFav) return aFav.compareTo(bFav);
 
         final aStartsAzkar = a.trim().startsWith('أذكار') ? 0 : 1;
@@ -204,14 +214,15 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
     }
 
     final bool isSurahFav =
-        azkarProvider.isCategoryFav(AppConstants.shortSurahsTitle);
-    final bool showSurahs =
-        AppConstants.shortSurahsTitle.contains(_searchQuery) &&
-            (_selectedFilter == 'الكل' ||
-                (_selectedFilter == 'المفضلة' && isSurahFav));
+        favoritesProvider.isCategoryFav(AppConstants.shortSurahsTitle);
+    final bool showSurahs = AppConstants.shortSurahsTitle
+            .contains(_searchQuery) &&
+        (_selectedFilter == 'الكل' ||
+            (_selectedFilter == AppConstants.favoriteCategory && isSurahFav));
 
     final bool showSavedFolder =
-        _selectedFilter == 'المفضلة' && _searchQuery.isEmpty;
+        _selectedFilter == AppConstants.favoriteCategory &&
+            _searchQuery.isEmpty;
 
     return Scaffold(
       appBar: AppBar(
@@ -256,33 +267,40 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
               itemBuilder: (context, index) {
                 final filter = _filters[index];
                 final isActive = _selectedFilter == filter;
-                return InkWell(
-                  onTap: () => setState(() {
-                    _selectedFilter = filter;
-                  }),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    decoration: BoxDecoration(
-                      color: isActive
-                          ? AppPalette.mainColor
-                          : AppPalette.mainColor
-                              .withValues(alpha: isDark ? 0.12 : 0.08),
-                      borderRadius: BorderRadius.circular(20.r),
-                      border: Border.all(
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(20.r),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => setState(() {
+                        _selectedFilter = filter;
+                      }),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        decoration: BoxDecoration(
                           color: isActive
-                              ? Colors.transparent
-                              : AppPalette.mainColor.withValues(alpha: 0.15),
-                          width: 0.5),
-                    ),
-                    child: Center(
-                      child: Text(filter,
-                          style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
+                              ? AppPalette.mainColor
+                              : AppPalette.mainColor
+                                  .withValues(alpha: isDark ? 0.12 : 0.08),
+                          borderRadius: BorderRadius.circular(20.r),
+                          border: Border.all(
                               color: isActive
-                                  ? Colors.white
-                                  : AppPalette.mainColor)),
+                                  ? Colors.transparent
+                                  : AppPalette.mainColor
+                                      .withValues(alpha: 0.15),
+                              width: 0.5),
+                        ),
+                        child: Center(
+                          child: Text(filter,
+                              style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: isActive
+                                      ? Colors.white
+                                      : AppPalette.mainColor)),
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -338,34 +356,42 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
                         (showSurahs ? 1 : 0) +
                         (showSavedFolder ? 1 : 0),
                     itemBuilder: (context, index) {
-                      int adjustedIndex = index;
+                      int listIndex = index;
 
-                      if (showSavedFolder && index == 0) {
-                        return _buildSavedItems(azkarProvider, isDark);
+                      if (showSavedFolder) {
+                        if (listIndex == 0) {
+                          return _buildSavedItems(favoritesProvider, isDark);
+                        }
+                        listIndex--;
                       }
-                      if (showSavedFolder) adjustedIndex--;
 
-                      if (adjustedIndex == 0 &&
-                          showSurahs &&
-                          _searchQuery.isEmpty) {
-                        return AzkarItem(
-                          title: AppConstants.shortSurahsTitle,
-                          count: context.read<SurahProvider>().surahList.length,
-                          itemLabel: 'سورة',
-                          isFavorite: isSurahFav,
-                          onFavoriteTap: () =>
-                              azkarProvider.toggleCategoryFavorite(
-                                  AppConstants.shortSurahsTitle),
-                          onTap: () => Navigator.push(
-                              context,
-                              CupertinoPageRoute(
-                                  builder: (_) => const SurahListPage())),
-                          isDark: isDark,
-                        );
+                      if (showSurahs) {
+                        if (listIndex == 0) {
+                          return Consumer<SurahProvider>(
+                            builder: (context, surahProvider, _) => AzkarItem(
+                              title: AppConstants.shortSurahsTitle,
+                              count: surahProvider.surahList.length,
+                              itemLabel: 'سورة',
+                              isFavorite: isSurahFav,
+                              onFavoriteTap: () => favoritesProvider
+                                  .toggleCategoryFavorite(
+                                      AppConstants.shortSurahsTitle),
+                              onTap: () => Navigator.push(
+                                  context,
+                                  CupertinoPageRoute(
+                                      builder: (_) => const SurahListPage())),
+                              isDark: isDark,
+                            ),
+                          );
+                        }
+                        listIndex--;
                       }
-                      if (showSurahs && _searchQuery.isEmpty) adjustedIndex--;
 
-                      final category = filteredCategories[adjustedIndex];
+                      if (listIndex >= filteredCategories.length) {
+                        return const SizedBox.shrink();
+                      }
+
+                      final category = filteredCategories[listIndex];
                       final isCustom =
                           azkarProvider.customCategories.contains(category);
 
@@ -373,9 +399,9 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
                         title: category,
                         count: _categoryCount(azkarProvider, category),
                         isCustom: isCustom,
-                        isFavorite: azkarProvider.isCategoryFav(category),
+                        isFavorite: favoritesProvider.isCategoryFav(category),
                         onFavoriteTap: () =>
-                            azkarProvider.toggleCategoryFavorite(category),
+                            favoritesProvider.toggleCategoryFavorite(category),
                         onTap: () => Navigator.push(
                             context,
                             CupertinoPageRoute(
@@ -392,36 +418,65 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
                           direction: DismissDirection
                               .horizontal, // التغيير هنا لدعم الاتجاهين
                           confirmDismiss: (direction) async {
-                            if (direction == DismissDirection.endToStart) {
-                              // سحب لليسار -> تأكيد الحذف
-                              return await _showDeleteConfirmation(
+                            // RTL: start = اليمين، end = اليسار.
+                            // endToStart = سحب لليمين -> تعديل. startToEnd = لليسار -> حذف.
+                            if (direction == DismissDirection.startToEnd) {
+                              // startToEnd = سحب لليسار -> تأكيد الحذف
+                              final confirmed = await _showDeleteConfirmation(
                                   context, category, isDark);
+                              if (!confirmed) return false;
+                              // Delete BEFORE the card leaves the tree. If the
+                              // delete fails, keep the card (return false);
+                              // otherwise the card must not show a dismissed
+                              // state or the swap can't be rolled back.
+                              final ok = await azkarProvider
+                                  .deleteCustomCategory(category);
+                              if (!ok) {
+                                if (context.mounted) {
+                                  AppHelpers.showToast(
+                                      'فشل حذف "$category"، حاول مرة أخرى',
+                                      status: ToastStatus.error);
+                                }
+                                return false;
+                              }
+                              // Drop favourite references so saved items and
+                              // the category aren't left orphaned after delete.
+                              await favoritesProvider
+                                  .removeCategoryItemFavorites(category);
+                              await favoritesProvider
+                                  .removeCategoryFavorite(category);
+                              if (context.mounted) {
+                                AppHelpers.showToast(
+                                    'تم حذف "$category" بنجاح',
+                                    status: ToastStatus.success);
+                              }
+                              return true;
                             } else if (direction ==
-                                DismissDirection.startToEnd) {
-                              // سحب لليمن -> فتح واجهة التعديل
+                                DismissDirection.endToStart) {
+                              // endToStart = سحب لليمين -> فتح واجهة التعديل
                               _showEditAzkarBottomSheet(
                                   context, category, azkarProvider, isDark);
                               return false; // يمنع حذف الكارت من القائمة بصرياً بعد انتهاء السحب
                             }
                             return false;
                           },
-                          onDismissed: (direction) async {
-                            if (direction == DismissDirection.endToStart) {
-                              await azkarProvider
-                                  .deleteCustomCategory(category);
-                              if (azkarProvider.isCategoryFav(category)) {
-                                azkarProvider.toggleCategoryFavorite(category);
-                              }
-                              if (context.mounted) {
-                                AppHelpers.showToast('تم حذف "$category" بنجاح',
-                                    status: ToastStatus.success);
-                              }
-                            }
-                          },
-                          // خلفية السحب لليمين (التعديل)
+                          onDismissed: (_) {},
+                          // خلفية السحب لليسار (الحذف)
                           background: Container(
                             alignment: Alignment.centerRight,
                             padding: EdgeInsets.only(right: 20.w),
+                            margin: EdgeInsets.symmetric(vertical: 4.h),
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent.withValues(alpha: 0.9),
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child:
+                                const Icon(Icons.delete, color: Colors.white),
+                          ),
+                          // خلفية السحب لليمين (التعديل)
+                          secondaryBackground: Container(
+                            alignment: Alignment.centerLeft,
+                            padding: EdgeInsets.only(left: 20.w),
                             margin: EdgeInsets.symmetric(vertical: 4.h),
                             decoration: BoxDecoration(
                               color: Colors.amber[700],
@@ -433,18 +488,6 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
                                 Icon(Icons.edit, color: Colors.white),
                               ],
                             ),
-                          ),
-                          // خلفية السحب لليسار (الحذف)
-                          secondaryBackground: Container(
-                            alignment: Alignment.centerLeft,
-                            padding: EdgeInsets.only(left: 20.w),
-                            margin: EdgeInsets.symmetric(vertical: 4.h),
-                            decoration: BoxDecoration(
-                              color: Colors.redAccent.withValues(alpha: 0.9),
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                            child:
-                                const Icon(Icons.delete, color: Colors.white),
                           ),
                           child: azkarItemWidget,
                         );
@@ -459,7 +502,7 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
     );
   }
 
-  Widget _buildSavedItems(AzkarProvider provider, bool isDark) {
+  Widget _buildSavedItems(FavoritesProvider provider, bool isDark) {
     final items = provider.favIndividualItems;
     if (items.isEmpty) return const SizedBox.shrink();
     return AzkarItem(
@@ -467,11 +510,7 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
       count: items.length,
       itemLabel: 'مادة',
       isFavorite: true,
-      onFavoriteTap: () {
-        for (final item in items) {
-          provider.toggleItemFavorite(item);
-        }
-      },
+      onFavoriteTap: () => _confirmClearSavedItems(context, provider, isDark),
       onTap: () {
         Navigator.of(context).push(MaterialPageRoute(
           builder: (context) => const FavoriteItemsPage(),
@@ -481,12 +520,71 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
     );
   }
 
+  Future<void> _confirmClearSavedItems(
+      BuildContext context, FavoritesProvider provider, bool isDark) async {
+    final items = List.of(provider.favIndividualItems);
+    if (items.isEmpty) return;
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.r)),
+            title: Text(
+              'إزالة كل المحفوظات؟',
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16.sp,
+                  color: isDark ? Colors.white : Colors.black),
+            ),
+            content: Text(
+              'سيتم إزالة جميع الأذكار والآيات المحفوظة (${items.length} مادة) من المفضلة.',
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                  fontSize: 14.sp,
+                  color: isDark ? Colors.white70 : Colors.black87),
+            ),
+            actionsAlignment: MainAxisAlignment.spaceBetween,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text('إلغاء',
+                    style: TextStyle(color: Colors.grey, fontSize: 13.sp)),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r)),
+                ),
+                child: Text('إزالة الكل',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirmed) return;
+    for (final item in items) {
+      await provider.toggleItemFavorite(item);
+    }
+    AppHelpers.showToast('تمت إزالة جميع المحفوظات');
+  }
+
   Widget _buildEmptyState() {
+    final isSearching = _searchQuery.trim().isNotEmpty;
     return Center(
       child: Text(
-        _selectedFilter == 'أذكاري'
-            ? 'لا توجد أذكار مخصصة مضافة'
-            : 'لم يتم العثور على نتائج',
+        isSearching
+            ? 'لم يتم العثور على نتائج'
+            : (_selectedFilter == 'أذكاري'
+                ? 'لا توجد أذكار مخصصة مضافة'
+                : 'لم يتم العثور على نتائج'),
         style: TextStyle(
             fontSize: 15.sp, color: Colors.grey, fontWeight: FontWeight.w500),
       ),

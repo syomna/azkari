@@ -89,4 +89,24 @@ class QuranRepositoryImpl implements QuranRepository {
   Future<void> saveQuranPageNumber(int pageNumber) async {
     await quranLocalDataSource.saveQuranPageNumber(pageNumber);
   }
+
+  @override
+  Future<void> saveQuranBookmark(int surahNumber, int pageNumber) async {
+    await quranLocalDataSource.saveQuranBookmark(surahNumber, pageNumber);
+  }
+
+  @override
+  int? getQuranBookmarkSurah() {
+    return quranLocalDataSource.getQuranBookmarkSurah();
+  }
+
+  @override
+  int? getQuranBookmarkPage() {
+    return quranLocalDataSource.getQuranBookmarkPage();
+  }
+
+  @override
+  Future<void> clearQuranBookmark() async {
+    await quranLocalDataSource.clearQuranBookmark();
+  }
 }

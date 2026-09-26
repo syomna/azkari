@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:developer';
 
+import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/core/services/notifications_service.dart';
 import 'package:azkar_app/core/services/prayer_times_service.dart';
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -46,6 +49,9 @@ class NotificationProvider extends ChangeNotifier {
   Future<void> _loadNotificationPreferences() async {
     // Always read the saved preference — never gate on permission status.
     _areNotificationsEnabled = _prefs.getBool(_notificationsEnabledKey) ?? true;
+    // Same schedule as last run? Nothing to re-create — skip the expensive
+    // cancelAll+reschedule that used to run on every cold start.
+    if (_areNotificationsEnabled && _hasUnchangedSchedulePlan()) return;
     await _rescheduleNotifications();
   }
 
@@ -67,10 +73,16 @@ class NotificationProvider extends ChangeNotifier {
         }
         if (!isGranted) {
           _areNotificationsEnabled = false;
-          await _prefs.setBool(_notificationsEnabledKey, newValue);
+          await _prefs.setBool(_notificationsEnabledKey, false);
           notifyListeners();
+          // Permission denied while notifications were previously scheduled:
+          // cancel whatever is already queued so stale alerts don't fire.
+          await _rescheduleNotifications();
           return 'يرجى تفعيل صلاحية الإشعارات من إعدادات الجهاز';
         }
+        // Constant exact alarms on Android need the "Alarms & reminders"
+        // special access; ask for it right here while the user is engaged.
+        await _notificationService.requestExactAlarmsPermission();
       } catch (e) {
         debugPrint('[NotificationProvider] Permission check failed: $e');
       }
@@ -85,18 +97,112 @@ class NotificationProvider extends ChangeNotifier {
     await _rescheduleNotifications();
   }
 
+  /// Reads the stored "HH:mm" custom azkar time for [key], or `null` when the
+  /// default (prayer-derived) time should be used. Out-of-range values (e.g. a
+  /// corrupted "25:99") are treated as unset rather than scheduled as-is.
+  TimeOfDay? azkarTime(String key) {
+    final raw = _prefs.getString(key);
+    if (raw == null) return null;
+    final parts = raw.split(':');
+    if (parts.length != 2) return null;
+    final h = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    if (h == null || m == null || h < 0 || h > 23 || m < 0 || m > 59) {
+      return null;
+    }
+    return TimeOfDay(hour: h, minute: m);
+  }
+
+  /// Stores a custom azkar time ("HH:mm") for [key] and reschedules. Passing
+  /// `null` clears the custom time and reverts to the default. Returns an
+  /// error message on scheduling failure, null on success.
+  Future<String?> setAzkarTime(String key, TimeOfDay? time) async {
+    if (time == null) {
+      await _prefs.remove(key);
+    } else {
+      await _prefs.setString(key,
+          '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}');
+    }
+    notifyListeners();
+    return _rescheduleNotifications();
+  }
+
   Future<void> refreshNotifications() async {
     _areNotificationsEnabled = _prefs.getBool(_notificationsEnabledKey) ?? true;
 
-    if (_areNotificationsEnabled) {
+    if (_areNotificationsEnabled &&
+        !_hasUnchangedSchedulePlan()) {
       await _rescheduleNotifications();
       log('Notifications refreshed on app launch');
     }
   }
 
+  static const String _scheduleSignatureKey = 'notif_schedule_signature';
+
+  /// Serializes every setting that affects what [NotificationService] queues,
+  /// so a later run can detect "same plan as before" and skip a redundant
+  /// cancel+reschedule. Returns `null` when the location — the one thing the
+  /// schedulers need to start at all — isn't resolved yet.
+  String? _computeScheduleSignature() {
+    double? lat = _prefs.getDouble(PrefsKeys.latitude);
+    double? lng = _prefs.getDouble(PrefsKeys.longitude);
+    if (lat == null || lng == null) return null;
+
+    final effectiveTimes = _prayerTimeService.getEffectiveTimes(_prefs);
+    final parts = <String>[
+      _prefs.getString(PrefsKeys.prayerTimeDate) ?? '',
+      _prefs.getString(PrefsKeys.cityTimezone) ?? '',
+      _prefs.getString(PrefsKeys.cityName) ?? '',
+      _areNotificationsEnabled.toString(),
+      isPrayerAdhanEnabled.toString(),
+      isMorningEveningAzkarEnabled.toString(),
+      isPeriodicAzkarEnabled.toString(),
+      isPreAdhanEnabled.toString(),
+      isQuranAfterSalahEnabled.toString(),
+      isProphetBlessingsEnabled.toString(),
+      '${lat.toStringAsFixed(6)},${lng.toStringAsFixed(6)}',
+      _prefs.getString(PrefsKeys.morningAzkarTime) ?? '',
+      _prefs.getString(PrefsKeys.eveningAzkarTime) ?? '',
+    ];
+    for (final key in AppHelpers.prayerNames.keys) {
+      final t = effectiveTimes[key];
+      parts.add(t == null ? '' : '${t.hour}:${t.minute}');
+    }
+    return parts.join('|');
+  }
+
+  bool _hasUnchangedSchedulePlan() {
+    final stored = _prefs.getString(_scheduleSignatureKey);
+    if (stored == null) return false;
+    final current = _computeScheduleSignature();
+    if (current == null) return false;
+    return stored == current;
+  }
+
+  /// Serializes reschedule runs so rapid successive edits/toggles cannot run
+  /// `cancelAll`/reschedule concurrently (which would interleave and silently
+  /// drop notifications, e.g. after editing a prayer or azkar time).
+  Future<String?> _rescheduleQueue = Future.value();
+
+  Future<String?> _rescheduleNotifications() {
+    final completer = Completer<String?>();
+    _rescheduleQueue = _rescheduleQueue.then((_) async {
+      String? result;
+      try {
+        result = await _rescheduleNotificationsInner();
+      } catch (e) {
+        debugPrint('[NotificationProvider] Reschedule failure: $e');
+        result = 'خطأ في جدولة الإشعارات';
+      }
+      completer.complete(result);
+      return result;
+    });
+    return completer.future;
+  }
+
   /// Schedules notifications based on current toggle state.
   /// Returns an error message if scheduling failed, null on success.
-  Future<String?> _rescheduleNotifications() async {
+  Future<String?> _rescheduleNotificationsInner() async {
     try {
       await _notificationService.cancelAllNotifications();
     } catch (e) {
@@ -109,57 +215,82 @@ class NotificationProvider extends ChangeNotifier {
 
     // --- Location-dependent notifications ---
     try {
-      double? lat = _prefs.getDouble('lat');
-      double? lng = _prefs.getDouble('lng');
+      double? lat = _prefs.getDouble(PrefsKeys.latitude);
+      double? lng = _prefs.getDouble(PrefsKeys.longitude);
       if (lat == null || lng == null) {
         final position = await _prayerTimeService.getCurrentLocation();
         lat = position?.latitude;
         lng = position?.longitude;
         if (lat != null && lng != null) {
-          await _prefs.setDouble('lat', lat);
-          await _prefs.setDouble('lng', lng);
+          await _prefs.setDouble(PrefsKeys.latitude, lat);
+          await _prefs.setDouble(PrefsKeys.longitude, lng);
         }
       }
 
       if (lat != null && lng != null) {
+        String? e;
         if (isPrayerAdhanEnabled) {
-          await _notificationService.schedulePrayerNotifications();
+          e = await _notificationService.schedulePrayerNotifications();
+          error ??= e;
         }
         if (isMorningEveningAzkarEnabled) {
-          await _notificationService.scheduleDayNightNotifications(lat, lng);
-          await _notificationService.scheduleDayNightNotifications(lat, lng,
+          e = await _notificationService.scheduleDayNightNotifications(
+              lat, lng);
+          error ??= e;
+          e = await _notificationService.scheduleDayNightNotifications(
+              lat, lng,
               isDay: true);
+          error ??= e;
         }
         if (isPreAdhanEnabled) {
-          await _notificationService.schedulePreAdhanReminders();
+          e = await _notificationService.schedulePreAdhanReminders();
+          error ??= e;
         }
         if (isQuranAfterSalahEnabled) {
-          await _notificationService.scheduleQuranReminderAfterSalah();
+          e =
+              await _notificationService.scheduleQuranReminderAfterSalah();
+          error ??= e;
         }
       } else {
         error = 'تعذر تحديد الموقع لجدولة إشعارات الصلاة';
       }
     } catch (e) {
       debugPrint('[NotificationProvider] Error scheduling prayers: $e');
-      error = 'خطأ في جدولة إشعارات الصلاة';
+      error ??= 'خطأ في جدولة إشعارات الصلاة';
     }
 
     // --- Location-independent notifications ---
     try {
       if (isPeriodicAzkarEnabled) {
-        await _notificationService.periodicallyShowNotification();
+        final e =
+            await _notificationService.periodicallyShowNotification();
+        error ??= e;
       }
       if (isProphetBlessingsEnabled) {
-        await _notificationService.scheduleProphetBlessings();
+        final e = await _notificationService.scheduleProphetBlessings();
+        error ??= e;
       }
     } catch (e) {
       debugPrint('[NotificationProvider] Error scheduling reminders: $e');
       error ??= 'خطأ في جدولة التذكيرات';
     }
 
+    // Record the plan we just queued so the next cold start can skip this
+    // whole reschedule. Only a fully-successful, prayer-times-ready run is
+    // cached (otherwise the next launch re-runs and heals the gap).
+    if (error == null && _areNotificationsEnabled) {
+      final prayerTimeDate = _prefs.getString(PrefsKeys.prayerTimeDate);
+      if (prayerTimeDate != null && prayerTimeDate.isNotEmpty) {
+        final signature = _computeScheduleSignature();
+        if (signature != null) {
+          await _prefs.setString(_scheduleSignatureKey, signature);
+        }
+      }
+    }
+
     return error;
   }
 
   /// Public entry point for external callers (e.g. prayer times settings).
-  Future<void> applyNotificationStates() => _rescheduleNotifications();
+  Future<String?> applyNotificationStates() => _rescheduleNotifications();
 }

@@ -1,3 +1,4 @@
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:flutter/material.dart';
@@ -91,12 +92,15 @@ class _AddAzkarBottomSheetState extends State<AddAzkarBottomSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'النصوص والأدعية',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white60 : Colors.black54,
+                    Expanded(
+                      child: Text(
+                        'النصوص والأدعية',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white60 : Colors.black54,
+                        ),
                       ),
                     ),
                     TextButton.icon(
@@ -214,8 +218,14 @@ class _AddAzkarBottomSheetState extends State<AddAzkarBottomSheet> {
                     for (int i = 0; i < zikrControllers.length; i++) {
                       final text = zikrControllers[i].text.trim();
                       final countVal =
-                          int.tryParse(countControllers[i].text.trim()) ?? 1;
+                          int.tryParse(AppHelpers.normalizeArabicIndicDigits(countControllers[i].text)) ?? 1;
                       if (text.isNotEmpty) {
+                        if (countVal <= 0) {
+                          AppHelpers.showToast(
+                              'عدد التكرار يجب أن يكون أكبر من صفر',
+                              status: ToastStatus.error);
+                          return;
+                        }
                         structuredAzkar.add({
                           'text': text,
                           'count': countVal,
@@ -225,16 +235,26 @@ class _AddAzkarBottomSheetState extends State<AddAzkarBottomSheet> {
 
                     if (title.isNotEmpty && structuredAzkar.isNotEmpty) {
                       // 👈 Pass structured data down to provider
-                      await context
+                      final success = await context
                           .read<AzkarProvider>()
                           .saveCustomAzkarCategory(
                             categoryTitle: title,
                             azkarItems: structuredAzkar,
                           );
 
+                      if (!success) {
+                        if (context.mounted) {
+                          AppHelpers.showToast('فشل حفظ الأذكار، حاول مرة أخرى',
+                              status: ToastStatus.error);
+                        }
+                        return;
+                      }
+
                       if (context.mounted) {
                         Navigator.pop(context);
                         widget.onChangeFilter();
+                        AppHelpers.showToast('تم حفظ الأذكار بنجاح',
+                            status: ToastStatus.success);
                       }
                     }
                   },

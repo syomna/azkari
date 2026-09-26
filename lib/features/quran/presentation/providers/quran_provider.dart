@@ -2,11 +2,15 @@ import 'dart:async';
 
 import 'package:azkar_app/features/quran/domain/usecases/check_surah_downloaded_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/clear_all_saved_quran_values_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/clear_quran_bookmark_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/clear_saved_position_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_latest_quran_surah_number_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/get_quran_bookmark_page_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/get_quran_bookmark_surah_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_saved_quran_page_number_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_surah_audio_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/save_latest_quran_surah_number_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/save_quran_bookmark_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/save_quran_page_number_usecase.dart';
 import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
@@ -20,6 +24,10 @@ class QuranProvider with ChangeNotifier {
   final ClearSavedPositionUseCase clearSavedPositionUseCase;
   final GetSurahAudioUseCase getSurahAudioUseCase;
   final CheckSurahDownloadedUseCase checkSurahDownloadedUseCase;
+  final SaveQuranBookmarkUseCase saveQuranBookmarkUseCase;
+  final GetQuranBookmarkSurahUseCase getQuranBookmarkSurahUseCase;
+  final GetQuranBookmarkPageUseCase getQuranBookmarkPageUseCase;
+  final ClearQuranBookmarkUseCase clearQuranBookmarkUseCase;
 
   QuranProvider(
       {required this.getQuranPageNumberUseCase,
@@ -29,7 +37,11 @@ class QuranProvider with ChangeNotifier {
       required this.clearAllSavedQuranValuesUsecase,
       required this.clearSavedPositionUseCase,
       required this.getSurahAudioUseCase,
-      required this.checkSurahDownloadedUseCase}) {
+      required this.checkSurahDownloadedUseCase,
+      required this.saveQuranBookmarkUseCase,
+      required this.getQuranBookmarkSurahUseCase,
+      required this.getQuranBookmarkPageUseCase,
+      required this.clearQuranBookmarkUseCase}) {
     _playerSubscription = _player.playbackEventStream.listen(
       (event) => notifyListeners(),
       onError: (Object e, StackTrace st) {
@@ -51,6 +63,12 @@ class QuranProvider with ChangeNotifier {
 
   int? get savedLatestQuranSurahNumber => getLatestSurahNumberUseCase();
   int? get savedLatestQuranPageNumber => getQuranPageNumberUseCase();
+
+  // The user's explicit bookmark is kept SEPARATE from the auto-resume
+  // position (which is re-saved on every page turn): bookmarking must not be
+  // silently overwritten by simply flipping pages.
+  int? get bookmarkSurah => getQuranBookmarkSurahUseCase();
+  int? get bookmarkPage => getQuranBookmarkPageUseCase();
 
   // QuranPositionEntity getSavedPosition(int surahNumber) {
   //   return getSavedPositionUseCase(surahNumber);
@@ -77,6 +95,16 @@ class QuranProvider with ChangeNotifier {
 
   Future<void> clearSavedPosition() async {
     await clearSavedPositionUseCase();
+    notifyListeners();
+  }
+
+  Future<void> saveBookmark({required int surahNumber, required int pageNumber}) async {
+    await saveQuranBookmarkUseCase(surahNumber: surahNumber, pageNumber: pageNumber);
+    notifyListeners();
+  }
+
+  Future<void> clearBookmark() async {
+    await clearQuranBookmarkUseCase();
     notifyListeners();
   }
 
@@ -121,13 +149,15 @@ class QuranProvider with ChangeNotifier {
   }
 
   Future<void> toggleAudio(int surahNumber, String url) async {
-    _errorMessage = null; // Clear previous errors
-    _currentPlayingSurah = surahNumber;
+    _errorMessage = null;
 
-    // Check if we are interacting with the same surah already loaded
-    // Note: Better to check if the path/surah matches specifically
+    // The player holds exactly one file; `_currentPlayingSurah` remembers
+    // whose file that is. Read it BEFORE reassigning below so tapping the
+    // already-loaded surah pauses/resumes while tapping a *different* surah
+    // switches the source even when audio is currently playing.
+    final int? loadedSurah = _currentPlayingSurah;
     final bool isSameSurah =
-        _player.audioSource != null && _currentPlayingSurah == surahNumber;
+        _player.audioSource != null && loadedSurah == surahNumber;
 
     if (isSameSurah && _player.playing) {
       await _player.pause();
@@ -136,12 +166,14 @@ class QuranProvider with ChangeNotifier {
     }
 
     if (isSameSurah &&
-        !(_player.playing) &&
+        !_player.playing &&
         _player.processingState == ProcessingState.ready) {
       await _player.play();
       notifyListeners();
       return;
     }
+
+    _currentPlayingSurah = surahNumber;
 
     try {
       final bool alreadyExists = await checkSurahDownloadedUseCase(surahNumber);

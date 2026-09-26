@@ -1,3 +1,4 @@
+import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:flutter/material.dart';
@@ -138,7 +139,8 @@ class AzkarItem extends StatelessWidget {
         title.contains('الآذان') ||
         title.contains('المسجد')) {
       iconData = Icons.mosque_rounded;
-    } else if (title.contains('المحفوظة') || title.contains('المفضلة')) {
+    } else if (title.contains('المحفوظة') ||
+        title.contains(AppConstants.favoriteCategory)) {
       iconData = Icons.folder_special_rounded;
       iconColor = AppPalette.favoriteColor;
     } else if (title.contains('سورة')) {

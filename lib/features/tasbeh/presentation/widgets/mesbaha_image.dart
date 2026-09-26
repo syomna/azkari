@@ -42,17 +42,16 @@ class _MesbahaWidgetState extends State<MesbahaWidget>
     super.dispose();
   }
 
-  // This handles the "Tap" logic: Shrink -> Wait -> Grow -> Count
-  void _handleTap(TasbehProvider provider) async {
-    // 1. Shrink down immediately
-    await _controller.forward();
-
-    // 2. Pop back up
-    await _controller.reverse();
-
-    // 3. Trigger haptics and count only AFTER the animation/release
+  // Tap handling: haptic + counter fire immediately on release; the squash
+  // animation is purely cosmetic and never gated the count (previously a rapid
+  // second tap cancelled the first tap's TickerFuture, silently dropping it).
+  void _handleTap(TasbehProvider provider) {
     HapticFeedback.lightImpact();
     provider.addCount();
+    _controller.forward().then((_) {
+      if (_controller.isAnimating || !mounted) return;
+      _controller.reverse();
+    });
   }
 
   @override

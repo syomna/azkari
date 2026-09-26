@@ -64,6 +64,28 @@ class QiblaScreen extends StatelessWidget {
               ));
             }
 
+            if (provider.compassUnavailable) {
+              return Center(
+                  child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 10.h,
+                children: [
+                  Icon(CupertinoIcons.compass,
+                      size: 56.h, color: Colors.grey.withValues(alpha: 0.6)),
+                  Text(
+                    'البوصلة غير متوفرة على هذا الجهاز',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    'لا يمكن تحديد اتجاه القبلة دون مستشعر البوصلة.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13.sp, color: Colors.grey),
+                  ),
+                ],
+              ));
+            }
+
             return QiblaBody(
               heading: provider.currentHeading,
               difference: provider.difference,

@@ -5,6 +5,7 @@ import 'package:azkar_app/core/providers/notification_provider.dart';
 import 'package:azkar_app/core/providers/theme_provider.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
+import 'package:azkar_app/features/azkar/presentation/providers/prayer_times_provider.dart';
 import 'package:azkar_app/features/names_of_allah/presentation/providers/names_of_allah_provider.dart';
 import 'package:azkar_app/features/surah/presentation/providers/surah_provider.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
@@ -61,6 +62,18 @@ class _SplashPageState extends State<SplashPage> {
     final surahProvider = Provider.of<SurahProvider>(context, listen: false);
     final tasbehProvider = Provider.of<TasbehProvider>(context, listen: false);
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final prayerTimesProvider =
+        Provider.of<PrayerTimesProvider>(context, listen: false);
+    final notificationProvider =
+        Provider.of<NotificationProvider>(context, listen: false);
+
+    // Compute and persist today's prayer times BEFORE refreshing
+    // notifications. The unchanged-plan skip in NotificationProvider compares
+    // the stored schedule against the stored signature, so running it while
+    // the stored date/times are still yesterday's would skip the reschedule
+    // and leave every prayer/adhan notification firing at yesterday's times
+    // for the rest of the day.
+    await prayerTimesProvider.loadPrayerTimes();
 
     final dataLoadingFutures = <Future>[
       themeProvider.loadTheme(),
@@ -68,6 +81,10 @@ class _SplashPageState extends State<SplashPage> {
       namesOfAllahProvider.loadNamesOfAllah(),
       surahProvider.loadSurah(),
       tasbehProvider.loadCount(),
+      // Awaited startup (re)schedule so the notifications are fully registered
+      // before the app proceeds — not a fire-and-forget constructor call that
+      // can be interrupted (which is why they'd only work after toggling).
+      notificationProvider.refreshNotifications(),
     ];
 
     // Minimum 2.5 seconds for branding impact
@@ -92,10 +109,13 @@ class _SplashPageState extends State<SplashPage> {
           },
           transitionDuration: const Duration(milliseconds: 800),
         ),
-      ).then((_) {
-        // After navigating to HomePage, fire the callback if the app
-        // was launched from a notification (e.g. to open AdhanPage).
-        widget.onReady?.call();
+      );
+      // Fire the launch-from-notification callback right after the replacement
+      // route is pushed, NOT in `.then(...)`: the pushReplacement future only
+      // completes when HomePage is eventually popped, so the old code deferred
+      // the Adhan/Azkar navigation to an arbitrary later moment (or never).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onReady?.call();
       });
     }
   }

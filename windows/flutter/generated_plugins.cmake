@@ -6,7 +6,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   clipboard
   flutter_timezone
   geolocator_windows
-  permission_handler_windows
   share_plus
   url_launcher_windows
 )

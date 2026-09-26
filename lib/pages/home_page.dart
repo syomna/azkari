@@ -8,6 +8,8 @@ import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/presentation/pages/all_azkar_page.dart';
 import 'package:azkar_app/features/azkar/presentation/pages/azkar_details_page.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
+import 'package:azkar_app/features/azkar/presentation/providers/prayer_times_provider.dart';
+import 'package:azkar_app/features/azkar/presentation/widgets/city_dropdown_button.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/day_zekr_widget.dart';
 import 'package:azkar_app/features/names_of_allah/presentation/pages/names_of_allah_page.dart';
 import 'package:azkar_app/features/names_of_allah/presentation/providers/names_of_allah_provider.dart';
@@ -15,6 +17,7 @@ import 'package:azkar_app/features/names_of_allah/presentation/widgets/names_of_
 import 'package:azkar_app/features/qibla/presentation/pages/qibla_screen.dart';
 import 'package:azkar_app/features/quran/presentation/pages/quran_details_page.dart';
 import 'package:azkar_app/features/tasbeh/presentation/pages/tasbeh_page.dart';
+import 'package:azkar_app/features/widget_guide/presentation/widget_guide_card.dart';
 import 'package:azkar_app/features/widget_guide/widget_guide_helper.dart';
 import 'package:azkar_app/pages/contact_us_page.dart';
 import 'package:azkar_app/pages/settings_page.dart';
@@ -44,18 +47,20 @@ class _HomePageState extends State<HomePage> {
       _randomNameIndex = Random().nextInt(namesList.length);
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-    WidgetGuideHelper.showIfNeeded(context);
-  });
+      WidgetGuideHelper.showIfNeeded(context);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Consumer<AzkarProvider>(
-      builder: (context, azkarProvider, _) {
-        if (azkarProvider.azkarStatus == AppLoadingStatus.initial ||
-            azkarProvider.azkarStatus == AppLoadingStatus.loading) {
+    return Builder(
+      builder: (context) {
+        final azkarStatus = context
+            .select<AzkarProvider, AppLoadingStatus>((p) => p.azkarStatus);
+        if (azkarStatus == AppLoadingStatus.initial ||
+            azkarStatus == AppLoadingStatus.loading) {
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(
@@ -63,11 +68,12 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           );
-        } else if (azkarProvider.azkarStatus == AppLoadingStatus.error) {
+        } else if (azkarStatus == AppLoadingStatus.error) {
+          final error = context.select<AzkarProvider, String?>(
+              (p) => p.azkarErrorMessage);
           return Scaffold(
             body: Center(
-                child: Text(
-                    'Error loading Azkar: ${azkarProvider.azkarErrorMessage}')),
+                child: Text('حدث خطأ أثناء تحميل الأذكار: $error')),
           );
         } else {
           return Scaffold(
@@ -90,41 +96,50 @@ class _HomePageState extends State<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(height: 5.h),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _buildHeaderAction(
-                                  context,
-                                  isDark
-                                      ? CupertinoIcons.sun_max
-                                      : CupertinoIcons.moon_stars,
-                                  () => context.read<ThemeProvider>().toggleTheme()),
-                              SizedBox(width: 16.w),
-                              _buildHeaderAction(
-                                  context,
-                                  CupertinoIcons.bubble_left_bubble_right,
-                                  () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (_) => const ContactUsPage()))),
-                              SizedBox(width: 16.w),
-                              _buildHeaderAction(
-                                  context,
-                                  CupertinoIcons.settings,
-                                  () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (_) => const SettingsPage()))),
-                            ],
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Flexible(
+                              fit: FlexFit.loose,
+                              child: CityDropdownButton(),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _buildHeaderAction(
+                                    context,
+                                    isDark
+                                        ? CupertinoIcons.sun_max
+                                        : CupertinoIcons.moon_stars,
+                                    () => context
+                                        .read<ThemeProvider>()
+                                        .toggleTheme()),
+                                SizedBox(width: 10.w),
+                                _buildHeaderAction(
+                                    context,
+                                    CupertinoIcons.bubble_left_bubble_right,
+                                    () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) =>
+                                                const ContactUsPage()))),
+                                SizedBox(width: 10.w),
+                                _buildHeaderAction(
+                                    context,
+                                    CupertinoIcons.settings,
+                                    () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) =>
+                                                const SettingsPage()))),
+                              ],
+                            ),
+                          ],
                         ),
                         SizedBox(height: 10.h),
                         const WelcomingWidget(),
                         SizedBox(height: 15.h),
-                        Consumer<AzkarProvider>(
+                        Consumer<PrayerTimesProvider>(
                           builder: (context, provider, _) {
                             if (provider.prayerTimes == null) {
                               return const SizedBox.shrink();
@@ -132,9 +147,12 @@ class _HomePageState extends State<HomePage> {
                             return PrayerTimesCard(
                               times: provider.prayerTimes!,
                               displayTimes: provider.allDisplayTimes,
+                              cityName: provider.cityName,
                             );
                           },
                         ),
+                        SizedBox(height: 12.h),
+                        const WidgetGuideCard(),
                         SizedBox(height: 15.h),
                         _buildTitle('ذكر اليوم'),
                         SizedBox(height: 15.h),
@@ -143,7 +161,8 @@ class _HomePageState extends State<HomePage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _buildTitle('الأذكار والأدعية'),
+                            Expanded(
+                                child: _buildTitle('الأذكار والأدعية')),
                             TextButton(
                               onPressed: () {
                                 Navigator.push(
@@ -153,6 +172,7 @@ class _HomePageState extends State<HomePage> {
                               },
                               child: const Text(
                                 'عرض الكل',
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                     color: AppPalette.mainColor,
                                     fontWeight: FontWeight.w600),
@@ -177,16 +197,19 @@ class _HomePageState extends State<HomePage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _buildTitle('أسماء الله الحسنى'),
+                            Expanded(
+                                child: _buildTitle('أسماء الله الحسنى')),
                             TextButton(
                               onPressed: () {
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (_) => const NamesOfAllahPage()));
+                                        builder: (_) =>
+                                            const NamesOfAllahPage()));
                               },
                               child: const Text(
                                 'عرض الكل',
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                     color: AppPalette.mainColor,
                                     fontWeight: FontWeight.w600),
@@ -195,12 +218,15 @@ class _HomePageState extends State<HomePage> {
                           ],
                         ),
                         SizedBox(height: 10.h),
-                        NamesOfAllahCard(
-                          item: context.read<NamesOfAllahProvider>().namesOfAllahList[
-                              context.read<NamesOfAllahProvider>().namesOfAllahList.isEmpty
-                                  ? 0
-                                  : _randomNameIndex],
-                        ),
+                        Builder(builder: (context) {
+                          final names = context
+                              .read<NamesOfAllahProvider>()
+                              .namesOfAllahList;
+                          if (names.isEmpty) return const SizedBox.shrink();
+                          return NamesOfAllahCard(
+                            item: names[_randomNameIndex % names.length],
+                          );
+                        }),
                         SizedBox(height: 40.h),
                       ],
                     ),
@@ -210,8 +236,7 @@ class _HomePageState extends State<HomePage> {
             ),
           );
         }
-      },
-    );
+      });
   }
 
   Text _buildTitle(String title) {
@@ -260,7 +285,7 @@ class _HomePageState extends State<HomePage> {
         text: AppConstants.favoriteCategory,
         img: 'duaa',
         page: AllAzkarPage(
-          selectedFilter: 'المفضلة',
+          selectedFilter: AppConstants.favoriteCategory,
         ),
         isColumn: true,
       ),
@@ -275,15 +300,21 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildHeaderAction(
       BuildContext context, IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(10.w),
-        decoration: BoxDecoration(
-          color: AppPalette.mainColor.withValues(alpha: 0.08),
-          shape: BoxShape.circle,
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Ink(
+          padding: EdgeInsets.all(10.w),
+          decoration: BoxDecoration(
+            color: AppPalette.mainColor.withValues(alpha: 0.08),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 20.h, color: AppPalette.mainColor),
         ),
-        child: Icon(icon, size: 20.h, color: AppPalette.mainColor),
       ),
     );
   }

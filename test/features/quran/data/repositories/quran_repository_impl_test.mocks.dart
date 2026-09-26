@@ -124,6 +124,16 @@ class MockQuranLocalDataSource extends _i1.Mock
       ) as _i9.Future<void>);
 
   @override
+  _i9.Future<void> clearSavedPosition() => (super.noSuchMethod(
+        Invocation.method(
+          #clearSavedPosition,
+          [],
+        ),
+        returnValue: _i9.Future<void>.value(),
+        returnValueForMissingStub: _i9.Future<void>.value(),
+      ) as _i9.Future<void>);
+
+  @override
   _i9.Future<void> clearAllSavedQuranValues() => (super.noSuchMethod(
         Invocation.method(
           #clearAllSavedQuranValues,
@@ -156,6 +166,33 @@ class MockQuranLocalDataSource extends _i1.Mock
         ),
         returnValue: _i9.Future<bool>.value(false),
       ) as _i9.Future<bool>);
+
+  @override
+  _i9.Future<void> saveQuranBookmark(
+    int? surahNumber,
+    int? pageNumber,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #saveQuranBookmark,
+          [
+            surahNumber,
+            pageNumber,
+          ],
+        ),
+        returnValue: _i9.Future<void>.value(),
+        returnValueForMissingStub: _i9.Future<void>.value(),
+      ) as _i9.Future<void>);
+
+  @override
+  _i9.Future<void> clearQuranBookmark() => (super.noSuchMethod(
+        Invocation.method(
+          #clearQuranBookmark,
+          [],
+        ),
+        returnValue: _i9.Future<void>.value(),
+        returnValueForMissingStub: _i9.Future<void>.value(),
+      ) as _i9.Future<void>);
 }
 
 /// A class which mocks [Dio].

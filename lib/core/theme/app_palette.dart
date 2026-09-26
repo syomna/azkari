@@ -23,6 +23,31 @@ class AppPalette {
 
   static const String tajawalFontFamily = 'Tajawal';
   static const String amiriFontFamily = 'Amiri';
+  static const String emojiFontFamily = 'NotoColorEmoji';
+
+  static const List<String> emojiFallback = [emojiFontFamily];
+
+  static TextTheme _withEmojiFallback(TextTheme theme) {
+    TextStyle? fb(TextStyle? style) =>
+        style?.copyWith(fontFamilyFallback: emojiFallback);
+    return TextTheme(
+      displayLarge: fb(theme.displayLarge),
+      displayMedium: fb(theme.displayMedium),
+      displaySmall: fb(theme.displaySmall),
+      headlineLarge: fb(theme.headlineLarge),
+      headlineMedium: fb(theme.headlineMedium),
+      headlineSmall: fb(theme.headlineSmall),
+      titleLarge: fb(theme.titleLarge),
+      titleMedium: fb(theme.titleMedium),
+      titleSmall: fb(theme.titleSmall),
+      bodyLarge: fb(theme.bodyLarge),
+      bodyMedium: fb(theme.bodyMedium),
+      bodySmall: fb(theme.bodySmall),
+      labelLarge: fb(theme.labelLarge),
+      labelMedium: fb(theme.labelMedium),
+      labelSmall: fb(theme.labelSmall),
+    );
+  }
 
   static final ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
@@ -44,16 +69,19 @@ class AppPalette {
       elevation: 0,
       titleTextStyle: TextStyle(
         fontFamily: tajawalFontFamily,
+        fontFamilyFallback: emojiFallback,
         fontWeight: FontWeight.w900,
         fontSize: 18.sp,
         color: mainColor,
       ),
     ),
-    textTheme: Typography.englishLike2018.apply(
-      fontSizeFactor: 1,
-      fontFamily: tajawalFontFamily,
-      bodyColor: lightText,
-      displayColor: lightText,
+    textTheme: _withEmojiFallback(
+      Typography.englishLike2018.apply(
+        fontSizeFactor: 1,
+        fontFamily: tajawalFontFamily,
+        bodyColor: lightText,
+        displayColor: lightText,
+      ),
     ),
   );
 
@@ -77,16 +105,19 @@ class AppPalette {
       elevation: 0,
       titleTextStyle: TextStyle(
         fontFamily: tajawalFontFamily,
+        fontFamilyFallback: emojiFallback,
         fontWeight: FontWeight.w900,
         fontSize: 18.sp,
         color: Colors.white,
       ),
     ),
-    textTheme: Typography.englishLike2018.apply(
-      fontSizeFactor: 1,
-      fontFamily: tajawalFontFamily,
-      bodyColor: darkText,
-      displayColor: darkText,
+    textTheme: _withEmojiFallback(
+      Typography.englishLike2018.apply(
+        fontSizeFactor: 1,
+        fontFamily: tajawalFontFamily,
+        bodyColor: darkText,
+        displayColor: darkText,
+      ),
     ),
   );
 }

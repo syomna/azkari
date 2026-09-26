@@ -1,7 +1,8 @@
-import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
+import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/domain/entities/zekr_entity.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
+import 'package:azkar_app/features/azkar/presentation/providers/favorites_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -106,12 +107,15 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'النصوص والأدعية',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white60 : Colors.black54,
+                    Expanded(
+                      child: Text(
+                        'النصوص والأدعية',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white60 : Colors.black54,
+                        ),
                       ),
                     ),
                     TextButton.icon(
@@ -223,8 +227,14 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
                     for (int i = 0; i < zikrControllers.length; i++) {
                       final text = zikrControllers[i].text.trim();
                       final countVal =
-                          int.tryParse(countControllers[i].text.trim()) ?? 1;
+                          int.tryParse(AppHelpers.normalizeArabicIndicDigits(countControllers[i].text)) ?? 1;
                       if (text.isNotEmpty) {
+                        if (countVal <= 0) {
+                          AppHelpers.showToast(
+                              'عدد التكرار يجب أن يكون أكبر من صفر',
+                              status: ToastStatus.error);
+                          return;
+                        }
                         structuredAzkar.add({
                           'text': text,
                           'count': countVal,
@@ -233,30 +243,51 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
                     }
 
                     if (newTitle.isNotEmpty && structuredAzkar.isNotEmpty) {
-                      // 1️⃣ معرفة ما إذا كان الاسم القديم موجود في المفضلة قبل حذفه
+                      final favorites =
+                          context.read<FavoritesProvider>();
+                      // 1️⃣ معرفة ما إذا كان الاسم القديم موجود في المفضلة قبل التعديل
                       final bool isOriginallyFavorited =
-                          provider.favCategories.contains(widget.category);
+                          favorites.isCategoryFav(widget.category);
 
-                      // 2️⃣ حذف الفئة القديمة مع تفعيل خيار الاحتفاظ بها في قائمة الـ Favorites مؤقتاً
-                      await provider.deleteCustomCategory(widget.category,
-                          keepInFavorites: true);
-
-                      // 3️⃣ حفظ الفئة بالبيانات الجديدة (أو الاسم الجديد)
-                      await provider.saveCustomAzkarCategory(
-                        categoryTitle: newTitle,
+                      // 2️⃣ استبدال الفئة القديمة بالجديدة في معاملة واحدة
+                      // (حتى لا تُفقد البيانات لو فشل الحفظ)
+                      final success = await provider.updateCustomAzkarCategory(
+                        oldCategoryTitle: widget.category,
+                        newCategoryTitle: newTitle,
                         azkarItems: structuredAzkar,
                       );
 
-                      if (isOriginallyFavorited) {
-                        if (widget.category != newTitle) {
-                          provider.favCategories.remove(widget.category);
+                      if (!success) {
+                        if (context.mounted) {
+                          AppHelpers.showToast('فشل حفظ التعديل، حاول مرة أخرى',
+                              status: ToastStatus.error);
                         }
-                        if (!provider.favCategories.contains(newTitle)) {
-                          provider.favCategories.add(newTitle);
+                        return;
+                      }
+
+                      // 3️⃣ ترحيل المحفوظات (النصوص والفئة) عند تغيير الاسم
+                      if (widget.category != newTitle) {
+                        await favorites.renameCategoryItemFavorites(
+                            widget.category, newTitle);
+                        if (isOriginallyFavorited) {
+                          await favorites.renameCategoryFavorite(
+                              widget.category, newTitle);
                         }
-                        await provider.sharedPreferences.setStringList(
-                            'fav_categories', provider.favCategories);
-                        provider.loadFavorites();
+                      }
+
+                      // 4️⃣ ترحيل مفضلة الذكر الفردي عندما يتغير نص الذكر نفسه
+                      // (مع تطابق عدد الصفوف فقط لتجنب الالتباس عند إضافة/حذف)
+                      if (widget.currentAzkar.length ==
+                          structuredAzkar.length) {
+                        for (int i = 0; i < structuredAzkar.length; i++) {
+                          final oldZekr = widget.currentAzkar[i].zekr;
+                          final newZekr =
+                              structuredAzkar[i]['text'] as String;
+                          if (oldZekr != newZekr) {
+                            await favorites.renameItemFavorite(
+                                newTitle, oldZekr, newZekr);
+                          }
+                        }
                       }
 
                       if (context.mounted) {

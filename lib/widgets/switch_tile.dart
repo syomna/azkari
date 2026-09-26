@@ -19,7 +19,7 @@ class SwitchTile extends StatelessWidget {
     return SwitchListTile(
       title: Text(
         title,
-        style: TextStyle(fontSize: 16.sp),
+        style: TextStyle(fontSize: 15.sp),
       ),
       tileColor: Colors.transparent,
       activeThumbColor: AppPalette.mainColor,

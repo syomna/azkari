@@ -55,4 +55,21 @@ class AzkarRepositoryImpl extends AzkarRepository {
       return Left(DatabaseFailure('Failed to delete custom category: $e'));
     }
   }
+
+  @override
+  Future<Either<Failure, Unit>> updateCustomAzkarCategory(
+      String oldCategory, List<ZekrEntity> items) async {
+    final List<AzkarModel> modelsToSave = items.map((entity) {
+      return AzkarModel(
+        category: entity.category,
+        count: entity.count,
+        description: entity.description,
+        reference: entity.reference,
+        zekr: entity.zekr,
+      );
+    }).toList();
+
+    return await azkarLocalDataSource.replaceCustomCategory(
+        oldCategory, modelsToSave);
+  }
 }

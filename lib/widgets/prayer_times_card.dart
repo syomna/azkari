@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:adhan/adhan.dart';
+import 'package:adhan_dart/adhan_dart.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,11 +9,13 @@ import 'package:intl/intl.dart';
 class PrayerTimesCard extends StatefulWidget {
   final PrayerTimes times;
   final Map<String, TimeOfDay?> displayTimes;
+  final String? cityName;
 
   const PrayerTimesCard({
     super.key,
     required this.times,
     required this.displayTimes,
+    this.cityName,
   });
 
   @override
@@ -49,36 +51,44 @@ class _PrayerTimesCardState extends State<PrayerTimesCard> {
         borderRadius: BorderRadius.circular(20.r),
         gradient: LinearGradient(
           colors: isDark
-              ? [
-                  AppPalette.mainColor.withValues(alpha: 0.2),
-                  Colors.black12
-                ]
+              ? [AppPalette.mainColor.withValues(alpha: 0.2), Colors.black12]
               : [AppPalette.mainColor.withValues(alpha: 0.1), Colors.white],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border:
-            Border.all(color: AppPalette.mainColor.withValues(alpha: 0.1)),
+        border: Border.all(color: AppPalette.mainColor.withValues(alpha: 0.1)),
       ),
       child: Column(
         children: [
           _buildHeader(),
           SizedBox(height: 12.h),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildPrayerItem('الفجر', widget.displayTimes['fajr'],
-                  nextPrayer == Prayer.fajr, isDark),
-              _buildPrayerItem('الشروق', widget.displayTimes['sunrise'],
-                  nextPrayer == Prayer.sunrise, isDark),
-              _buildPrayerItem('الظهر', widget.displayTimes['dhuhr'],
-                  nextPrayer == Prayer.dhuhr, isDark),
-              _buildPrayerItem('العصر', widget.displayTimes['asr'],
-                  nextPrayer == Prayer.asr, isDark),
-              _buildPrayerItem('المغرب', widget.displayTimes['maghrib'],
-                  nextPrayer == Prayer.maghrib, isDark),
-              _buildPrayerItem('العشاء', widget.displayTimes['isha'],
-                  nextPrayer == Prayer.isha, isDark),
+              Expanded(
+                child: _buildPrayerItem('الفجر', widget.displayTimes['fajr'],
+                    nextPrayer == Prayer.fajr, isDark),
+              ),
+              Expanded(
+                child: _buildPrayerItem('الشروق', widget.displayTimes['sunrise'],
+                    nextPrayer == Prayer.sunrise, isDark),
+              ),
+              Expanded(
+                child: _buildPrayerItem('الظهر', widget.displayTimes['dhuhr'],
+                    nextPrayer == Prayer.dhuhr, isDark),
+              ),
+              Expanded(
+                child: _buildPrayerItem('العصر', widget.displayTimes['asr'],
+                    nextPrayer == Prayer.asr, isDark),
+              ),
+              Expanded(
+                child: _buildPrayerItem('المغرب', widget.displayTimes['maghrib'],
+                    nextPrayer == Prayer.maghrib, isDark),
+              ),
+              Expanded(
+                child: _buildPrayerItem('العشاء', widget.displayTimes['isha'],
+                    nextPrayer == Prayer.isha, isDark),
+              ),
             ],
           ),
         ],
@@ -87,14 +97,31 @@ class _PrayerTimesCardState extends State<PrayerTimesCard> {
   }
 
   Widget _buildHeader() {
+    final city = widget.cityName;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('مواقيت الصلاة',
-            style: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.bold,
-                color: AppPalette.mainColor)),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('مواقيت الصلاة',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppPalette.mainColor)),
+              if (city != null)
+                Text(city,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 11.sp, color: AppPalette.mainColor)),
+            ],
+          ),
+        ),
         Icon(Icons.access_time_filled, size: 18.h, color: AppPalette.mainColor),
       ],
     );
@@ -113,6 +140,8 @@ class _PrayerTimesCardState extends State<PrayerTimesCard> {
       children: [
         Text(name,
             maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 11.sp,
               color: isActive

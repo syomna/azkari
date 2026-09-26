@@ -45,7 +45,7 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
     HijriDate fromGregorian = HijriDate.fromDate(DateTime.now());
     // String date = fromGregorian.fullDate();
     String dateString =
-        '${fromGregorian.dayWeName}، ${AppHelpers.getArabicNumber(fromGregorian.hDay)} ${fromGregorian.longMonthName} ${fromGregorian.hYear}';
+        '${fromGregorian.dayWeName}، ${AppHelpers.getArabicNumber(fromGregorian.hDay)} ${fromGregorian.longMonthName} ${AppHelpers.getArabicNumber(fromGregorian.hYear)}';
 
     return Container(
       width: double.infinity,
@@ -104,19 +104,28 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Icon(CupertinoIcons.calendar,
-                              color: isDark ? Colors.grey : Colors.white,
-                              size: 14.sp),
-                          SizedBox(width: 5.w),
-                          Text(dateString,
-                              style: TextStyle(
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(
+                                CupertinoIcons.calendar,
                                 color: isDark ? Colors.grey : Colors.white,
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w500,
-                              )),
-                        ],
+                                size: 14.sp),
+                            SizedBox(width: 5.w),
+                            Flexible(
+                              child: Text(
+                                dateString,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                style: TextStyle(
+                                  color: isDark ? Colors.grey : Colors.white,
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       _buildHeaderIcon(
                         isDark: isDark,
@@ -169,19 +178,23 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
       {required bool isDark,
       required IconData icon,
       required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
+    return Material(
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(10.r),
-      child: Container(
-        padding: EdgeInsets.all(6.w),
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppPalette.mainColor.withValues(alpha: 0.1)
-              : Colors.white.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(10.r),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Ink(
+          padding: EdgeInsets.all(6.w),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppPalette.mainColor.withValues(alpha: 0.1)
+                : Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(10.r),
+          ),
+          child: Icon(icon,
+              color: isDark ? AppPalette.mainColor : Colors.white, size: 18.sp),
         ),
-        child: Icon(icon,
-            color: isDark ? AppPalette.mainColor : Colors.white, size: 18.sp),
       ),
     );
   }

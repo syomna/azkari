@@ -8,7 +8,11 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetPlugin
+import org.json.JSONObject
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class PrayerTimesWidgetProvider : AppWidgetProvider() {
 
@@ -66,8 +70,13 @@ class PrayerTimesWidgetProvider : AppWidgetProvider() {
         val prefs = HomeWidgetPlugin.getData(context)
         val views = RemoteViews(context.packageName, R.layout.prayer_times_widget)
 
-        val hijriDate = prefs.getString("hijri_date", "") ?: ""
-        val gregorianDate = prefs.getString("gregorian_date", "") ?: ""
+        // The app writes a rolling multi-day snapshot (`widget_times_json`).
+        // Prefer today's entry so the widget stays correct even if the app
+        // hasn't run for days; fall back to the single saved day otherwise.
+        val today = todayEntry(prefs)
+        val dayTimes = today?.times
+        val hijriDate = today?.hijriDate ?: (prefs.getString("hijri_date", "") ?: "")
+        val gregorianDate = today?.gregorianDate ?: (prefs.getString("gregorian_date", "") ?: "")
         views.setTextViewText(R.id.widget_hijri_date, hijriDate)
         views.setTextViewText(R.id.widget_gregorian_date, gregorianDate)
 
@@ -77,7 +86,7 @@ class PrayerTimesWidgetProvider : AppWidgetProvider() {
         for (i in prayerKeys.indices) {
             val key = prayerKeys[i]
             val name = prefs.getString("prayer_name_$key", "") ?: ""
-            val time = prefs.getString("prayer_$key", "") ?: ""
+            val time = dayTimes?.get(key) ?: (prefs.getString("prayer_$key", "") ?: "")
 
             views.setTextViewText(prayerNameIds[i], name)
             views.setTextViewText(prayerTimeIds[i], time.ifEmpty { "--:--" })
@@ -113,10 +122,37 @@ class PrayerTimesWidgetProvider : AppWidgetProvider() {
                 context, 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            views.setOnClickPendingIntent(R.layout.prayer_times_widget, pendingIntent)
+            views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
         }
 
         appWidgetManager.updateAppWidget(appWidgetId, views)
+    }
+
+    private data class DayEntry(
+        val times: Map<String, String>,
+        val hijriDate: String,
+        val gregorianDate: String
+    )
+
+    /// Reads today's times + date labels from the app-written rolling snapshot,
+    /// returning `null` when the snapshot is missing or has no entry for today.
+    private fun todayEntry(prefs: android.content.SharedPreferences): DayEntry? {
+        val json = prefs.getString("widget_times_json", "") ?: ""
+        if (json.isEmpty()) return null
+        val todayKey = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        return try {
+            val blob = JSONObject(json)
+            if (!blob.has(todayKey)) return null
+            val day = blob.getJSONObject(todayKey)
+            val times = prayerKeys.associateWith { day.optString(it, "") }
+            DayEntry(
+                times = times,
+                hijriDate = day.optString("hijri", ""),
+                gregorianDate = day.optString("gregorian", "")
+            )
+        } catch (_: Exception) {
+            null
+        }
     }
 
     private fun currentMinutesSinceMidnight(): Int {

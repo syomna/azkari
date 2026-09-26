@@ -1,6 +1,6 @@
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
-import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
+import 'package:azkar_app/features/azkar/presentation/providers/favorites_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/zekr_action_button.dart';
 import 'package:azkar_app/features/surah/domain/entities/surah_entity.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +15,7 @@ class SurahItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isFav = context.select<AzkarProvider, bool>(
+    final isFav = context.select<FavoritesProvider, bool>(
       (p) => p.isItemFav(surah.surah),
     );
 
@@ -97,7 +97,7 @@ class SurahItem extends StatelessWidget {
                     ZekrActionButton(
                       isDark: isDark,
                       onTap: () => context
-                          .read<AzkarProvider>()
+                          .read<FavoritesProvider>()
                           .toggleItemFavorite(surah.surah),
                       child: Icon(
                         isFav

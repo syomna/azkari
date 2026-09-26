@@ -2,6 +2,7 @@ import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/azkar/domain/entities/zekr_entity.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
+import 'package:azkar_app/features/azkar/presentation/providers/favorites_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/display_azkar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -24,60 +25,115 @@ class AzkarDetailsPage extends StatefulWidget {
 }
 
 class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
-  int _countedIndex = 0;
+  /// "`<category>` + `\u0000` + `<zekr>`" — stable identity so the same
+  /// zekr text in different custom categories (or morning/evening)
+  /// keeps independent favorites.
+  String _favoriteKey(String categoryName, String zekr) =>
+      '$categoryName\u0000$zekr';
 
-  double _progressValue(int length) {
-    if (length == 0) return 0;
-    return _countedIndex / length;
+  late final AzkarProvider _azkarProvider;
+  bool _wasComplete = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _azkarProvider = context.read<AzkarProvider>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _wasComplete = _isComplete();
+      _azkarProvider.addListener(_handleProgressChange);
+    });
   }
 
-  String _progressLabel(int length) {
-    if (_countedIndex >= length) {
+  @override
+  void dispose() {
+    _azkarProvider.removeListener(_handleProgressChange);
+    super.dispose();
+  }
+
+  int _currentCount() {
+    final azkar = widget.isCustomCategory
+        ? _azkarProvider.customAzkarList
+        : _azkarProvider.azkarList;
+    return azkar.where((z) => z.category == widget.categoryName).length;
+  }
+
+  bool _isComplete() {
+    final total = _currentCount();
+    if (total == 0) return false;
+    return _azkarProvider.completedIndexOf(widget.categoryName) >= total;
+  }
+
+  void _handleProgressChange() {
+    if (!mounted) return;
+    final nowComplete = _isComplete();
+    // Celebrate only on the transition from not-complete to complete.
+    if (!_wasComplete && nowComplete) {
+      _wasComplete = true;
+      _showCelebrationDialog();
+    } else {
+      _wasComplete = nowComplete;
+    }
+  }
+
+  double _progressValue(int length, int countedIndex) {
+    if (length == 0) return 0;
+    return countedIndex / length;
+  }
+
+  String _progressLabel(int length, int countedIndex) {
+    if (countedIndex >= length) {
       return 'اكتمل ✓';
     }
-    return '${AppHelpers.getArabicNumber(_countedIndex)} من ${AppHelpers.getArabicNumber(length)}';
+    return '${AppHelpers.getArabicNumber(countedIndex)} من ${AppHelpers.getArabicNumber(length)}';
   }
 
-  String _progressPercent(int length) {
-    return '${AppHelpers.getArabicNumber((_progressValue(length) * 100).round())}٪';
+  String _progressPercent(int length, int countedIndex) {
+    return '${AppHelpers.getArabicNumber((_progressValue(length, countedIndex) * 100).round())}٪';
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // final azkarProvider = Provider.of<AzkarProvider>(context);
-    final azkarProvider = context.watch<AzkarProvider>();
-    List<ZekrEntity> currentDisplayedAzkar = widget.isCustomCategory
-        ? azkarProvider.customAzkarList
-            .where((zekr) => zekr.category == widget.categoryName)
-            .toList()
-        : azkarProvider.azkarList
-            .where((zekr) => zekr.category == widget.categoryName)
-            .toList();
+    final favorites = context.watch<FavoritesProvider>();
+    final currentDisplayedAzkar = context
+        .select<AzkarProvider, List<ZekrEntity>>(
+            (p) => widget.isCustomCategory ? p.customAzkarList : p.azkarList)
+        .where((zekr) => zekr.category == widget.categoryName)
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        centerTitle: true,
         actions: [
+          // Reset counting for this category
+          Padding(
+            padding: EdgeInsets.only(left: 8.w),
+            child: IconButton(
+              tooltip: 'إعادة تعيين العد',
+              onPressed: () => _confirmReset(context),
+              icon: Icon(
+                Icons.refresh_rounded,
+                size: 24.sp,
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.5)
+                    : Colors.black.withValues(alpha: 0.35),
+              ),
+            ),
+          ),
           // Favorite the whole category
           Padding(
             padding: EdgeInsets.only(left: 8.w),
             child: IconButton(
-              onPressed: () {
-                context
-                    .read<AzkarProvider>()
-                    .toggleCategoryFavorite(widget.categoryName);
-              },
+              onPressed: () =>
+                  favorites.toggleCategoryFavorite(widget.categoryName),
               icon: Icon(
-                context
-                        .watch<AzkarProvider>()
-                        .isCategoryFav(widget.categoryName)
+                favorites.isCategoryFav(widget.categoryName)
                     ? Icons.star_rounded
                     : Icons.star_border_rounded,
                 size: 28.sp,
-                color: context
-                        .watch<AzkarProvider>()
-                        .isCategoryFav(widget.categoryName)
+                color: favorites.isCategoryFav(widget.categoryName)
                     ? AppPalette.favoriteColor
                     : (isDark
                         ? Colors.white.withValues(alpha: 0.2)
@@ -91,47 +147,67 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
         children: [
           // ── Progress bar ────────────────────────────────────────
           if (currentDisplayedAzkar.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 4.h),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Consumer<AzkarProvider>(
+              builder: (context, azkarProvider, _) {
+                final countedIndex = azkarProvider
+                    .completedIndexOf(widget.categoryName)
+                    .clamp(0, currentDisplayedAzkar.length);
+                return Padding(
+                  padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 4.h),
+                  child: Column(
                     children: [
-                      Text(
-                        _progressPercent(currentDisplayedAzkar.length),
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          color: isDark ? Colors.white38 : Colors.black38,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              _progressPercent(
+                                  currentDisplayedAzkar.length, countedIndex),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: isDark
+                                    ? Colors.white38
+                                    : Colors.black38,
+                              ),
+                            ),
+                          ),
+                          Flexible(
+                            child: Text(
+                              _progressLabel(
+                                  currentDisplayedAzkar.length, countedIndex),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppPalette.mainColor,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        _progressLabel(currentDisplayedAzkar.length),
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppPalette.mainColor,
+                      SizedBox(height: 6.h),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4.r),
+                        child: LinearProgressIndicator(
+                          value: _progressValue(
+                              currentDisplayedAzkar.length, countedIndex),
+                          minHeight: 3.h,
+                          backgroundColor:
+                              AppPalette.mainColor.withValues(alpha: 0.12),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            countedIndex >= currentDisplayedAzkar.length
+                                ? AppPalette.favoriteColor
+                                : AppPalette.mainColor,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 6.h),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4.r),
-                    child: LinearProgressIndicator(
-                      value: _progressValue(currentDisplayedAzkar.length),
-                      minHeight: 3.h,
-                      backgroundColor:
-                          AppPalette.mainColor.withValues(alpha: 0.12),
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        _countedIndex >= currentDisplayedAzkar.length
-                            ? AppPalette.mainColor
-                            : AppPalette.mainColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
 
           // ── Tap hint ────────────────────────────────────────────
@@ -151,12 +227,14 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
                     size: 18.sp,
                   ),
                   SizedBox(width: 8.w),
-                  Text(
-                    'اضغط للعد، ومطولاً للنسخ.',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w500,
-                      color: AppPalette.mainColor,
+                  Expanded(
+                    child: Text(
+                      'اضغط للعد، ومطولاً للنسخ.',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w500,
+                        color: AppPalette.mainColor,
+                      ),
                     ),
                   ),
                 ],
@@ -177,32 +255,39 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
                       separatorBuilder: (_, __) => SizedBox(height: 12.h),
                       itemBuilder: (context, index) {
                         final zikr = currentDisplayedAzkar[index];
+                        final total = int.tryParse(zikr.count) ?? 1;
 
-                        final isDone = index < _countedIndex;
-
-                        return AnimatedOpacity(
-                          duration: const Duration(milliseconds: 300),
-                          opacity: isDone ? 0.45 : 1.0,
-                          child: DisplayAzkar(
-                            zikrEntity: zikr,
-                            isFavorite: context
-                                .watch<AzkarProvider>()
-                                .isItemFav(zikr.zekr),
-                            onFavoriteTap: () => context
-                                .read<AzkarProvider>()
-                                .toggleItemFavorite(zikr.zekr),
-                            // Called when the user finishes counting this zekr
-                            onCounted: index == _countedIndex
-                                ? () {
-                                    setState(() {
-                                      if (_countedIndex <
-                                          currentDisplayedAzkar.length) {
-                                        _countedIndex++;
-                                      }
-                                    });
-                                  }
-                                : null,
+                        return Selector<AzkarProvider, int>(
+                          selector: (_, p) => p.remainingFor(
+                            zikr.zekr,
+                            total,
+                            category: widget.categoryName,
+                            index: index,
                           ),
+                          builder: (context, remaining, _) {
+                            final isDone = remaining == 0;
+                            return AnimatedOpacity(
+                              duration: const Duration(milliseconds: 300),
+                              opacity: isDone ? 0.45 : 1.0,
+                              child: DisplayAzkar(
+                                key: ValueKey('$index\u0000${zikr.zekr}'),
+                                zikrEntity: zikr,
+                                remaining: remaining,
+                                isFavorite: favorites.isItemFav(_favoriteKey(widget.categoryName, zikr.zekr)),
+                                onFavoriteTap: () =>
+                                    favorites.toggleItemFavorite(
+                                        _favoriteKey(widget.categoryName, zikr.zekr)),
+                                onDecrement: () =>
+                                    context.read<AzkarProvider>().decrement(
+                                          zikr.zekr,
+                                          total,
+                                          category: widget.categoryName,
+                                          index: index,
+                                        ),
+                                onCounted: () {},
+                              ),
+                            );
+                          },
                         );
                       },
                     ),
@@ -211,6 +296,122 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
         ],
       ),
     );
+  }
+
+  void _showCelebrationDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+        contentPadding: EdgeInsets.fromLTRB(24.w, 28.h, 24.w, 20.h),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 84.h,
+              height: 84.h,
+              decoration: BoxDecoration(
+                color: AppPalette.mainColor.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_circle_rounded,
+                color: AppPalette.mainColor,
+                size: 56.h,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            Text(
+              'أحسنت! 🎉',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22.sp,
+                fontWeight: FontWeight.w900,
+                color: isDark ? Colors.white : const Color(0xFF162019),
+                fontFamilyFallback: AppPalette.emojiFallback,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              'أتممت جميع الأذكار في هذه المجموعة.\nتقبل الله منك، وجعل ذلك في ميزان حسناتك.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14.sp,
+                height: 1.7,
+                color: isDark ? Colors.white70 : Colors.black87,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: TextButton.styleFrom(
+                foregroundColor: AppPalette.mainColor,
+                textStyle: TextStyle(
+                  fontFamily: AppPalette.tajawalFontFamily,
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              child: const Text('ما شاء الله'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmReset(BuildContext context) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        title: Text(
+          'إعادة تعيين العد؟',
+          textAlign: TextAlign.right,
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16.sp),
+        ),
+        content: Text(
+          'سيتم مسح تقدم العد في هذه المجموعة.',
+          textAlign: TextAlign.right,
+          style: TextStyle(fontSize: 14.sp, height: 1.5),
+        ),
+        actionsAlignment: MainAxisAlignment.spaceBetween,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('إلغاء',
+                style: TextStyle(color: Colors.grey, fontSize: 13.sp)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppPalette.mainColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r)),
+            ),
+            child: Text('إعادة التعيين',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+    if (!(confirmed ?? false)) return;
+    if (!context.mounted) return;
+    context.read<AzkarProvider>().resetCategoryCounts(widget.categoryName);
+    AppHelpers.showToast('تمت إعادة تعيين العد');
   }
 
   Widget _buildEmptyState() {

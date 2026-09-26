@@ -36,15 +36,16 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
   int _currentIndex = 0;
   bool _isAudioVisible = false;
   bool _showControls = true;
+  late QuranProvider _provider;
 
   @override
   void initState() {
     super.initState();
     _generateVirtualPages();
 
-    final provider = Provider.of<QuranProvider>(context, listen: false);
-    int savedPage = provider.savedLatestQuranPageNumber ?? 1;
-    int savedSurah = provider.savedLatestQuranSurahNumber ?? 1;
+    _provider = Provider.of<QuranProvider>(context, listen: false);
+    int savedPage = _provider.savedLatestQuranPageNumber ?? 1;
+    int savedSurah = _provider.savedLatestQuranSurahNumber ?? 1;
 
     // البحث عن الاندكس المطابق للصفحة والسورة المحفوظة لتجنب لخبطة البدايات
     _currentIndex = _virtualPages.indexWhere((page) =>
@@ -83,6 +84,8 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
 
   @override
   void dispose() {
+    // Stop any playing surah audio before leaving the reader
+    _provider.resetAudio();
     _pageController.dispose();
     super.dispose();
   }
@@ -110,7 +113,9 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
                 SizedBox(height: MediaQuery.of(context).padding.top),
                 if (_showControls) SizedBox(height: 70.h),
                 LinearProgressIndicator(
-                  value: currentPageItem.globalPageNumber / 604,
+                  value: _virtualPages.length > 1
+                      ? _currentIndex / (_virtualPages.length - 1)
+                      : 0,
                   backgroundColor: AppPalette.mainColor.withValues(alpha: 0.1),
                   color: AppPalette.mainColor,
                   minHeight: 2.h,
@@ -171,7 +176,6 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
               start: _showControls ? 14.w : -90.w,
               top: MediaQuery.sizeOf(context).height * 0.34,
               child: SideTools(
-                currentSurahNumber: currentSurahNumber,
                 isAudioVisible: _isAudioVisible,
                 onAudioToggle: () {
                   setState(() {
@@ -450,17 +454,17 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
 
   TextSpan buildVerseSpan({required int surahNumber, required int index}) {
     final int verseNumber = index + 1;
+
+    // The basmala is already rendered prominently by `_buildBasmalaHeader`
+    // on the surah's opening segment. `quran.getVerse(1,1)` returns exactly
+    // the basmala, so rendering it here would duplicate it; rendering an
+    // empty/whitespace-only leftover is what produced the hollow first line.
+    if (surahNumber == 1 && verseNumber == 1) {
+      return const TextSpan(text: '');
+    }
+
     String ayah =
         quran.getVerse(surahNumber, verseNumber, verseEndSymbol: true);
-
-    if (verseNumber == 1 && surahNumber != 9) {
-      const basmalaRegex = 'بِسْمِ اللَّهِ الرَّحْمَـٰنِ الرَّحِيمِ';
-      if (ayah.contains(basmalaRegex)) {
-        ayah = ayah.replaceFirst(basmalaRegex, '').trim();
-      } else {
-        ayah = ayah.replaceFirst(quran.basmala, '').trim();
-      }
-    }
 
     return TextSpan(
       text: '$ayah ',

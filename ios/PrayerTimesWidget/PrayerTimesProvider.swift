@@ -10,6 +10,9 @@ struct PrayerTimesEntry: TimelineEntry {
 }
 
 struct PrayerTimesProvider: TimelineProvider {
+    static let suiteName = "group.com.yomna.azkarApp"
+    static let timesJsonKey = "widget_times_json"
+
     func placeholder(in context: Context) -> PrayerTimesEntry {
         PrayerTimesEntry(
             date: Date(),
@@ -34,61 +37,104 @@ struct PrayerTimesProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<PrayerTimesEntry>) -> Void) {
         let now = Date()
+        let calendar = Calendar.current
+
+        if let blob = Self.loadTimesBlob() {
+            let todayKey = Self.dayKey(for: now, calendar: calendar)
+            let dayKeys = blob.keys.filter { $0 >= todayKey }.sorted()
+            let entries = dayKeys.compactMap { key -> PrayerTimesEntry? in
+                guard let dayStart = Self.dayStart(fromKey: key, calendar: calendar),
+                      let times = blob[key] else { return nil }
+                return buildEntry(at: dayStart, times: times)
+            }
+
+            if !entries.isEmpty, let lastDate = entries.last?.date,
+               let refresh = calendar.date(byAdding: .day, value: 1,
+                                           to: calendar.startOfDay(for: lastDate)) {
+                completion(Timeline(entries: entries, policy: .after(refresh)))
+                return
+            }
+        }
+
+        // No usable snapshot (app never ran or the stored days all passed):
+        // fall back to a single entry refreshed on the usual cadence.
         let entry = buildEntry(at: now)
-        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: now)!
-        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
-        completion(timeline)
+        let nextUpdate = calendar.date(byAdding: .minute, value: 15, to: now)!
+        completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
     }
 
-    private func buildEntry(at date: Date) -> PrayerTimesEntry {
-        let defaults = UserDefaults(suiteName: "group.com.yomna.azkarApp")
+    /// Reads and decodes the rolling multi-day times snapshot written by the
+    /// Flutter app: `{"yyyy-MM-dd": {"fajr": "...", ..., "hijri": "...", ...}}`.
+    private static func loadTimesBlob() -> [String: [String: String]]? {
+        guard let json = UserDefaults(suiteName: suiteName)?.string(forKey: timesJsonKey),
+              let data = json.data(using: .utf8) else { return nil }
+        return (try? JSONSerialization.jsonObject(with: data)) as? [String: [String: String]]
+    }
+
+    static func dayKey(for date: Date, calendar: Calendar = .current) -> String {
+        let c = calendar.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", c.year!, c.month!, c.day!)
+    }
+
+    private static func dayStart(fromKey key: String, calendar: Calendar) -> Date? {
+        let parts = key.split(separator: "-")
+        guard parts.count == 3,
+              let year = Int(parts[0]), let month = Int(parts[1]), let day = Int(parts[2]) else {
+            return nil
+        }
+        return calendar.date(from: DateComponents(year: year, month: month, day: day))
+    }
+
+    private func buildEntry(at date: Date, times: [String: String]? = nil) -> PrayerTimesEntry {
+        let defaults = UserDefaults(suiteName: Self.suiteName)
 
         let keys = ["fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha"]
         let arabicNames = ["fajr": "الفجر", "sunrise": "الشروق", "dhuhr": "الظهر",
                           "asr": "العصر", "maghrib": "المغرب", "isha": "العشاء"]
 
-        let nowMinutes = currentMinutesSinceMidnight()
-        var nextPrayerKey = keys[0]
+        let clock = Calendar.current
+        let isToday = clock.isDateInToday(date)
+        let nowMinutes = isToday ? currentMinutesSinceMidnight() : -1
         var nextPrayerName = ""
         var prayerTimes: [(name: String, time: String, isActive: Bool)] = []
 
         for key in keys {
-            let time = defaults?.string(forKey: "prayer_\(key)") ?? "--:--"
+            let time = times?[key] ?? defaults?.string(forKey: "prayer_\(key)") ?? "--:--"
             let name = arabicNames[key] ?? key
-            let isActive: Bool
+            var isActive = false
 
-            if !time.isEmpty && time != "--:--" {
+            if isToday && !time.isEmpty && time != "--:--" {
                 let prayerMinutes = parseTimeToMinutes(time)
-                if let pm = prayerMinutes, pm > nowMinutes, nextPrayerKey == keys[0] && nextPrayerName.isEmpty {
-                    nextPrayerKey = key
+                if let pm = prayerMinutes, pm > nowMinutes, nextPrayerName.isEmpty {
                     nextPrayerName = name
+                    isActive = true
                 }
-                isActive = key == nextPrayerKey && !nextPrayerName.isEmpty
-            } else {
-                isActive = false
             }
 
             prayerTimes.append((name: name, time: time.isEmpty ? "--:--" : time, isActive: isActive))
         }
 
         if nextPrayerName.isEmpty {
-            nextPrayerKey = keys[0]
+            // With no prayer left today, wrap to fajr; future-day entries show
+            // the first prayer with no active highlight.
             nextPrayerName = arabicNames[keys[0]] ?? ""
         }
 
-        for i in prayerTimes.indices {
-            prayerTimes[i].isActive = prayerTimes[i].name == nextPrayerName
-        }
-
-        let hijriDate = defaults?.string(forKey: "hijri_date") ?? ""
-        let gregorianDate = defaults?.string(forKey: "gregorian_date") ?? ""
+        let fallbackHijri = defaults?.string(forKey: "hijri_date") ?? ""
+        let fallbackGregorian = defaults?.string(forKey: "gregorian_date") ?? ""
+        // Compute the dates fresh on every timeline refresh instead of showing
+        // strings saved on the last app run (which go stale after a day).
+        let hijriDate = UmmAlQura.hijriDateString(for: date)
+        let gregorianDate = UmmAlQura.gregorianDateString(for: date)
 
         return PrayerTimesEntry(
             date: date,
             prayerTimes: prayerTimes,
             nextPrayerName: nextPrayerName,
-            hijriDate: hijriDate,
-            gregorianDate: gregorianDate
+            // Only fall back to the stored strings when the date is outside the
+            // Umm al-Qura table span (1356-1500 AH).
+            hijriDate: hijriDate.isEmpty ? fallbackHijri : hijriDate,
+            gregorianDate: gregorianDate.isEmpty ? fallbackGregorian : gregorianDate
         )
     }
 

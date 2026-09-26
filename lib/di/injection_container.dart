@@ -9,6 +9,7 @@ import 'package:azkar_app/features/azkar/domain/usecases/delete_custom_azkar_use
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/get_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/save_custom_azkar_usecase.dart';
+import 'package:azkar_app/features/azkar/domain/usecases/update_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/names_of_allah/data/datasources/names_of_allah_local_data_source.dart';
 import 'package:azkar_app/features/names_of_allah/data/datasources/names_of_allah_local_data_source_impl.dart';
 import 'package:azkar_app/features/names_of_allah/data/repositories/names_of_allah_repository_impl.dart';
@@ -24,11 +25,15 @@ import 'package:azkar_app/features/quran/data/repositories/quran_repository_impl
 import 'package:azkar_app/features/quran/domain/repositories/quran_repository.dart';
 import 'package:azkar_app/features/quran/domain/usecases/check_surah_downloaded_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/clear_all_saved_quran_values_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/clear_quran_bookmark_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/clear_saved_position_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_latest_quran_surah_number_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/get_quran_bookmark_page_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/get_quran_bookmark_surah_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_saved_quran_page_number_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/get_surah_audio_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/save_latest_quran_surah_number_usecase.dart';
+import 'package:azkar_app/features/quran/domain/usecases/save_quran_bookmark_usecase.dart';
 import 'package:azkar_app/features/quran/domain/usecases/save_quran_page_number_usecase.dart';
 import 'package:azkar_app/features/surah/data/datasources/surah_local_data_source.dart';
 import 'package:azkar_app/features/surah/data/datasources/surah_local_data_source_impl.dart';
@@ -61,6 +66,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetCustomAzkarUseCase(azkarRepository: sl()));
   sl.registerLazySingleton(() => SaveCustomAzkarUseCase(azkarRepository: sl()));
   sl.registerLazySingleton(() => DeleteCustomAzkarUseCase(azkarRepository: sl()));
+  sl.registerLazySingleton(
+      () => UpdateCustomAzkarUseCase(azkarRepository: sl()));
 
   // Names of allah
   sl.registerLazySingleton<NamesOfAllahLocalDataSource>(
@@ -103,6 +110,14 @@ Future<void> init() async {
       () => ClearSavedPositionUseCase(quranRepository: sl()));
   sl.registerLazySingleton(() => GetSurahAudioUseCase(sl()));
   sl.registerLazySingleton(() => CheckSurahDownloadedUseCase(sl()));
+  sl.registerLazySingleton(
+      () => SaveQuranBookmarkUseCase(quranRepository: sl()));
+  sl.registerLazySingleton(
+      () => GetQuranBookmarkSurahUseCase(quranRepository: sl()));
+  sl.registerLazySingleton(
+      () => GetQuranBookmarkPageUseCase(quranRepository: sl()));
+  sl.registerLazySingleton(
+      () => ClearQuranBookmarkUseCase(quranRepository: sl()));
 
   sl.registerLazySingleton<QiblaRepository>(() => QiblaRepositoryImpl());
 

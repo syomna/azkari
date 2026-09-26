@@ -7,4 +7,8 @@ abstract class AzkarLocalDataSource {
   Future<Either<Failure, List<AzkarModel>>> getCustomAzkar();
   Future<Either<Failure, Unit>> saveCustomAzkar(List<AzkarModel> items);
   Future<void> deleteCustomCategory(String categoryName);
+
+  /// Atomically replaces [oldCategory] with [items] in a single transaction.
+  Future<Either<Failure, Unit>> replaceCustomCategory(
+      String oldCategory, List<AzkarModel> items);
 }

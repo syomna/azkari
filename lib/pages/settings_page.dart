@@ -1,15 +1,13 @@
 import 'dart:io';
 
 import 'package:azkar_app/core/constants/app_constants.dart';
-import 'package:azkar_app/core/providers/notification_provider.dart';
 import 'package:azkar_app/core/providers/theme_provider.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
-import 'package:azkar_app/features/widget_guide/presentation/widget_guide_page.dart';
+import 'package:azkar_app/pages/notifications_screen.dart';
 import 'package:azkar_app/pages/prayer_times_settings_page.dart';
-import 'package:azkar_app/widgets/switch_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -37,12 +35,68 @@ class _SettingsPageState extends State<SettingsPage> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _confirmClear(
+    BuildContext context, {
+    required String title,
+    required String message,
+    required String confirmLabel,
+    required Future<void> Function() onConfirm,
+  }) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.r)),
+            title: Text(
+              title,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16.sp,
+                  color: isDark ? Colors.white : Colors.black),
+            ),
+            content: Text(
+              message,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                  fontSize: 14.sp,
+                  color: isDark ? Colors.white70 : Colors.black87),
+            ),
+            actionsAlignment: MainAxisAlignment.spaceBetween,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text('إلغاء',
+                    style: TextStyle(color: Colors.grey, fontSize: 13.sp)),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r)),
+                ),
+                child: Text(confirmLabel,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirmed) return;
+    await onConfirm();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('الإعدادات',
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22.sp)),
+        title: const Text('الإعدادات'),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -52,145 +106,118 @@ class _SettingsPageState extends State<SettingsPage> {
             _buildSectionHeader('مواقيت الصلاة'),
             _buildSettingsCard([
               _buildListTile(
-                  'كيفية إضافة ويدجيت مواقيت الصلاة', Icons.widgets_rounded,
-                  () {
-                WidgetGuidePage.open(
-                  context,
-                  openedFromSettings: true,
-                );
-              }),
-              _divider(),
-              _buildListTile('ضبط مواقيت الصلاة', Icons.access_time_rounded,
-                  () {
+                  'مواقيت الصلاة والأذكار', Icons.access_time_rounded, () {
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const PrayerTimesSettingsScreen()));
-              }),
+              }, subtitle: 'ضبط أوقات الصلاة وأذكار الصباح والمساء'),
             ]),
             SizedBox(height: 25.h),
             _buildSectionHeader('المظهر العام'),
             Consumer<ThemeProvider>(
               builder: (context, theme, _) => _buildSettingsCard([
-                SwitchTile(
-                  title: 'الوضع المظلم',
-                  value: !theme.isLight,
-                  onChanged: (v) => theme.toggleTheme(),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 12.h),
+                  child: Row(
+                    children: [
+                      Icon(Icons.dark_mode_rounded,
+                          color: AppPalette.mainColor, size: 22.h),
+                      SizedBox(width: 15.w),
+                      Expanded(
+                        child: Text('مظهر التطبيق',
+                            style: TextStyle(
+                                fontSize: _rowTitleFontSize,
+                                fontWeight: FontWeight.w500)),
+                      ),
+                      DropdownButton<ThemeMode>(
+                        value: theme.themeMode,
+                        underline: const SizedBox.shrink(),
+                        borderRadius: BorderRadius.circular(14.r),
+                        icon: const Icon(Icons.arrow_drop_down_rounded,
+                            color: AppPalette.mainColor),
+                        items: const [
+                          DropdownMenuItem(
+                              value: ThemeMode.system, child: Text('تلقائي')),
+                          DropdownMenuItem(
+                              value: ThemeMode.light, child: Text('فاتح')),
+                          DropdownMenuItem(
+                              value: ThemeMode.dark, child: Text('داكن')),
+                        ],
+                        onChanged: (mode) {
+                          if (mode != null) theme.setThemeMode(mode);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-                _divider(),
                 _divider(),
                 _buildFontSlider(theme, context),
               ]),
             ),
             SizedBox(height: 25.h),
             _buildSectionHeader('التنبيهات'),
-            Consumer<NotificationProvider>(
-              builder: (context, notify, _) => _buildSettingsCard([
-                SwitchTile(
-                  title: 'تفعيل الإشعارات',
-                  value: notify.areNotificationsEnabled,
-                  onChanged: (v) async {
-                    final error = await notify.toggleAllNotifications(v);
-                    if (!context.mounted) return;
-                    if (v == true && error != null) {
-                      AppHelpers.showToast(error, status: ToastStatus.error);
-                    } else if (v == true && error == null) {
-                      AppHelpers.showToast('تم تفعيل الإشعارات');
-                    } else {
-                      AppHelpers.showToast('تم إيقاف الإشعارات');
-                    }
-                  },
-                ),
-                if (notify.areNotificationsEnabled) ...[
-                  _divider(),
-                  SwitchTile(
-                    title: 'أذان الصلاة',
-                    value: notify.isPrayerAdhanEnabled,
-                    onChanged: (v) => notify.toggleNotificationType(
-                        NotificationProvider.prayerAdhanKey, v),
-                  ),
-                  _divider(),
-                  SwitchTile(
-                    title: 'أذكار الصباح والمساء',
-                    value: notify.isMorningEveningAzkarEnabled,
-                    onChanged: (v) => notify.toggleNotificationType(
-                        NotificationProvider.morningEveningAzkarKey, v),
-                  ),
-                  _divider(),
-                  SwitchTile(
-                    title: 'تذكيرات عشوائية',
-                    value: notify.isPeriodicAzkarEnabled,
-                    onChanged: (v) => notify.toggleNotificationType(
-                        NotificationProvider.periodicAzkarKey, v),
-                  ),
-                  _divider(),
-                  SwitchTile(
-                    title: 'تذكير ما قبل الأذان',
-                    value: notify.isPreAdhanEnabled,
-                    onChanged: (v) => notify.toggleNotificationType(
-                        NotificationProvider.preAdhanKey, v),
-                  ),
-                  _divider(),
-                  SwitchTile(
-                    title: 'ورد القرآن بعد الصلاة',
-                    value: notify.isQuranAfterSalahEnabled,
-                    onChanged: (v) => notify.toggleNotificationType(
-                        NotificationProvider.quranAfterSalahKey, v),
-                  ),
-                  _divider(),
-                  SwitchTile(
-                    title: 'الصلاة على النبي ﷺ',
-                    value: notify.isProphetBlessingsEnabled,
-                    onChanged: (v) => notify.toggleNotificationType(
-                        NotificationProvider.prophetBlessingsKey, v),
-                  ),
-                ],
-              ]),
-            ),
+            _buildSettingsCard([
+              _buildListTile('إدارة الإشعارات', Icons.notifications_rounded,
+                  () {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const NotificationsScreen()));
+              }, subtitle: 'أذان الصلاة وأذكار الصباح والمساء والتذكيرات'),
+            ]),
             SizedBox(height: 25.h),
             _buildSectionHeader('عام'),
-            Consumer2<TasbehProvider, QuranProvider>(
-              builder: (context, tasbeh, quran, _) => _buildSettingsCard([
-                _buildListTile('مسح عداد التسبيح', Icons.refresh_rounded, () {
-                  tasbeh.resetAll();
+            _buildSettingsCard([
+              _buildListTile('مسح عداد التسبيح', Icons.refresh_rounded, () {
+                _confirmClear(context,
+                    title: 'مسح عداد التسبيح؟',
+                    message:
+                        'سيتم تصفير إجمالي التسبيحات وعداد الجلسة نهائياً.',
+                    confirmLabel: 'مسح الكل', onConfirm: () async {
+                  await context.read<TasbehProvider>().resetAll();
                   AppHelpers.showToast('تم مسح العداد!');
-                }),
-                _divider(),
-                _buildListTile('مسح تقدم القرآن', Icons.auto_stories_rounded,
-                    () {
-                  quran.clearAllSavedQuranValues();
+                });
+              }),
+              _divider(),
+              _buildListTile('مسح تقدم القرآن', Icons.auto_stories_rounded, () {
+                _confirmClear(context,
+                    title: 'مسح تقدم القرآن؟',
+                    message: 'سيتم حذف آخر سورة ورقم الصفحة المحفوظين.',
+                    confirmLabel: 'مسح التقدم', onConfirm: () async {
+                  await context
+                      .read<QuranProvider>()
+                      .clearAllSavedQuranValues();
                   AppHelpers.showToast('تم مسح التقدم!');
-                }),
-                _divider(),
-                _buildListTile('مشاركة التطبيق', Icons.share_rounded, () async {
-                  final box = context.findRenderObject() as RenderBox?;
-                  String appStoreLink = '';
-                  if (Platform.isIOS) {
-                    appStoreLink = AppConstants.appStoreURL;
-                  } else if (Platform.isAndroid) {
-                    appStoreLink = AppConstants.playStoreURL;
-                  }
+                });
+              }),
+              _divider(),
+              _buildListTile('مشاركة التطبيق', Icons.share_rounded, () async {
+                final box = context.findRenderObject() as RenderBox?;
+                String appStoreLink = '';
+                if (Platform.isIOS) {
+                  appStoreLink = AppConstants.appStoreURL;
+                } else if (Platform.isAndroid) {
+                  appStoreLink = AppConstants.playStoreURL;
+                }
 
-                  final String shareMessage =
-                      'تطبيق أذكاري - رفيقك اليومي للذكر والدعاء. حمله الآن!\n$appStoreLink';
+                final String shareMessage =
+                    'تطبيق أذكاري - رفيقك اليومي للذكر والدعاء. حمله الآن!\n$appStoreLink';
 
-                  ShareParams params = ShareParams(
+                ShareParams params = ShareParams(
+                  text: shareMessage,
+                  subject: 'تطبيق أذكاري',
+                );
+                if (box != null && box.hasSize) {
+                  params = ShareParams(
                     text: shareMessage,
                     subject: 'تطبيق أذكاري',
+                    sharePositionOrigin:
+                        box.localToGlobal(Offset.zero) & box.size,
                   );
-                  if (box != null && box.hasSize) {
-                    params = ShareParams(
-                      text: shareMessage,
-                      subject: 'تطبيق أذكاري',
-                      sharePositionOrigin:
-                          box.localToGlobal(Offset.zero) & box.size,
-                    );
-                  }
-                  await SharePlus.instance.share(params);
-                }),
-                _divider(),
-                _buildListTile('عن التطبيق', Icons.info_rounded,
-                    () => _showAboutAppDialog(context, packageInfo)),
-              ]),
-            ),
+                }
+                await SharePlus.instance.share(params);
+              }),
+              _divider(),
+              _buildListTile('عن التطبيق', Icons.info_rounded,
+                  () => _showAboutAppDialog(context, packageInfo)),
+            ]),
             SizedBox(height: 40.h),
           ],
         ),
@@ -208,6 +235,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
 // --- UI Helper Methods ---
 
+final double _sectionHeaderFontSize = 14.sp;
+final double _rowTitleFontSize = 15.sp;
+final double _rowSubtitleFontSize = 12.sp;
+
 Widget _buildSectionHeader(String title) {
   return Padding(
     padding: EdgeInsets.only(right: 8.w, bottom: 10.h),
@@ -215,7 +246,7 @@ Widget _buildSectionHeader(String title) {
       alignment: Alignment.centerRight,
       child: Text(title,
           style: TextStyle(
-              fontSize: 14.sp,
+              fontSize: _sectionHeaderFontSize,
               fontWeight: FontWeight.w900,
               color: Colors.grey)),
     ),
@@ -223,22 +254,40 @@ Widget _buildSectionHeader(String title) {
 }
 
 Widget _buildSettingsCard(List<Widget> children) {
-  return Container(
-    clipBehavior: Clip.antiAlias,
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(20.r),
-      border: Border.all(color: AppPalette.mainColor.withValues(alpha: 0.1)),
-    ),
-    child: Column(children: children),
+  return Builder(
+    builder: (context) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      return Material(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+          side: BorderSide(color: AppPalette.mainColor.withValues(alpha: 0.1)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(children: children),
+      );
+    },
   );
 }
 
-Widget _buildListTile(String title, IconData icon, VoidCallback onTap) {
+Widget _buildListTile(String title, IconData icon, VoidCallback onTap,
+    {String? subtitle}) {
   return ListTile(
     tileColor: Colors.transparent,
     leading: Icon(icon, color: AppPalette.mainColor, size: 22.h),
     title: Text(title,
-        style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w500)),
+        style: TextStyle(
+            fontSize: _rowTitleFontSize, fontWeight: FontWeight.w500)),
+    subtitle: subtitle != null
+        ? Padding(
+            padding: EdgeInsets.only(top: 2.h),
+            child: Text(subtitle,
+                style: TextStyle(
+                    fontSize: _rowSubtitleFontSize,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w400)),
+          )
+        : null,
     onTap: onTap,
   );
 }
@@ -255,11 +304,12 @@ Widget _buildFontSlider(ThemeProvider theme, BuildContext context) {
                 color: AppPalette.mainColor, size: 22.h),
             SizedBox(width: 15.w),
             Text('حجم الخط',
-                style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w500)),
+                style: TextStyle(
+                    fontSize: _rowTitleFontSize, fontWeight: FontWeight.w500)),
           ],
         ),
         Slider(
-          value: theme.textScaleFactor,
+          value: theme.textScaleFactor.clamp(0.8, 1.5).toDouble(),
           min: 0.8,
           max: 1.5,
           divisions: 7,
@@ -281,78 +331,83 @@ void _showAboutAppDialog(BuildContext context, PackageInfo? packageInfo) {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: Padding(
         padding: EdgeInsets.all(24.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // App Logo
-            CircleAvatar(
-              radius: 40.r,
-              backgroundColor: AppPalette.mainColor.withValues(alpha: 0.1),
-              child: Image.asset('assets/images/pray.png', width: 50.w),
-            ),
-            SizedBox(height: 16.h),
-
-            // App Name & Version
-            Text('تطبيق أذكاري',
-                style: TextStyle(
-                    fontFamily: AppPalette.amiriFontFamily,
-                    fontSize: 24.sp,
-                    fontWeight: FontWeight.bold)),
-            Text('الإصدار ${packageInfo?.version}',
-                style: TextStyle(color: Colors.grey, fontSize: 12.sp)),
-            SizedBox(height: 15.h),
-
-            // Description
-            Text(
-              'رفيقك في رحلة الذكر والتقرب إلى الله.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  height: 1.5,
-                  fontSize: 14.sp,
-                  color: isDark ? Colors.white70 : Colors.black87),
-            ),
-
-            SizedBox(height: 20.h),
-            Divider(
-                color: AppPalette.mainColor.withValues(alpha: 0.1),
-                thickness: 1),
-            SizedBox(height: 15.h),
-
-            // YOUR NAME (Developer Credit)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.code_rounded,
-                    size: 16.sp, color: AppPalette.mainColor),
-                SizedBox(width: 8.w),
-                Text(
-                  'تم التطوير بواسطة: يمنى',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppPalette.mainColor,
-                  ),
-                ),
-              ],
-            ),
-
-            SizedBox(height: 25.h),
-
-            // Close Button
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppPalette.mainColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15.r)),
-                minimumSize: Size(double.infinity, 45.h),
-                elevation: 0,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // App Logo
+              CircleAvatar(
+                radius: 40.r,
+                backgroundColor: AppPalette.mainColor.withValues(alpha: 0.1),
+                child: Image.asset('assets/images/pray.png', width: 50.w),
               ),
-              onPressed: () => Navigator.pop(context),
-              child: const Text('إغلاق',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            )
-          ],
+              SizedBox(height: 16.h),
+
+              // App Name & Version
+              Text('تطبيق أذكاري',
+                  style: TextStyle(
+                      fontFamily: AppPalette.amiriFontFamily,
+                      fontSize: 24.sp,
+                      fontWeight: FontWeight.bold)),
+              Text('الإصدار ${packageInfo?.version}',
+                  style: TextStyle(color: Colors.grey, fontSize: 12.sp)),
+              SizedBox(height: 15.h),
+
+              // Description
+              Text(
+                'رفيقك في رحلة الذكر والتقرب إلى الله.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    height: 1.5,
+                    fontSize: 14.sp,
+                    color: isDark ? Colors.white70 : Colors.black87),
+              ),
+
+              SizedBox(height: 20.h),
+              Divider(
+                  color: AppPalette.mainColor.withValues(alpha: 0.1),
+                  thickness: 1),
+              SizedBox(height: 15.h),
+
+              // YOUR NAME (Developer Credit)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.code_rounded,
+                      size: 16.sp, color: AppPalette.mainColor),
+                  SizedBox(width: 8.w),
+                  Flexible(
+                    child: Text(
+                      'تم التطوير بواسطة: يمنى',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppPalette.mainColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 25.h),
+
+              // Close Button
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppPalette.mainColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15.r)),
+                  minimumSize: Size(double.infinity, 45.h),
+                  elevation: 0,
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('إغلاق',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+              )
+            ],
+          ),
         ),
       ),
     ),

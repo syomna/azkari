@@ -11,13 +11,11 @@ import 'package:provider/provider.dart';
 class SideTools extends StatelessWidget {
   const SideTools(
       {super.key,
-      required this.currentSurahNumber,
       required this.isAudioVisible,
       required this.onAudioToggle,
       required this.selectedSurahNumber,
       required this.onSurahSelected,
       required this.targetPage});
-  final int currentSurahNumber;
   final bool isAudioVisible;
   final VoidCallback onAudioToggle;
 
@@ -64,7 +62,7 @@ class SideTools extends StatelessWidget {
             onTap: () => _showSurahPicker(context),
           ),
           _buildSideDivider(context),
-          _bookmark(context, provider, currentSurahNumber),
+          _bookmark(context, provider),
           _buildSideDivider(context),
           _buildSideToolButton(
             context: context,
@@ -151,29 +149,28 @@ class SideTools extends StatelessWidget {
     );
   }
 
-  Widget _bookmark(
-      BuildContext context, QuranProvider provider, int surahNumber) {
-    // int index = _virtualPages.indexWhere((page) =>
-    //     page.globalPageNumber ==
-    //         _virtualPages[_currentIndex].globalPageNumber &&
-    //     page.surahSegments.first['surah'] == surahNumber);
-    // final targetPage = _virtualPages[_currentIndex];
+  Widget _bookmark(BuildContext context, QuranProvider provider) {
     int targetSurah = targetPage.surahSegments.first['surah'];
 
-    bool isBookmarked = provider.savedLatestQuranSurahNumber == targetSurah &&
-        provider.savedLatestQuranPageNumber == targetPage.globalPageNumber;
+    // Bookmarking uses its own dedicated storage, independent from the
+    // auto-resume position that is overwritten on every page turn — otherwise
+    // flipping a page silently destroys the saved mark.
+    bool isBookmarked = provider.bookmarkSurah == targetSurah &&
+        provider.bookmarkPage == targetPage.globalPageNumber;
     return _buildSideToolButton(
       context: context,
       icon:
           isBookmarked ? CupertinoIcons.bookmark_fill : CupertinoIcons.bookmark,
-      tooltip: isBookmarked ? 'إزالة من المفضلة' : 'أضف إلى المفضلة',
+      tooltip: isBookmarked ? 'ازالة إشارة مرجعية' : 'إضافة إشارة مرجعية',
       color: Colors.amber,
       onTap: () {
         if (isBookmarked) {
-          provider.clearSavedPosition();
+          provider.clearBookmark();
         } else {
-          provider.saveQuranPageNumber(targetPage.globalPageNumber);
-          provider.saveLatestQuranSurahNumber(targetSurah);
+          provider.saveBookmark(
+            surahNumber: targetSurah,
+            pageNumber: targetPage.globalPageNumber,
+          );
         }
       },
     );

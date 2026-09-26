@@ -1,35 +1,27 @@
 import 'dart:developer';
 
-import 'package:adhan/adhan.dart';
 import 'package:azkar_app/core/enums/app_loading_status.dart';
-import 'package:azkar_app/core/services/prayer_times_service.dart';
-import 'package:azkar_app/core/services/prayer_times_widget_service.dart';
 import 'package:azkar_app/features/azkar/domain/entities/zekr_entity.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/delete_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart';
-// IMPORT YOUR NEW USE CASES HERE
 import 'package:azkar_app/features/azkar/domain/usecases/get_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/save_custom_azkar_usecase.dart';
+import 'package:azkar_app/features/azkar/domain/usecases/update_custom_azkar_usecase.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class AzkarProvider extends ChangeNotifier {
   final GetAzkarUseCase getAzkarUseCase;
-  // Added new custom use case dependencies
   final GetCustomAzkarUseCase getCustomAzkarUseCase;
   final SaveCustomAzkarUseCase saveCustomAzkarUseCase;
   final DeleteCustomAzkarUseCase deleteCustomAzkarUseCase;
-
-  final PrayerTimeService prayerTimeService;
-  final SharedPreferences sharedPreferences;
+  final UpdateCustomAzkarUseCase updateCustomAzkarUseCase;
 
   AzkarProvider({
     required this.getAzkarUseCase,
     required this.getCustomAzkarUseCase,
     required this.saveCustomAzkarUseCase,
     required this.deleteCustomAzkarUseCase,
-    required this.prayerTimeService,
-    required this.sharedPreferences,
+    required this.updateCustomAzkarUseCase,
   }) {
     _initData();
   }
@@ -37,9 +29,7 @@ class AzkarProvider extends ChangeNotifier {
   // Orchestrate app initialization steps safely
   Future<void> _initData() async {
     await loadAzkar();
-    loadFavorites();
     await loadCustomAzkar(); // Load sqflite cache data right away
-    await loadPrayerTimes();
   }
 
   // --- Core Azkar Asset State ---
@@ -50,9 +40,6 @@ class AzkarProvider extends ChangeNotifier {
   AppLoadingStatus get azkarStatus => _azkarStatus;
   String? get azkarErrorMessage => _azkarErrorMessage;
 
-  PrayerTimes? _prayerTimes;
-  PrayerTimes? get prayerTimes => _prayerTimes;
-
   // --- 📍 NEW: Custom User-Generated Azkar State ---
   List<ZekrEntity> _customAzkarList = [];
   List<ZekrEntity> get customAzkarList => _customAzkarList;
@@ -60,71 +47,6 @@ class AzkarProvider extends ChangeNotifier {
   // Extends your navigation menus by getting all unique custom titles
   List<String> get customCategories {
     return _customAzkarList.map((item) => item.category).toSet().toList();
-  }
-
-  VoidCallback? onOverrideChanged;
-
-  Future<void> loadPrayerTimes() async {
-    double? lat = sharedPreferences.getDouble('lat');
-    double? lng = sharedPreferences.getDouble('lng');
-
-    if (lat == null || lng == null) {
-      final position = await prayerTimeService.getCurrentLocation();
-      lat = position?.latitude;
-      lng = position?.longitude;
-      if (lat != null && lng != null) {
-        await sharedPreferences.setDouble('lat', lat);
-        await sharedPreferences.setDouble('lng', lng);
-      }
-    }
-
-    if (lat != null && lng != null) {
-      final storedDate = sharedPreferences.getString('prayer_time_date');
-      final today = DateTime.now().toIso8601String().substring(0, 10);
-
-      if (storedDate != today) {
-        await prayerTimeService.calculateAndStore(lat, lng, sharedPreferences);
-        await sharedPreferences.setString('prayer_time_date', today);
-      }
-
-      _prayerTimes = prayerTimeService.getTimes(lat, lng);
-      notifyListeners();
-      PrayerTimesWidgetService.updateWidget(
-          prayerTimes: _prayerTimes, prefs: sharedPreferences);
-    }
-  }
-
-  // --- Overrides ---
-  Map<String, TimeOfDay> get allDisplayTimes =>
-      prayerTimeService.getEffectiveTimes(sharedPreferences);
-
-  TimeOfDay? getDisplayTime(String key) => allDisplayTimes[key];
-
-  bool isOverridden(String key) =>
-      prayerTimeService.hasOverride(key, sharedPreferences);
-
-  void setOverride(String key, TimeOfDay time) {
-    prayerTimeService.saveOverride(key, time, sharedPreferences);
-    notifyListeners();
-    onOverrideChanged?.call();
-    PrayerTimesWidgetService.updateWidget(
-        prayerTimes: _prayerTimes, prefs: sharedPreferences);
-  }
-
-  void clearOverride(String key) {
-    prayerTimeService.clearOverride(key, sharedPreferences);
-    notifyListeners();
-    onOverrideChanged?.call();
-    PrayerTimesWidgetService.updateWidget(
-        prayerTimes: _prayerTimes, prefs: sharedPreferences);
-  }
-
-  void clearAllOverrides() {
-    prayerTimeService.clearAllOverrides(sharedPreferences);
-    notifyListeners();
-    onOverrideChanged?.call();
-    PrayerTimesWidgetService.updateWidget(
-        prayerTimes: _prayerTimes, prefs: sharedPreferences);
   }
 
   // Standard Azkar loading from JSON
@@ -163,8 +85,10 @@ class AzkarProvider extends ChangeNotifier {
     );
   }
 
-  /// Packages multi-field dynamic inputs into pure entities and writes them to sqflite
-  Future<void> saveCustomAzkarCategory({
+  /// Packages multi-field dynamic inputs into pure entities and writes them to
+  /// sqflite. Returns whether the write actually succeeded so callers only
+  /// report success / navigate when the data really persisted.
+  Future<bool> saveCustomAzkarCategory({
     required String categoryTitle,
     required List<Map<String, dynamic>> azkarItems,
   }) async {
@@ -179,71 +103,129 @@ class AzkarProvider extends ChangeNotifier {
       );
     }).toList();
 
-    if (modelsToInsert.isNotEmpty) {
-      final result = await saveCustomAzkarUseCase(modelsToInsert);
-      await result.fold(
-        (failure) => null, // Handle local disk write constraint exceptions here
-        (_) async =>
-            await loadCustomAzkar(), // Reload immediately to populate UI maps
-      );
-    }
-  }
+    if (modelsToInsert.isEmpty) return false;
 
-  Future<void> deleteCustomCategory(String categoryName,
-      {bool keepInFavorites = false}) async {
-    final result = await deleteCustomAzkarUseCase(categoryName);
-
-    result.fold(
-      (failure) => log('Failed to delete category: ${failure.message}'),
+    final result = await saveCustomAzkarUseCase(modelsToInsert);
+    return result.fold(
+      (failure) async {
+        log('Failed to save category: ${failure.message}');
+        return false;
+      },
       (_) async {
-        log('Successfully deleted category: $categoryName');
-        await loadCustomAzkar();
-
-        if (!keepInFavorites) {
-          if (_favCategories.contains(categoryName)) {
-            _favCategories.remove(categoryName);
-            await sharedPreferences.setStringList(
-                'fav_categories', _favCategories);
-          }
-        }
-        loadFavorites();
+        await loadCustomAzkar(); // Reload immediately to populate UI maps
+        return true;
       },
     );
   }
 
-  // --- Favorites Management ---
-  List<String> _favCategories = [];
-  List<String> _favIndividualItems = [];
-
-  List<String> get favCategories => _favCategories;
-  List<String> get favIndividualItems => _favIndividualItems;
-
-  void loadFavorites() {
-    _favCategories = sharedPreferences.getStringList('fav_categories') ?? [];
-    _favIndividualItems = sharedPreferences.getStringList('fav_items') ?? [];
-    notifyListeners();
+  /// Deletes a custom category. Returns whether the delete actually happened.
+  Future<bool> deleteCustomCategory(String categoryName) async {
+    final result = await deleteCustomAzkarUseCase(categoryName);
+    return result.fold(
+      (failure) async {
+        log('Failed to delete category: ${failure.message}');
+        return false;
+      },
+      (_) async {
+        log('Successfully deleted category: $categoryName');
+        await loadCustomAzkar();
+        return true;
+      },
+    );
   }
 
-  Future<void> toggleCategoryFavorite(String categoryName) async {
-    if (_favCategories.contains(categoryName)) {
-      _favCategories.remove(categoryName);
-    } else {
-      _favCategories.add(categoryName);
+  /// Atomically replaces the items of [oldCategoryTitle] (optionally renaming
+  /// it to [newCategoryTitle]). Unlike delete-then-save, a disk failure cannot
+  /// leave the old category deleted. Returns whether the write succeeded.
+  Future<bool> updateCustomAzkarCategory({
+    required String oldCategoryTitle,
+    required String newCategoryTitle,
+    required List<Map<String, dynamic>> azkarItems,
+  }) async {
+    final List<ZekrEntity> modelsToInsert = azkarItems.map((item) {
+      return ZekrEntity(
+        category: newCategoryTitle,
+        zekr: item['text'] as String,
+        count: (item['count'] as int).toString(),
+        description: '',
+        reference: '',
+      );
+    }).toList();
+
+    if (modelsToInsert.isEmpty) return false;
+
+    final result = await updateCustomAzkarUseCase.call(
+      oldCategory: oldCategoryTitle,
+      items: modelsToInsert,
+    );
+    return result.fold(
+      (failure) async {
+        log('Failed to update category: ${failure.message}');
+        return false;
+      },
+      (_) async {
+        // Editing a category invalidates its in-memory counting: completed
+        // state and any stale per-item remainders for BOTH the old and the new
+        // name must be dropped, otherwise a shrunken item list keeps an
+        // impossible remainder ("٢٠ / ٥") and the category can never
+        // complete again.
+        _completedIndex.remove(oldCategoryTitle);
+        _completedIndex.remove(newCategoryTitle);
+        _clearCategoryCountKeys(oldCategoryTitle);
+        _clearCategoryCountKeys(newCategoryTitle);
+        await loadCustomAzkar();
+        return true;
+      },
+    );
+  }
+
+  // --- Counting State (in-memory only so it resets each app session) ---
+  // Azkar are meant to be re-read daily, so counts intentionally reset every
+  // time the app launches. This state lives in the (app-scoped) provider so it
+  // survives `ListView` recycling (scrolling) within a single session.
+  final Map<String, int> _remainingCounts = {};
+  final Map<String, int> _completedIndex = {};
+
+  // A zekr's text can appear in multiple categories; key by category + text so
+  // completing it in one category does not mark it done in another. The index
+  // part disambiguates duplicate zekr texts *within* a single custom category
+  // (two identical rows previously shared one counter, so they always finished
+  // together and the category could never complete).
+  String _countKey(String category, int index, String zekr) =>
+      '$category\u0000$index\u0000$zekr';
+
+  int remainingFor(String zekr, int total,
+          {required String category, int index = 0}) =>
+      _remainingCounts[_countKey(category, index, zekr)] ?? total;
+
+  int completedIndexOf(String category) => _completedIndex[category] ?? 0;
+
+  /// Decrements the remaining count for a zekr and advances the category
+  /// progress when the zekr is finished. The count lives in the provider so
+  /// that `ListView` recycling (scrolling) does not reset it.
+  void decrement(String zekr, int total,
+      {required String category, int index = 0}) {
+    final key = _countKey(category, index, zekr);
+    final current = _remainingCounts[key] ?? total;
+    if (current <= 0) return;
+    _remainingCounts[key] = current - 1;
+    if (current - 1 == 0) {
+      _completedIndex[category] = (_completedIndex[category] ?? 0) + 1;
     }
-    await sharedPreferences.setStringList('fav_categories', _favCategories);
     notifyListeners();
   }
 
-  Future<void> toggleItemFavorite(String itemIdentifier) async {
-    if (_favIndividualItems.contains(itemIdentifier)) {
-      _favIndividualItems.remove(itemIdentifier);
-    } else {
-      _favIndividualItems.add(itemIdentifier);
-    }
-    await sharedPreferences.setStringList('fav_items', _favIndividualItems);
-    notifyListeners();
+  /// Drops every counting row that belongs to [category].
+  void _clearCategoryCountKeys(String category) {
+    final prefix = '$category\u0000';
+    _remainingCounts.removeWhere((key, _) => key.startsWith(prefix));
   }
 
-  bool isCategoryFav(String name) => _favCategories.contains(name);
-  bool isItemFav(String identifier) => _favIndividualItems.contains(identifier);
+  /// Resets all counting progress for a single category (e.g. from a
+  /// user-tapped reset button on the details page).
+  void resetCategoryCounts(String categoryName) {
+    _clearCategoryCountKeys(categoryName);
+    _completedIndex.remove(categoryName);
+    notifyListeners();
+  }
 }

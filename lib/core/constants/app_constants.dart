@@ -20,3 +20,28 @@ class AppConstants {
   static const String appStoreURL =
       'https://apps.apple.com/eg/app/أذكــــاري-azkari/id6479560831';
 }
+
+/// Centralized [SharedPreferences] storage keys used across the app.
+class PrefsKeys {
+  PrefsKeys._();
+
+  static const String favoriteCategories = 'fav_categories';
+  static const String favoriteItems = 'fav_items';
+
+  static const String latitude = 'lat';
+  static const String longitude = 'lng';
+  static const String cityName = 'city_name';
+  static const String cityTimezone = 'city_timezone';
+  static const String prayerTimeDate = 'prayer_time_date';
+
+  /// Prefix for stored (calculated) prayer times, e.g. "prayer_time_fajr".
+  static const String prayerTimePrefix = 'prayer_time_';
+
+  /// Prefix for manually overridden prayer times, e.g. "prayer_override_fajr".
+  static const String prayerOverridePrefix = 'prayer_override_';
+
+  /// Optional custom times (stored as "HH:mm") for morning/evening azkar.
+  /// When unset, the app falls back to the prayer-derived default.
+  static const String morningAzkarTime = 'azkar_morning_time';
+  static const String eveningAzkarTime = 'azkar_evening_time';
+}

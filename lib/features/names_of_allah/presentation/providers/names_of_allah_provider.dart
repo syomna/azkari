@@ -25,6 +25,7 @@ class NamesOfAllahProvider extends ChangeNotifier {
     }
     _namesOfAllahStatus = AppLoadingStatus.loading;
     _namesOfAllahErrorMessage = null;
+    notifyListeners();
     final result = await getNamesOfAllahUseCase();
     result.fold((failure) {
       _namesOfAllahStatus = AppLoadingStatus.error;

@@ -12,7 +12,9 @@ class TasbehPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tasbehProvider = Provider.of<TasbehProvider>(context);
+    // Rebuild only when the total changes — a session tap (via MesbahaWidget)
+    // notifies the provider and must not rebuild this whole page.
+    final savedCount = context.select<TasbehProvider, int>((p) => p.savedCount);
     // final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -23,7 +25,8 @@ class TasbehPage extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            onPressed: () => tasbehProvider.reset(),
+            onPressed: () =>
+                _confirmReset(context, context.read<TasbehProvider>()),
             icon: const Icon(Icons.refresh_rounded),
           )
         ],
@@ -46,14 +49,19 @@ class TasbehPage extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  'إجمالي التسبيحات:',
-                  style:
-                      TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+                Flexible(
+                  child: Text(
+                    'إجمالي التسبيحات:',
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style:
+                        TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+                  ),
                 ),
                 SizedBox(width: 15.w),
                 Text(
-                  AppHelpers.getArabicNumber(tasbehProvider.savedCount),
+                  AppHelpers.getArabicNumber(savedCount),
                   style: TextStyle(
                       fontSize: 22.sp,
                       fontWeight: FontWeight.w900,
@@ -66,5 +74,56 @@ class TasbehPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmReset(
+      BuildContext context, TasbehProvider provider) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.r)),
+            title: Text(
+              'تصفير جلسة التسبيح؟',
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16.sp,
+                  color: isDark ? Colors.white : Colors.black),
+            ),
+            content: Text(
+              'سيتم تصفير عداد هذه الجلسة فقط، مع بقاء الإجمالي كما هو.',
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                  fontSize: 14.sp,
+                  color: isDark ? Colors.white70 : Colors.black87),
+            ),
+            actionsAlignment: MainAxisAlignment.spaceBetween,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text('إلغاء',
+                    style: TextStyle(color: Colors.grey, fontSize: 13.sp)),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppPalette.mainColor,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r)),
+                ),
+                child: Text('تصفير',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (confirmed) await provider.reset();
   }
 }

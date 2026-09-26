@@ -267,30 +267,33 @@ class _WidgetGuidePageState extends State<WidgetGuidePage> {
                           color: Colors.white,
                         ),
                       )
-                    : Row(
-                        key: ValueKey(_isLastPage),
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _isLastPage
-                                ? 'تم، فهمت'
-                                : _isFirstPage
-                                    ? 'عرض طريقة الإضافة'
-                                    : 'التالي',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w800,
+                    : FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          key: ValueKey(_isLastPage),
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _isLastPage
+                                  ? 'تم، فهمت'
+                                  : _isFirstPage
+                                      ? 'عرض طريقة الإضافة'
+                                      : 'التالي',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
-                          ),
-                          if (!_isLastPage) ...[
-                            SizedBox(width: 8.w),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              size: 20.sp,
-                            ),
+                            if (!_isLastPage) ...[
+                              SizedBox(width: 8.w),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 20.sp,
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
               ),
             ),

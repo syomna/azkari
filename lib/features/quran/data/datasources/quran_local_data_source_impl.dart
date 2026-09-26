@@ -13,6 +13,8 @@ class QuranLocalDataSourceImpl implements QuranLocalDataSource {
   static const String _kSavedLatestQuranSurahNumberKey =
       'latest_quran_surah_number_key';
   static const String _kSavedQuranPageNumberKey = 'quran_page_number_key';
+  static const String _kBookmarkSurahKey = 'quran_bookmark_surah_key';
+  static const String _kBookmarkPageKey = 'quran_bookmark_page_key';
 
   @override
   Future<void> saveLatestQuranSurahNumber(int surahNumber) async {
@@ -58,5 +60,27 @@ class QuranLocalDataSourceImpl implements QuranLocalDataSource {
   @override
   Future<void> saveQuranPageNumber(int pageNumber) {
     return sharedPreferences.setInt(_kSavedQuranPageNumberKey, pageNumber);
+  }
+
+  @override
+  Future<void> saveQuranBookmark(int surahNumber, int pageNumber) async {
+    await sharedPreferences.setInt(_kBookmarkSurahKey, surahNumber);
+    await sharedPreferences.setInt(_kBookmarkPageKey, pageNumber);
+  }
+
+  @override
+  int? getQuranBookmarkSurah() {
+    return sharedPreferences.getInt(_kBookmarkSurahKey);
+  }
+
+  @override
+  int? getQuranBookmarkPage() {
+    return sharedPreferences.getInt(_kBookmarkPageKey);
+  }
+
+  @override
+  Future<void> clearQuranBookmark() async {
+    await sharedPreferences.remove(_kBookmarkSurahKey);
+    await sharedPreferences.remove(_kBookmarkPageKey);
   }
 }

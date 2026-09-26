@@ -1,7 +1,9 @@
+import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/core/providers/notification_provider.dart';
 import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
-import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
+import 'package:azkar_app/core/utils/app_helpers.dart';
+import 'package:azkar_app/features/azkar/presentation/providers/prayer_times_provider.dart';
 import 'package:azkar_app/widgets/prayer_time_tile.dart';
 import 'package:azkar_app/widgets/time_adjustment_sheet.dart';
 import 'package:flutter/material.dart';
@@ -25,9 +27,9 @@ class PrayerTimesSettingsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('مواقيت الصلاة'),
-        centerTitle: false,
+        centerTitle: true,
         actions: [
-          Consumer<AzkarProvider>(
+          Consumer<PrayerTimesProvider>(
             builder: (context, provider, _) {
               final hasAny = PrayerTimeService.prayerKeys
                   .any((key) => provider.isOverridden(key));
@@ -50,7 +52,7 @@ class PrayerTimesSettingsScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Consumer<AzkarProvider>(
+      body: Consumer<PrayerTimesProvider>(
         builder: (context, provider, _) {
           if (provider.prayerTimes == null) {
             return Center(
@@ -114,29 +116,21 @@ class PrayerTimesSettingsScreen extends StatelessWidget {
               SizedBox(height: 8.h),
 
               Expanded(
-                child: ListView.separated(
+                child: ListView(
                   padding:
                       EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                  itemCount: _prayers.length,
-                  separatorBuilder: (_, __) => SizedBox(height: 10.h),
-                  itemBuilder: (context, i) {
-                    final (key, name, icon) = _prayers[i];
-                    final displayTime = provider.getDisplayTime(key);
-                    final isOverridden = provider.isOverridden(key);
-
-                    return PrayerTimeTile(
-                      name: name,
-                      icon: icon,
-                      displayTime: displayTime,
-                      isOverridden: isOverridden,
-                      onTap: () => _showOffsetPicker(
-                          context, provider, key, name, displayTime),
-                      // _pickTime(context, provider, key, displayTime),
-                      onReset: isOverridden
-                          ? () => provider.clearOverride(key)
-                          : null,
-                    );
-                  },
+                  children: [
+                    Consumer<NotificationProvider>(
+                      builder: (context, notify, _) =>
+                          _buildAzkarSection(context, provider, notify),
+                    ),
+                    SizedBox(height: 20.h),
+                    _buildSectionHeader('مواقيت الصلاة'),
+                    for (var i = 0; i < _prayers.length; i++) ...[
+                      _buildPrayerTile(context, provider, i),
+                      if (i < _prayers.length - 1) SizedBox(height: 10.h),
+                    ],
+                  ],
                 ),
               ),
             ],
@@ -146,46 +140,31 @@ class PrayerTimesSettingsScreen extends StatelessWidget {
     );
   }
 
-  void _showOffsetPicker(BuildContext context, AzkarProvider provider,
-      String key, String name, TimeOfDay? time) {
-    showModalBottomSheet(
-      context: context,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25.r))),
-      builder: (context) {
-        return TimeAdjustmentSheet(
-          prayerName: name,
-          initialTime: time ?? TimeOfDay.now(),
-          onChanged: (newTime) {
-            provider.setOverride(key, newTime);
-            context.read<NotificationProvider>().applyNotificationStates();
-          },
-        );
-      },
-    );
+  Future<void> _pickPrayerTime(
+      BuildContext context,
+      PrayerTimesProvider provider,
+      String key,
+      String name,
+      TimeOfDay? time) async {
+    final picked = await _pickTime(context, time ?? TimeOfDay.now(), name);
+    if (picked != null && context.mounted) {
+      provider.setOverride(key, picked);
+      if (context.mounted) {
+        final error = await context
+            .read<NotificationProvider>()
+            .applyNotificationStates();
+        if (context.mounted) {
+          if (error != null) {
+            AppHelpers.showToast(error, status: ToastStatus.error);
+          } else {
+            AppHelpers.showToast('تم تعديل وقت $name');
+          }
+        }
+      }
+    }
   }
 
-  // Future<void> _pickTime(
-  //   BuildContext context,
-  //   AzkarProvider provider,
-  //   String key,
-  //   TimeOfDay? initial,
-  // ) async {
-  //   final picked = await showTimePicker(
-  //     context: context,
-  //     initialTime: initial ?? TimeOfDay.now(),
-  //     builder: (context, child) => MediaQuery(
-  //       data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-  //       child: child!,
-  //     ),
-  //   );
-  //   if (picked != null && context.mounted) {
-  //     provider.setOverride(key, picked);
-  //     context.read<NotificationProvider>().applyNotificationStates();
-  //   }
-  // }
-
-  void _confirmResetAll(BuildContext context, AzkarProvider provider) {
+  void _confirmResetAll(BuildContext context, PrayerTimesProvider provider) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -205,10 +184,12 @@ class PrayerTimesSettingsScreen extends StatelessWidget {
             child: const Text('إلغاء'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               provider.clearAllOverrides();
               Navigator.pop(ctx);
-              context.read<NotificationProvider>().applyNotificationStates();
+              await context
+                  .read<NotificationProvider>()
+                  .applyNotificationStates();
             },
             child: const Text(
               'إعادة ضبط',
@@ -218,5 +199,109 @@ class PrayerTimesSettingsScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildPrayerTile(
+      BuildContext context, PrayerTimesProvider provider, int index) {
+    final (key, name, icon) = _prayers[index];
+    final displayTime = provider.getDisplayTime(key);
+    final isOverridden = provider.isOverridden(key);
+
+    return PrayerTimeTile(
+      name: name,
+      icon: icon,
+      displayTime: displayTime,
+      isOverridden: isOverridden,
+      onTap: () => _pickPrayerTime(context, provider, key, name, displayTime),
+      onReset: isOverridden
+          ? () {
+              provider.clearOverride(key);
+              context.read<NotificationProvider>().applyNotificationStates();
+            }
+          : null,
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: EdgeInsets.only(right: 8.w, bottom: 10.h),
+      child: Text(title,
+          style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w900,
+              color: Colors.grey)),
+    );
+  }
+
+  Widget _buildAzkarSection(BuildContext context, PrayerTimesProvider provider,
+      NotificationProvider notify) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader('أوقات الأذكار'),
+        _buildAzkarTile(context, provider, notify, isMorning: true),
+        SizedBox(height: 10.h),
+        _buildAzkarTile(context, provider, notify, isMorning: false),
+        SizedBox(height: 12.h),
+      ],
+    );
+  }
+
+  Widget _buildAzkarTile(BuildContext context, PrayerTimesProvider provider,
+      NotificationProvider notify,
+      {required bool isMorning}) {
+    final keyPref =
+        isMorning ? PrefsKeys.morningAzkarTime : PrefsKeys.eveningAzkarTime;
+    final title = isMorning ? 'أذكار الصباح' : 'أذكار المساء';
+    final icon = isMorning ? Icons.wb_sunny_rounded : Icons.nightlight_round;
+    final custom = notify.azkarTime(keyPref);
+    final defaultTime = _azkarDefaultTime(provider, isMorning);
+
+    return PrayerTimeTile(
+      name: title,
+      icon: icon,
+      displayTime: custom ?? defaultTime,
+      isOverridden: custom != null,
+      onTap: () => _pickAzkarTime(context, notify, keyPref, title,
+          custom ?? defaultTime ?? TimeOfDay.now()),
+      onReset: custom != null ? () => notify.setAzkarTime(keyPref, null) : null,
+    );
+  }
+
+  Future<void> _pickAzkarTime(BuildContext context, NotificationProvider notify,
+      String keyPref, String title, TimeOfDay initial) async {
+    final picked = await _pickTime(context, initial, title);
+    if (picked != null && context.mounted) {
+      final error = await notify.setAzkarTime(keyPref, picked);
+      if (context.mounted) {
+        if (error != null) {
+          AppHelpers.showToast(error, status: ToastStatus.error);
+        } else {
+          AppHelpers.showToast('تم تحديث وقت $title');
+        }
+      }
+    }
+  }
+
+  /// Single time-picker used by both prayer times and azkar rows. Uses the
+  /// app's stepper-based [showTimeAdjustmentSheet] which shows Arabic-Indic
+  /// digits regardless of the device keyboard.
+  Future<TimeOfDay?> _pickTime(
+      BuildContext context, TimeOfDay initial, String helpText) {
+    return showTimeAdjustmentSheet(
+      context: context,
+      prayerName: helpText,
+      initialTime: initial,
+    );
+  }
+
+  /// Default morning/evening azkar time = Fajr+30 / Asr+30 using the effective
+  /// (possibly overridden) prayer times.
+  TimeOfDay? _azkarDefaultTime(PrayerTimesProvider provider, bool isMorning) {
+    final key = isMorning ? 'fajr' : 'asr';
+    final t = provider.getDisplayTime(key);
+    if (t == null) return null;
+    final total = t.hour * 60 + t.minute + 30;
+    return TimeOfDay(hour: (total ~/ 60) % 24, minute: total % 60);
   }
 }

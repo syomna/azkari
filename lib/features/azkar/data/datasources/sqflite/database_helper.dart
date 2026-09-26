@@ -80,6 +80,28 @@ class DatabaseHelper {
     );
   }
 
+  /// Atomically replaces a custom category: deletes the old rows and inserts
+  /// the new ones in a single transaction so a failure can never leave the
+  /// user with the category half-deleted (data loss).
+  Future<void> replaceCustomCategory({
+    required String oldCategory,
+    required List<AzkarModel> items,
+  }) async {
+    final db = await instance.database;
+    await db.transaction((txn) async {
+      await txn.delete(
+        'custom_azkar',
+        where: 'category = ?',
+        whereArgs: [oldCategory],
+      );
+      final batch = txn.batch();
+      for (final item in items) {
+        batch.insert('custom_azkar', item.toJson());
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
   Future<void> close() async {
     final db = _database;
     if (db != null) await db.close();

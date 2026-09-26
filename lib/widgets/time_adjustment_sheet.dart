@@ -1,6 +1,30 @@
 import 'package:azkar_app/core/theme/app_palette.dart';
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+/// Shows the stepper-based time adjustment sheet. Returns the chosen
+/// [TimeOfDay], or null if dismissed.
+Future<TimeOfDay?> showTimeAdjustmentSheet({
+  required BuildContext context,
+  required String prayerName,
+  required TimeOfDay initialTime,
+}) {
+  TimeOfDay? result;
+  return showModalBottomSheet<TimeOfDay>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+    ),
+    builder: (_) => TimeAdjustmentSheet(
+      prayerName: prayerName,
+      initialTime: initialTime,
+      onChanged: (t) => result = t,
+    ),
+  ).then((_) => result);
+}
 
 class TimeAdjustmentSheet extends StatefulWidget {
   final String prayerName;
@@ -54,7 +78,7 @@ class _TimeAdjustmentSheetState extends State<TimeAdjustmentSheet> {
           // تعديل الساعات
           _buildAdjuster(
             'الساعة',
-            displayHour.toString().padLeft(2, '0'),
+            AppHelpers.getArabicNumber(displayHour).padLeft(2, '٠'),
             onAdd: () => _updateTime(_hour + 1, _minute),
             onRemove: () => _updateTime(_hour - 1, _minute),
           ),
@@ -64,7 +88,7 @@ class _TimeAdjustmentSheetState extends State<TimeAdjustmentSheet> {
           // تعديل الدقائق
           _buildAdjuster(
             'الدقيقة',
-            _minute.toString().padLeft(2, '0'),
+            AppHelpers.getArabicNumber(_minute).padLeft(2, '٠'),
             onAdd: () => _updateTime(_hour, _minute + 1),
             onRemove: () => _updateTime(_hour, _minute - 1),
           ),
@@ -86,9 +110,11 @@ class _TimeAdjustmentSheetState extends State<TimeAdjustmentSheet> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15.r)),
               ),
-              child: const Text('حفظ التعديل',
+              child: Text('حفظ التعديل',
                   style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
+                      fontSize: 16.sp,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -135,40 +161,51 @@ class _TimeAdjustmentSheetState extends State<TimeAdjustmentSheet> {
   }
 
   Widget _amPmButton(String label, bool selected) {
-    return GestureDetector(
-      onTap: () {
-        if (label == 'م' && !selected) {
-          _updateTime(_hour + 12, _minute);
-        } else if (label == 'ص' && !selected) {
-          _updateTime(_hour - 12, _minute);
-        }
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-        decoration: BoxDecoration(
-          color: selected ? AppPalette.mainColor : Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(10.r),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10.r),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            if (label == 'م' && !selected) {
+              _updateTime(_hour + 12, _minute);
+            } else if (label == 'ص' && !selected) {
+              _updateTime(_hour - 12, _minute);
+            }
+          },
+          child: Ink(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: selected ? AppPalette.mainColor : Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Text(label,
+                style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: selected ? Colors.white : Colors.grey.shade600)),
+          ),
         ),
-        child: Text(label,
-            style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
-                color: selected ? Colors.white : Colors.grey.shade600)),
       ),
     );
   }
 
   Widget _roundButton(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(50),
-      child: Container(
-        padding: EdgeInsets.all(10.w),
-        decoration: BoxDecoration(
-          color: AppPalette.mainColor.withValues(alpha: 0.1),
-          shape: BoxShape.circle,
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Ink(
+          padding: EdgeInsets.all(10.w),
+          decoration: BoxDecoration(
+            color: AppPalette.mainColor.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: AppPalette.mainColor, size: 24.sp),
         ),
-        child: Icon(icon, color: AppPalette.mainColor, size: 24.sp),
       ),
     );
   }

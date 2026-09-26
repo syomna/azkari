@@ -58,6 +58,7 @@ class WelcomingWidget extends StatelessWidget {
                   fontSize: 13.sp,
                   color: isDark ? Colors.white70 : Colors.grey[600],
                   fontWeight: FontWeight.w500,
+                  fontFamilyFallback: AppPalette.emojiFallback,
                 ),
                 softWrap: true,
               ),

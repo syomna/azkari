@@ -209,13 +209,19 @@ class _QuranListState extends State<QuranList> {
                           ),
 
                           // Right Side: Surah Name
-                          Text(
-                            quran.getSurahNameArabic(surahNumber),
-                            style: TextStyle(
-                              fontFamily: AppPalette.amiriFontFamily,
-                              fontSize: 22.sp,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected ? AppPalette.mainColor : null,
+                          Flexible(
+                            child: Text(
+                              quran.getSurahNameArabic(surahNumber),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.end,
+                              style: TextStyle(
+                                fontFamily: AppPalette.amiriFontFamily,
+                                fontSize: 22.sp,
+                                fontWeight: FontWeight.bold,
+                                color:
+                                    isSelected ? AppPalette.mainColor : null,
+                              ),
                             ),
                           ),
                         ],

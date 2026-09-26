@@ -33,6 +33,7 @@ class _AudioControllersState extends State<AudioControllers> {
   }
 
   void _refreshDownloadStatus() {
+    if (!mounted) return;
     setState(() {
       _isDownloadedFuture = _checkDownloaded();
     });
@@ -47,7 +48,7 @@ class _AudioControllersState extends State<AudioControllers> {
         GestureDetector(
           onTap: () async {
             await provider.toggleAudio(widget.surahNumber, widget.url);
-            _refreshDownloadStatus();
+            if (mounted) _refreshDownloadStatus();
           },
           child: Container(
             width: 50.h,
