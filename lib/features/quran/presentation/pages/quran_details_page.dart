@@ -4,9 +4,10 @@ import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/audio_player_card.dart';
-import 'package:azkar_app/features/quran/presentation/widgets/bottom_navigation_controls.dart';
-import 'package:azkar_app/features/quran/presentation/widgets/side_tools.dart';
+import 'package:azkar_app/features/quran/presentation/widgets/quran_font_sheet.dart';
+import 'package:azkar_app/features/quran/presentation/widgets/quran_list.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/tafseer_sheet.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -37,7 +38,6 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
   final List<QuranPageItem> _virtualPages = [];
   int _currentIndex = 0;
   bool _isAudioVisible = false;
-  bool _showControls = true;
   late QuranProvider _provider;
 
   @override
@@ -77,112 +77,255 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    bool isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final currentSurahNumber = _currentSurah;
+    final theme = Theme.of(context);
+    final int currentSurahNumber = _currentSurah;
+    final int currentPageNumber = _currentIndex + 1;
 
     return Scaffold(
-      body: GestureDetector(
-        onTap: () {
-          setState(() {
-            _showControls = !_showControls;
-            _isAudioVisible = false;
-          });
-        },
-        child: Stack(
+      appBar: _buildAppBar(theme, currentSurahNumber, currentPageNumber),
+      bottomNavigationBar: _buildBottomBar(theme),
+      body: Stack(
+        children: [
+          Padding(
+            // إفساح مساحة كافية كي لا يغطي كارت الصوت آخر سطر في الصفحة
+            padding: EdgeInsets.only(bottom: _isAudioVisible ? 190.h : 0),
+            child: quran.QuranPageView(
+              pageController: _pageController,
+              onPageChanged: _onPageChanged,
+              onLongPressStart: (surah, verse, details) {
+                HapticFeedback.mediumImpact();
+                _showTafseer(surah, verse);
+              },
+              ayahStyle: TextStyle(
+                fontSize: 23.55 * themeProvider.textScaleFactor,
+              ),
+              pageBackgroundColor: theme.scaffoldBackgroundColor,
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: _isAudioVisible
+                ? AudioPlayerCard(surahNumber: currentSurahNumber)
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(
+    ThemeData theme,
+    int currentSurahNumber,
+    int currentPageNumber,
+  ) {
+    final int firstStart =
+        _virtualPages[_currentIndex].surahSegments.first['start'] as int;
+    final int juz = quran.getJuzNumber(currentSurahNumber, firstStart);
+
+    return AppBar(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      centerTitle: true,
+      leading: const BackButton(),
+      title: Text(
+        AppConstants.holyQuran,
+        style: TextStyle(
+          fontFamily: AppPalette.amiriFontFamily,
+          fontWeight: FontWeight.bold,
+          fontSize: 20.sp,
+        ),
+      ),
+      actions: [
+        IconButton(
+          tooltip: 'قائمة السور',
+          icon: const Icon(CupertinoIcons.list_bullet),
+          onPressed: _showSurahPicker,
+        ),
+        IconButton(
+          tooltip: 'حجم الخط',
+          icon: const Icon(Icons.format_size_rounded),
+          onPressed: () {
+            showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              builder: (_) => const QuranFontSheet(),
+            );
+          },
+        ),
+        _buildBookmarkButton(),
+        IconButton(
+          tooltip: 'الاستماع',
+          icon: Icon(
+            CupertinoIcons.headphones,
+            color: _isAudioVisible ? AppPalette.mainColor : null,
+          ),
+          onPressed: () {
+            setState(() => _isAudioVisible = !_isAudioVisible);
+          },
+        ),
+        SizedBox(width: 4.w),
+      ],
+      bottom: PreferredSize(
+        preferredSize: Size.fromHeight(34.h),
+        child: Column(
           children: [
-            Column(
-              children: [
-                SizedBox(height: MediaQuery.of(context).padding.top),
-                if (_showControls) SizedBox(height: 70.h),
-                LinearProgressIndicator(
-                  value: _virtualPages.length > 1
-                      ? _currentIndex / (_virtualPages.length - 1)
-                      : 0,
-                  backgroundColor: AppPalette.mainColor.withValues(alpha: 0.1),
+            LinearProgressIndicator(
+              value: _virtualPages.length > 1
+                  ? _currentIndex / (_virtualPages.length - 1)
+                  : 0,
+              backgroundColor: AppPalette.mainColor.withValues(alpha: 0.1),
+              color: AppPalette.mainColor,
+              minHeight: 2.h,
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 5.h),
+              child: Text(
+                'سورة ${quran.getSurahNameArabic(currentSurahNumber)} • الجزء ${AppHelpers.getArabicNumber(juz)} • صفحة ${AppHelpers.getArabicNumber(currentPageNumber)}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: AppPalette.amiriFontFamily,
+                  fontSize: 12.sp,
                   color: AppPalette.mainColor,
-                  minHeight: 2.h,
+                  fontWeight: FontWeight.bold,
                 ),
-                SizedBox(height: 10.h),
-                _buildInfoRow(isDark, _virtualPages[_currentIndex]),
-                SizedBox(height: 10.h),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      bottom:
-                          _showControls ? 110.h : (_isAudioVisible ? 210.h : 0),
-                    ),
-                    child: quran.QuranPageView(
-                      pageController: _pageController,
-                      onPageChanged: _onPageChanged,
-                      onLongPressStart: (surah, verse, details) {
-                        HapticFeedback.mediumImpact();
-                        _showTafseer(surah, verse);
-                      },
-                      ayahStyle: TextStyle(
-                        fontSize: 23.55 * themeProvider.textScaleFactor,
-                      ),
-                      pageBackgroundColor:
-                          Theme.of(context).scaffoldBackgroundColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              top: _showControls ? 0 : -120.h,
-              left: 0,
-              right: 0,
-              child: _buildFloatingHeader(context),
-            ),
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              bottom: _showControls ? 25.h : -100.h,
-              left: 20.w,
-              right: 20.w,
-              child: BottomNavigationControls(
-                currentIndex: _currentIndex,
-                virtualPages: _virtualPages,
-                onPreviousPage: _goToPreviousPage,
-                onNextPage: _goToNextPage,
-                onPreviousSurah: _goToPreviousSurah,
-                onNextSurah: _goToNextSurah,
               ),
-            ),
-            AnimatedPositionedDirectional(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOutCubic,
-              start: _showControls ? 14.w : -90.w,
-              top: MediaQuery.sizeOf(context).height * 0.34,
-              child: SideTools(
-                isAudioVisible: _isAudioVisible,
-                onAudioToggle: () {
-                  setState(() {
-                    _isAudioVisible = !_isAudioVisible;
-
-                    if (_isAudioVisible) {
-                      _showControls = false;
-                    }
-                  });
-                },
-                selectedSurahNumber: _currentSurah,
-                onSurahSelected: (int surahNum) {
-                  Navigator.pop(context);
-                  int firstPageOfSurah = quran.getPageNumber(surahNum, 1);
-
-                  _pageController.jumpToPage(firstPageOfSurah - 1);
-                },
-                targetPage: _virtualPages[_currentIndex],
-              ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: _isAudioVisible
-                  ? AudioPlayerCard(surahNumber: currentSurahNumber)
-                  : const SizedBox.shrink(),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBookmarkButton() {
+    final int currentSurahNumber = _currentSurah;
+    final int currentPageNumber = _currentIndex + 1;
+    final bool isBookmarked = _provider.bookmarkSurah == currentSurahNumber &&
+        _provider.bookmarkPage == currentPageNumber;
+
+    return IconButton(
+      tooltip: isBookmarked ? 'إزالة الإشارة المرجعية' : 'إضافة إشارة مرجعية',
+      icon: Icon(
+        isBookmarked ? CupertinoIcons.bookmark_fill : CupertinoIcons.bookmark,
+        color: isBookmarked ? Colors.amber : null,
+      ),
+      onPressed: () {
+        if (isBookmarked) {
+          _provider.clearBookmark();
+        } else {
+          _provider.saveBookmark(
+            surahNumber: currentSurahNumber,
+            pageNumber: currentPageNumber,
+          );
+        }
+      },
+    );
+  }
+
+  Widget _buildBottomBar(ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        border: Border(
+          top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4)),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 54.h,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildBarButton(
+                theme: theme,
+                icon: CupertinoIcons.forward_end_alt,
+                tooltip: 'السورة السابقة',
+                enabled: _currentSurah > 1,
+                onTap: _goToPreviousSurah,
+              ),
+              _buildBarButton(
+                theme: theme,
+                icon: CupertinoIcons.forward_end,
+                tooltip: 'الصفحة السابقة',
+                enabled: _currentIndex > 0,
+                onTap: _goToPreviousPage,
+              ),
+              _buildPagePill(theme),
+              _buildBarButton(
+                theme: theme,
+                icon: CupertinoIcons.backward_end,
+                tooltip: 'الصفحة التالية',
+                enabled: _currentIndex < _virtualPages.length - 1,
+                onTap: _goToNextPage,
+              ),
+              _buildBarButton(
+                theme: theme,
+                icon: CupertinoIcons.backward_end_alt,
+                tooltip: 'السورة التالية',
+                enabled: _currentSurah < 114,
+                onTap: _goToNextSurah,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPagePill(ThemeData theme) {
+    final int currentPage = _currentIndex + 1;
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: AppPalette.mainColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(
+          color: AppPalette.mainColor.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Text(
+        '${AppHelpers.getArabicNumber(currentPage)} / ٦٠٤',
+        style: TextStyle(
+          fontFamily: AppPalette.amiriFontFamily,
+          fontSize: 12.sp,
+          fontWeight: FontWeight.bold,
+          color: AppPalette.mainColor,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBarButton({
+    required ThemeData theme,
+    required IconData icon,
+    required String tooltip,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    final Color enabledColor = theme.colorScheme.onSurface;
+    final Color disabledColor = theme.colorScheme.onSurface.withValues(
+      alpha: 0.25,
+    );
+
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          borderRadius: BorderRadius.circular(18.r),
+          child: SizedBox(
+            width: 38.w,
+            height: 38.h,
+            child: Icon(
+              icon,
+              size: 20.sp,
+              color: enabled ? enabledColor : disabledColor,
+            ),
+          ),
         ),
       ),
     );
@@ -211,48 +354,6 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
     _provider.saveLatestQuranSurahNumber(savedSurah);
   }
 
-  Widget _buildFloatingHeader(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 10.h,
-        bottom: 15.h,
-        left: 15.w,
-        right: 15.w,
-      ),
-      decoration: BoxDecoration(
-        color:
-            Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.95),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5))
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const BackButton(),
-          Expanded(
-            child: Center(
-              child: Text(
-                AppConstants.holyQuran,
-                style: TextStyle(
-                  fontFamily: AppPalette.amiriFontFamily,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20.sp,
-                ),
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 40.w,
-          )
-        ],
-      ),
-    );
-  }
-
   void _goToNextPage() {
     if (_currentIndex == _virtualPages.length - 1) return;
 
@@ -274,25 +375,48 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
   void _goToNextSurah() {
     if (_currentSurah >= 114) return;
 
-    final int targetPage = quran.getPageNumber(_currentSurah + 1, 1);
-
-    _pageController.animateToPage(
-      targetPage - 1,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOut,
-    );
+    _jumpToSurah(_currentSurah + 1, animate: true);
   }
 
   void _goToPreviousSurah() {
     if (_currentSurah <= 1) return;
 
-    final int previousSurah = _currentSurah - 1;
-    final int targetPage = quran.getPageNumber(previousSurah, 1);
+    _jumpToSurah(_currentSurah - 1, animate: true);
+  }
 
-    _pageController.animateToPage(
-      targetPage - 1,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOutCubic,
+  void _jumpToSurah(int surahNumber, {bool animate = false}) {
+    final int firstPageOfSurah = quran.getPageNumber(surahNumber, 1);
+    if (animate) {
+      _pageController.animateToPage(
+        firstPageOfSurah - 1,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOut,
+      );
+    } else {
+      _pageController.jumpToPage(firstPageOfSurah - 1);
+    }
+  }
+
+  void _showSurahPicker() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useSafeArea: true,
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) {
+          return QuranList(
+            selectedSurahNumber: _currentSurah,
+            onSurahSelected: (int surahNum) {
+              Navigator.pop(context);
+              _jumpToSurah(surahNum);
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -304,37 +428,6 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
       builder: (_) => TafseerSheet(
         surahNumber: surahNumber,
         verseNumber: verseNumber,
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(bool isDark, QuranPageItem pageItem) {
-    int firstSurahInPage = pageItem.surahSegments.first['surah'];
-    int firstStart = pageItem.surahSegments.first['start'];
-    int juz = quran.getJuzNumber(firstSurahInPage, firstStart);
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.w),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'سورة ${quran.getSurahNameArabic(firstSurahInPage)}',
-            style: TextStyle(
-                fontSize: 13.sp,
-                color: AppPalette.mainColor,
-                fontFamily: AppPalette.amiriFontFamily,
-                fontWeight: FontWeight.bold),
-          ),
-          Text(
-            'الجزء ${AppHelpers.getArabicNumber(juz)} • صفحة ${AppHelpers.getArabicNumber(pageItem.globalPageNumber)}',
-            style: TextStyle(
-                fontFamily: AppPalette.amiriFontFamily,
-                fontSize: 12.sp,
-                color: isDark ? Colors.white70 : Colors.black54,
-                fontWeight: FontWeight.w600),
-          ),
-        ],
       ),
     );
   }

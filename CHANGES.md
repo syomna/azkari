@@ -567,3 +567,27 @@ selected city's UTC offset.
   tests + 2 `quran_page_view_smoke_test` widget tests that render the mushaf
   and confirm `onPageChanged` reports physical page numbers).
 - `flutter analyze`: no issues.
+
+## 52. Quran reader: floating overlays replaced with clean app bar + bottom bar
+- Removed the three floating/animated controls from the reader (the padded
+  floating header strip, the rounded pill bottom-navigation, and the side
+  tools rail) and the associated tap-to-show/hide behavior.
+- The reader now uses a standard `AppBar`:
+  - Title `القرآن الكريم` with a centered back button.
+  - Actions: surah index (`QuranList` sheet), font size (`QuranFontSheet`),
+    bookmark toggle (independent of the auto-resume position, amber when set),
+    and audio toggle (highlighted while open).
+  - `bottom` strip: a thin reading-progress line plus a compact
+    `سورة • الجزء • صفحة` status line.
+- New slim, always-visible bottom bar with just four icon buttons (previous
+  surah, previous page, next page, next surah) and a small centered page pill
+  (`صفحة X / 604`).
+- Deleted the now-unused `bottom_navigation_controls.dart` and `side_tools.dart`
+  widgets; their logic (surah picker, bookmark, page/surah navigation, audio)
+  was folded into the page. Audio card still slides in above the bottom bar
+  with bottom padding added to the mushaf so the last line stays readable.
+
+### Verification
+- `flutter test`: 138/138 passing.
+- `flutter analyze`: no issues.
+- `flutter build ios --simulator --debug` + `simctl install/launch`: app runs.
