@@ -2,7 +2,7 @@ import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:quran/quran.dart' as quran;
+import 'package:qcf_quran_lite/qcf_quran_lite.dart' as quran;
 
 class QuranList extends StatefulWidget {
   const QuranList({
@@ -219,8 +219,7 @@ class _QuranListState extends State<QuranList> {
                                 fontFamily: AppPalette.amiriFontFamily,
                                 fontSize: 22.sp,
                                 fontWeight: FontWeight.bold,
-                                color:
-                                    isSelected ? AppPalette.mainColor : null,
+                                color: isSelected ? AppPalette.mainColor : null,
                               ),
                             ),
                           ),

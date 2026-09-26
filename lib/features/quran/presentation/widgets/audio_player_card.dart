@@ -1,11 +1,11 @@
 import 'dart:ui';
 
 import 'package:azkar_app/core/theme/app_palette.dart';
+import 'package:azkar_app/features/quran/presentation/utils/quran_audio_source.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/audio_controllers.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/audio_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:quran/quran.dart' as quran;
 
 class AudioPlayerCard extends StatelessWidget {
   const AudioPlayerCard({super.key, required this.surahNumber});
@@ -14,7 +14,7 @@ class AudioPlayerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final String url = quran.getAudioURLBySurah(surahNumber);
+    final String url = QuranAudioSource.urlForSurah(surahNumber);
     return Container(
       key: const ValueKey('floating_audio_player'),
       height: 155.h,

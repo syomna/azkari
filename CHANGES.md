@@ -494,3 +494,76 @@ selected city's UTC offset.
   a run confirmed the real OS pending list held exactly ids 100–104 with
   title `حان وقت الصلاة` (other runs hit the daemon introspection quirk and
   passed via the no-error wiring check).
+
+## 49. Quran audio no longer depends on the `quran` package
+- The audio feature previously pulled its mp3 URL from `package:quran`
+  (`getAudioURLBySurah`) and its display name from `getSurahNameArabic`; both
+  are now served by a self-contained helper
+  `QuranAudioSource` (`lib/features/quran/presentation/utils/
+  quran_audio_source.dart`):
+  - `QuranAudioSource.urlForSurah(n)` reproduces the very same CDN URL
+    (`cdn.islamic.network/quran/audio-surah/128/ar.alafasy/<n>.mp3`) with
+    optional reciter/bitrate overrides, so existing behavior is unchanged and
+    the download/play pipeline (dio + just_audio local-file playback) needs no
+    `quran` package anywhere.
+  - `QuranAudioSource.surahArabicNames` + `surahName(n)` carry the 114 Arabic
+    surah names (identical to what the audio card showed before), with a safe
+    fallback for invalid numbers.
+- `audio_player_card.dart` and `audio_controllers.dart` no longer import
+  `package:quran` at all. The `quran` package remains a dependency only for
+  the reader's mushaf text and surah-list metadata (page/verse text, juz,
+  revelation place), which is out of scope.
+- Verified live: the produced URL returns `200` with `audio/mpeg` (1.4 MB
+  for Al-Fatiha).
+
+### Verification
+- `flutter test`: 131/131 passing (5 new `quran_audio_source_test` tests).
+- `flutter analyze`: no issues.
+
+## 50. Android builds fixed on Codemagic
+- Codemagic's `bundleRelease` was failing at the version gate: the project used
+  Gradle 8.12, AGP 8.9.1 and Kotlin 2.1.0, all below the minimums required by
+  the current Flutter stable toolchain (Gradle 8.14, AGP 8.11.1, Kotlin 2.2.20).
+- Bumped the Android wrapper to `gradle-8.14-all.zip`
+  (`android/gradle/wrapper/gradle-wrapper.properties`) and the plugin versions
+  to AGP `8.11.1` / Kotlin `2.2.20` in `android/settings.gradle.kts`.
+- `android/build/` is now gitignored and the single accidentally-committed
+  problems report was untracked.
+
+### Verification
+- `flutter build apk --debug`: builds.
+- `flutter build appbundle --release` (with Codemagic-style `CI=true` +
+  `CM_KEYSTORE_*` env): builds, `bundleRelease` success (79.1 MB AAB) — the
+  exact task that failed on the CI.
+- `flutter analyze`: no issues.
+
+## 51. Quran reader migrated to `qcf_quran_lite` (mushaf rendering + lazy tafseer)
+- The reader no longer depends on `package:quran` (removed from `pubspec.yaml`).
+  It now renders real Madinah mushaf pages via `qcf_quran_lite: ^0.0.5`
+  (`QuranPageView`), which draws each physical page (1–604) exactly as printed,
+  including the decorative surah banner and basmalah automatically.
+- `quran_details_page.dart` was rewritten around `QuranPageView`:
+  - One page entry per physical page (the old "virtual page" splitting of
+    overlapping surahs is obsolete — the mushaf page shows everything).
+  - Resume-from-saved-page, auto-save on page turn, surah-change audio reset,
+    info row (سورة/الجزء/صفحة), surah picker, next/previous surah, page
+    nav, floating header, side tools, audio card and tap-to-toggle controls
+    all preserved. Surah navigation now jumps straight to the physical page
+    where the surah starts (`getPageNumber(surah, 1) - 1`).
+  - Font sizing still works: the pack's `textScaleFactor` is fed to
+    `ayahStyle` (the package's own Hafs/Uthmani font stays intact).
+- `quran_list.dart` (surah index sheet) now uses `qcf_quran_lite` for names,
+  juz, verses and Makkah/Madinah metadata (same API signatures as before).
+- Tafseer added as a lazy-loading bottom sheet:
+  - `TafseerService` (`lib/features/quran/data/services/tafseer_service.dart`)
+    fetches a single ayah's tafseer on demand from `api.alquran.cloud`
+    (Al-Muyassar edition) with in-memory caching and a 15s timeout, instead of
+    bundling a multi-MB tafseer DB.
+  - `TafseerSheet` opens on long-press of any ayah: shows the ayah text, a
+    loading state, the translated tafseer, and a retry on offline errors.
+
+### Verification
+- `flutter test`: 138/138 passing (5 new `tafseer_service_test` cleaning
+  tests + 2 `quran_page_view_smoke_test` widget tests that render the mushaf
+  and confirm `onPageChanged` reports physical page numbers).
+- `flutter analyze`: no issues.

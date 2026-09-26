@@ -1,18 +1,17 @@
-
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
+import 'package:azkar_app/features/quran/presentation/utils/quran_audio_source.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/infinate_download_icon.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import 'package:quran/quran.dart' as quran;
-
 
 class AudioControllers extends StatefulWidget {
-  const AudioControllers({super.key, required this.surahNumber, required this.url});
-final int surahNumber;
-final String url;
+  const AudioControllers(
+      {super.key, required this.surahNumber, required this.url});
+  final int surahNumber;
+  final String url;
 
   @override
   State<AudioControllers> createState() => _AudioControllersState();
@@ -41,7 +40,7 @@ class _AudioControllersState extends State<AudioControllers> {
 
   @override
   Widget build(BuildContext context) {
-        final provider = Provider.of<QuranProvider>(context);
+    final provider = Provider.of<QuranProvider>(context);
 
     return Row(
       children: [
@@ -75,7 +74,7 @@ class _AudioControllersState extends State<AudioControllers> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('سورة ${quran.getSurahNameArabic(widget.surahNumber)}',
+              Text('سورة ${QuranAudioSource.surahName(widget.surahNumber)}',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16.sp,

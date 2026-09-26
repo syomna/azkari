@@ -1,21 +1,23 @@
 import 'package:azkar_app/core/constants/app_constants.dart';
+import 'package:azkar_app/core/providers/theme_provider.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/audio_player_card.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/bottom_navigation_controls.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/side_tools.dart';
+import 'package:azkar_app/features/quran/presentation/widgets/tafseer_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
-import 'package:quran/quran.dart' as quran;
+import 'package:qcf_quran_lite/qcf_quran_lite.dart' as quran;
 
-// بنية بيانات لتمثيل الصفحة الفرعية المنفصلة داخل الـ View
+// وصف صفحة المصحف الواحدة: رقمها (1-604) مع شرائح السور التي تبدأ عليها
 class QuranPageItem {
   final int globalPageNumber; // رقم الصفحة الأصلي بالمصحف (1-604)
   final List<Map<String, dynamic>>
-      surahSegments; // السور والآيات المخصصة لهذه الصفحة فقط
+      surahSegments; // السور والآيات الموجودة على هذه الصفحة
 
   QuranPageItem({
     required this.globalPageNumber,
@@ -45,40 +47,22 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
 
     _provider = Provider.of<QuranProvider>(context, listen: false);
     int savedPage = _provider.savedLatestQuranPageNumber ?? 1;
-    int savedSurah = _provider.savedLatestQuranSurahNumber ?? 1;
+    if (savedPage < 1) savedPage = 1;
+    if (savedPage > 604) savedPage = 604;
 
-    // البحث عن الاندكس المطابق للصفحة والسورة المحفوظة لتجنب لخبطة البدايات
-    _currentIndex = _virtualPages.indexWhere((page) =>
-        page.globalPageNumber == savedPage &&
-        page.surahSegments.any((seg) => seg['surah'] == savedSurah));
-
-    if (_currentIndex == -1) _currentIndex = 0;
-
+    _currentIndex = savedPage - 1;
     _pageController = PageController(initialPage: _currentIndex);
   }
 
-  // توليد صفحات منفصلة تماماً عند تداخل السور
+  // صفحة مصحف واحدة لكل entry (1..604)، بدون تقسيم صفحات افتراضية لأن
+  // QuranPageView يعرض الصفحة كاملة كما في المصحف المطبوع.
   void _generateVirtualPages() {
     _virtualPages.clear();
     for (int p = 1; p <= 604; p++) {
-      List<Map<String, dynamic>> originalSegments =
-          quran.getPageData(p).cast<Map<String, dynamic>>();
-
-      if (originalSegments.length <= 1) {
-        // الصفحة تحتوي على سورة واحدة كالعادة
-        _virtualPages.add(QuranPageItem(
-          globalPageNumber: p,
-          surahSegments: originalSegments,
-        ));
-      } else {
-        // الصفحة بها تداخل (سورة تنتهي وسورة تبدأ)، نقسمها لصفحتين منفصلتين
-        for (var segment in originalSegments) {
-          _virtualPages.add(QuranPageItem(
-            globalPageNumber: p,
-            surahSegments: [segment],
-          ));
-        }
-      }
+      _virtualPages.add(QuranPageItem(
+        globalPageNumber: p,
+        surahSegments: quran.getPageData(p).cast<Map<String, dynamic>>(),
+      ));
     }
   }
 
@@ -92,11 +76,10 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<QuranProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
     bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final currentPageItem = _virtualPages[_currentIndex];
-    int currentSurahNumber = currentPageItem.surahSegments.first['surah'];
+    final currentSurahNumber = _currentSurah;
 
     return Scaffold(
       body: GestureDetector(
@@ -121,30 +104,27 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
                   minHeight: 2.h,
                 ),
                 SizedBox(height: 10.h),
-                _buildInfoRow(isDark, currentPageItem),
+                _buildInfoRow(isDark, _virtualPages[_currentIndex]),
                 SizedBox(height: 10.h),
                 Expanded(
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: _virtualPages.length,
-                    onPageChanged: (index) {
-                      final targetPage = _virtualPages[index];
-                      int targetSurah = targetPage.surahSegments.first['surah'];
-                      int prevSurah = _virtualPages[_currentIndex]
-                          .surahSegments
-                          .first['surah'];
-
-                      if (targetSurah != prevSurah) {
-                        provider.resetAudio();
-                      }
-
-                      setState(() => _currentIndex = index);
-
-                      provider.saveQuranPageNumber(targetPage.globalPageNumber);
-                      provider.saveLatestQuranSurahNumber(targetSurah);
-                    },
-                    itemBuilder: (context, index) =>
-                        _buildPageContent(_virtualPages[index]),
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      bottom:
+                          _showControls ? 110.h : (_isAudioVisible ? 210.h : 0),
+                    ),
+                    child: quran.QuranPageView(
+                      pageController: _pageController,
+                      onPageChanged: _onPageChanged,
+                      onLongPressStart: (surah, verse, details) {
+                        HapticFeedback.mediumImpact();
+                        _showTafseer(surah, verse);
+                      },
+                      ayahStyle: TextStyle(
+                        fontSize: 23.55 * themeProvider.textScaleFactor,
+                      ),
+                      pageBackgroundColor:
+                          Theme.of(context).scaffoldBackgroundColor,
+                    ),
                   ),
                 ),
               ],
@@ -186,20 +166,12 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
                     }
                   });
                 },
-                selectedSurahNumber:
-                    _virtualPages[_currentIndex].surahSegments.first['surah'],
+                selectedSurahNumber: _currentSurah,
                 onSurahSelected: (int surahNum) {
                   Navigator.pop(context);
                   int firstPageOfSurah = quran.getPageNumber(surahNum, 1);
 
-                  // الانتقال إلى أول صفحة افتراضية تحتوي على هذه السورة
-                  int targetIndex = _virtualPages.indexWhere((page) =>
-                      page.globalPageNumber == firstPageOfSurah &&
-                      page.surahSegments.first['surah'] == surahNum);
-
-                  if (targetIndex != -1) {
-                    _pageController.jumpToPage(targetIndex);
-                  }
+                  _pageController.jumpToPage(firstPageOfSurah - 1);
                 },
                 targetPage: _virtualPages[_currentIndex],
               ),
@@ -214,6 +186,29 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
         ),
       ),
     );
+  }
+
+  // السورة المقصودة في الصفحة الحالية (أول سورة تظهر أعلى الصفحة)
+  int get _currentSurah {
+    final segments = _virtualPages[_currentIndex].surahSegments;
+    if (segments.isEmpty) return 1;
+    return segments.first['surah'];
+  }
+
+  void _onPageChanged(int pageNumber) {
+    final segments = quran.getPageData(pageNumber).cast<Map<String, dynamic>>();
+    final int savedSurah =
+        segments.isEmpty ? 1 : segments.first['surah'] as int;
+    final int prevSurah = _currentSurah;
+
+    if (savedSurah != prevSurah) {
+      _provider.resetAudio();
+    }
+
+    setState(() => _currentIndex = pageNumber - 1);
+
+    _provider.saveQuranPageNumber(pageNumber);
+    _provider.saveLatestQuranSurahNumber(savedSurah);
   }
 
   Widget _buildFloatingHeader(BuildContext context) {
@@ -277,101 +272,38 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
   }
 
   void _goToNextSurah() {
-    final currentSurah =
-        _virtualPages[_currentIndex].surahSegments.first['surah'];
+    if (_currentSurah >= 114) return;
 
-    final targetIndex = _virtualPages.indexWhere(
-      (page) => page.surahSegments.first['surah'] > currentSurah,
-    );
-
-    if (targetIndex == -1) return;
+    final int targetPage = quran.getPageNumber(_currentSurah + 1, 1);
 
     _pageController.animateToPage(
-      targetIndex,
+      targetPage - 1,
       duration: const Duration(milliseconds: 350),
       curve: Curves.easeOut,
     );
   }
 
   void _goToPreviousSurah() {
-    final currentSurah =
-        _virtualPages[_currentIndex].surahSegments.first['surah'];
+    if (_currentSurah <= 1) return;
 
-    if (currentSurah <= 1) return;
-
-    final previousSurah = currentSurah - 1;
-
-    final targetIndex = _virtualPages.indexWhere(
-      (page) => page.surahSegments.first['surah'] == previousSurah,
-    );
-
-    if (targetIndex == -1) return;
+    final int previousSurah = _currentSurah - 1;
+    final int targetPage = quran.getPageNumber(previousSurah, 1);
 
     _pageController.animateToPage(
-      targetIndex,
+      targetPage - 1,
       duration: const Duration(milliseconds: 350),
       curve: Curves.easeOutCubic,
     );
   }
 
-  Widget _buildSurahNameCard(BuildContext context, int surahNumber) {
-    bool isDark = Theme.of(context).brightness == Brightness.dark;
-    Color contentColor = isDark ? Colors.white : AppPalette.mainColor;
-
-    int totalAyahs = quran.getVerseCount(surahNumber);
-    String surahOrder = AppHelpers.getArabicNumber(surahNumber);
-    String ayahsCount = AppHelpers.getArabicNumber(totalAyahs);
-
-    return SizedBox(
-      height: 40.h,
-      width: double.infinity,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SvgPicture.asset(
-            'assets/images/surah_border.svg',
-            // width: MediaQuery.of(context).size.width,
-            fit: BoxFit.contain,
-            colorFilter: ColorFilter.mode(contentColor, BlendMode.srcIn),
-          ),
-          Positioned(
-            left: 63.w,
-            child: Text(
-              'ترتيبها\n$surahOrder',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: AppPalette.amiriFontFamily,
-                fontSize: 7.sp,
-                fontWeight: FontWeight.bold,
-                color: contentColor,
-                height: 1.1,
-              ),
-            ),
-          ),
-          Text(
-            quran.getSurahNameArabic(surahNumber),
-            style: TextStyle(
-              fontFamily: AppPalette.amiriFontFamily,
-              fontWeight: FontWeight.bold,
-              fontSize: 20.sp,
-              color: contentColor,
-            ),
-          ),
-          Positioned(
-            right: 63.w,
-            child: Text(
-              'آياتها\n$ayahsCount',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: AppPalette.amiriFontFamily,
-                fontSize: 7.sp,
-                fontWeight: FontWeight.bold,
-                color: contentColor,
-                height: 1.1,
-              ),
-            ),
-          ),
-        ],
+  Future<void> _showTafseer(int surahNumber, int verseNumber) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => TafseerSheet(
+        surahNumber: surahNumber,
+        verseNumber: verseNumber,
       ),
     );
   }
@@ -404,90 +336,6 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildPageContent(QuranPageItem pageItem) {
-    int currentSurah = pageItem.surahSegments.first['surah'];
-    int firstVerse = pageItem.surahSegments.first['start'];
-
-    return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-      child: Column(
-        children: [
-          // كارد اسم السورة يظهر دائماً في بداية الصفحة المستقلة للسورة الجديدة
-          _buildSurahNameCard(context, currentSurah),
-
-          // عرض البسملة إذا كنا عند الآية الأولى (باستثناء سورة التوبة)
-          if (firstVerse == 1 && currentSurah != 9) ...[
-            SizedBox(height: 15.h),
-            _buildBasmalaHeader(),
-          ],
-
-          SizedBox(height: 15.h),
-          Text.rich(
-            TextSpan(children: _buildVersesList(pageItem.surahSegments)),
-            textAlign: TextAlign.justify,
-            textDirection: TextDirection.rtl,
-          ),
-          if (_isAudioVisible) SizedBox(height: 200.h),
-          if (_showControls) SizedBox(height: 100.h),
-        ],
-      ),
-    );
-  }
-
-  List<InlineSpan> _buildVersesList(List<Map<String, dynamic>> segments) {
-    List<InlineSpan> spans = [];
-
-    for (var surahData in segments) {
-      int surahNum = surahData['surah'];
-      int start = surahData['start'];
-      int end = surahData['end'];
-
-      for (int vNum = start; vNum <= end; vNum++) {
-        spans.add(buildVerseSpan(surahNumber: surahNum, index: vNum - 1));
-      }
-    }
-    return spans;
-  }
-
-  TextSpan buildVerseSpan({required int surahNumber, required int index}) {
-    final int verseNumber = index + 1;
-
-    // The basmala is already rendered prominently by `_buildBasmalaHeader`
-    // on the surah's opening segment. `quran.getVerse(1,1)` returns exactly
-    // the basmala, so rendering it here would duplicate it; rendering an
-    // empty/whitespace-only leftover is what produced the hollow first line.
-    if (surahNumber == 1 && verseNumber == 1) {
-      return const TextSpan(text: '');
-    }
-
-    String ayah =
-        quran.getVerse(surahNumber, verseNumber, verseEndSymbol: true);
-
-    return TextSpan(
-      text: '$ayah ',
-      style: TextStyle(
-        fontFamily: AppPalette.amiriFontFamily,
-        fontSize: 22.sp,
-        height: 2.2,
-        fontWeight: FontWeight.w500,
-        color: Theme.of(context).brightness == Brightness.dark
-            ? Colors.white
-            : Colors.black,
-      ),
-    );
-  }
-
-  Widget _buildBasmalaHeader() {
-    return Text(
-      quran.basmala,
-      textAlign: TextAlign.center,
-      style: TextStyle(
-          fontFamily: AppPalette.amiriFontFamily,
-          fontSize: 24.sp,
-          fontWeight: FontWeight.bold),
     );
   }
 }
