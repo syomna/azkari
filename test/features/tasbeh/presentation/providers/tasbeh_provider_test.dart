@@ -68,9 +68,7 @@ void main() {
           .called(1);
     });
 
-    test(
-        'should reset all and save it to SharedPreferences',
-        () async {
+    test('should reset all and save it to SharedPreferences', () async {
       when(mockSharedPreferences.setInt(any, any))
           .thenAnswer((_) async => true);
       await tasbehProvider.addCount();
@@ -80,8 +78,7 @@ void main() {
       expect(tasbehProvider.savedCount, 0);
       verify(mockSharedPreferences.setInt('current_session_tasbeh_count', 0))
           .called(1);
-          verify(mockSharedPreferences.setInt('total_tasbeh_count', 0))
-          .called(1);
+      verify(mockSharedPreferences.setInt('total_tasbeh_count', 0)).called(1);
     });
   });
 }

@@ -139,7 +139,8 @@ class NotificationService {
         await androidPlugin?.requestExactAlarmsPermission();
       }
     } catch (e) {
-      debugPrint('[NotificationService] First-run permission request failed: $e');
+      debugPrint(
+          '[NotificationService] First-run permission request failed: $e');
     }
   }
 
@@ -240,9 +241,7 @@ class NotificationService {
   /// with the still-default (UTC) `tz.local` would fire notifications at the
   /// wrong times, so it is better to surface an error than to schedule wrong.
   Future<String?> _guardTimezone() async {
-    return await _ensureTimezone()
-        ? null
-        : 'تعذر تحديد المنطقة الزمنية للجهاز';
+    return await _ensureTimezone() ? null : 'تعذر تحديد المنطقة الزمنية للجهاز';
   }
 
   /// The IANA timezone of the selected city, or `null` when relying on the
@@ -615,8 +614,8 @@ class NotificationService {
       final error = await _scheduleExact(
         id: id,
         title: 'الصلاة على النبي',
-        body: DuaaNotifications
-            .blessings[i % DuaaNotifications.blessings.length],
+        body:
+            DuaaNotifications.blessings[i % DuaaNotifications.blessings.length],
         payload: 'prophet_blessing',
         scheduledDate: scheduledDate,
         notificationDetails: azkarDetailsNoSound,
@@ -652,14 +651,14 @@ class NotificationService {
 
   Future<bool> requestNotificationPermission() async {
     if (Platform.isAndroid) {
-      final impl = flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
+      final impl =
+          flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
       return (await impl?.requestNotificationsPermission()) ?? false;
     }
     // iOS: ask for the flags our notifications actually use.
-    final impl = flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
+    final impl =
+        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin>();
     return (await impl?.requestPermissions(
             alert: true, badge: true, sound: true)) ??
@@ -671,13 +670,13 @@ class NotificationService {
     // the OS reports for the app (permission_handler can disagree with the
     // system state, e.g. on iOS Simulator after granting in Settings).
     if (Platform.isAndroid) {
-      final impl = flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
+      final impl =
+          flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
       return (await impl?.areNotificationsEnabled()) ?? false;
     }
-    final impl = flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
+    final impl =
+        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin>();
     final enabled = await impl?.checkPermissions();
     return enabled?.isAlertEnabled ?? enabled?.isEnabled ?? false;

@@ -167,9 +167,7 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 11.sp,
-                                color: isDark
-                                    ? Colors.white38
-                                    : Colors.black38,
+                                color: isDark ? Colors.white38 : Colors.black38,
                               ),
                             ),
                           ),
@@ -273,10 +271,11 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
                                 key: ValueKey('$index\u0000${zikr.zekr}'),
                                 zikrEntity: zikr,
                                 remaining: remaining,
-                                isFavorite: favorites.isItemFav(_favoriteKey(widget.categoryName, zikr.zekr)),
+                                isFavorite: favorites.isItemFav(_favoriteKey(
+                                    widget.categoryName, zikr.zekr)),
                                 onFavoriteTap: () =>
-                                    favorites.toggleItemFavorite(
-                                        _favoriteKey(widget.categoryName, zikr.zekr)),
+                                    favorites.toggleItemFavorite(_favoriteKey(
+                                        widget.categoryName, zikr.zekr)),
                                 onDecrement: () =>
                                     context.read<AzkarProvider>().decrement(
                                           zikr.zekr,

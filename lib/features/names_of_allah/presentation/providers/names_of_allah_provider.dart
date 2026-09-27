@@ -5,10 +5,9 @@ import 'package:flutter/material.dart';
 
 class NamesOfAllahProvider extends ChangeNotifier {
   final GetNamesOfAllahUseCase getNamesOfAllahUseCase;
-  NamesOfAllahProvider(
-      {
-      required this.getNamesOfAllahUseCase,
-    });
+  NamesOfAllahProvider({
+    required this.getNamesOfAllahUseCase,
+  });
 
 // Names of allah
   List<NamesOfAllahEntity> _namesOfAllahList = [];

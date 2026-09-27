@@ -373,8 +373,8 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
                               count: surahProvider.surahList.length,
                               itemLabel: 'سورة',
                               isFavorite: isSurahFav,
-                              onFavoriteTap: () => favoritesProvider
-                                  .toggleCategoryFavorite(
+                              onFavoriteTap: () =>
+                                  favoritesProvider.toggleCategoryFavorite(
                                       AppConstants.shortSurahsTitle),
                               onTap: () => Navigator.push(
                                   context,
@@ -446,8 +446,7 @@ class _AllAzkarPageState extends State<AllAzkarPage> {
                               await favoritesProvider
                                   .removeCategoryFavorite(category);
                               if (context.mounted) {
-                                AppHelpers.showToast(
-                                    'تم حذف "$category" بنجاح',
+                                AppHelpers.showToast('تم حذف "$category" بنجاح',
                                     status: ToastStatus.success);
                               }
                               return true;

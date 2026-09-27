@@ -16,5 +16,4 @@ class SurahModel extends SurahEntity {
       'surah': surah,
     };
   }
-
 }

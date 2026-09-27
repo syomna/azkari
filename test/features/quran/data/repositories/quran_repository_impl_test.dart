@@ -37,7 +37,8 @@ void main() {
     test('should return page number from local data source', () {
       // Arrange
       const tPageNumber = 50;
-      when(mockLocalDataSource.getSavedQuranPageNumber()).thenReturn(tPageNumber);
+      when(mockLocalDataSource.getSavedQuranPageNumber())
+          .thenReturn(tPageNumber);
 
       // Act
       final result = repository.getSavedQuranPageNumber();
@@ -63,7 +64,8 @@ void main() {
     test('should return latest surah number from local data source', () {
       // Arrange
       const tSurahNumber = 18;
-      when(mockLocalDataSource.getLatestQuranSurahNumber()).thenReturn(tSurahNumber);
+      when(mockLocalDataSource.getLatestQuranSurahNumber())
+          .thenReturn(tSurahNumber);
 
       // Act
       final result = repository.getLatestQuranSurahNumber();
@@ -90,20 +92,24 @@ void main() {
     const tUrl = 'https://example.com/audio.mp3';
     const tPath = '/storage/emulated/0/audio.mp3';
 
-    test('should complete download successfully when Dio returns success', () async {
+    test('should complete download successfully when Dio returns success',
+        () async {
       // Arrange
       when(mockDio.download(
         any,
         any,
         options: anyNamed('options'),
-      )).thenAnswer((_) async => Response(requestOptions: RequestOptions(path: tUrl)));
+      )).thenAnswer(
+          (_) async => Response(requestOptions: RequestOptions(path: tUrl)));
 
       // Act & Assert
       await expectLater(repository.downloadSurah(tUrl, tPath), completes);
-      verify(mockDio.download(tUrl, '$tPath.tmp', options: anyNamed('options'))).called(1);
+      verify(mockDio.download(tUrl, '$tPath.tmp', options: anyNamed('options')))
+          .called(1);
     });
 
-    test('should throw connection timeout message when DioException is timeout', () async {
+    test('should throw connection timeout message when DioException is timeout',
+        () async {
       // Arrange
       when(mockDio.download(any, any, options: anyNamed('options')))
           .thenThrow(DioException(
@@ -118,7 +124,9 @@ void main() {
       );
     });
 
-    test('should throw bad response message when server returns error (404/500)', () async {
+    test(
+        'should throw bad response message when server returns error (404/500)',
+        () async {
       // Arrange
       when(mockDio.download(any, any, options: anyNamed('options')))
           .thenThrow(DioException(

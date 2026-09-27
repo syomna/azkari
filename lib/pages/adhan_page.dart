@@ -112,8 +112,7 @@ class _AdhanPageState extends State<AdhanPage>
                 AnimatedBuilder(
                   animation: _pulseController,
                   builder: (context, child) {
-                    final glowOpacity =
-                        0.15 + (_pulseController.value * 0.2);
+                    final glowOpacity = 0.15 + (_pulseController.value * 0.2);
                     return Container(
                       width: 180.w,
                       height: 180.w,

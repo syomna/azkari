@@ -591,3 +591,217 @@ selected city's UTC offset.
 - `flutter test`: 138/138 passing.
 - `flutter analyze`: no issues.
 - `flutter build ios --simulator --debug` + `simctl install/launch`: app runs.
+
+## 53. App bar cleanup + compact audio bar in the Quran reader
+- App bar title is now the current surah name (`سورة الفاتحة`) instead of the
+  generic `القرآن الكريم`; it updates as the reader flips pages. The status
+  line below shows the remaining info (`الجزء • صفحة`).
+- Removed the font-size action from the app bar and the `QuranFontSheet`
+  widget; mushaf text stays at the package's default size.
+- The audio UI is no longer a large floating card (155h) that pushed the page
+  text up. It's now a slim 62h bar docked above the bottom bar: play/pause,
+  surah name, download status, a thin seek slider (live via position stream),
+  and a close button. The page only reserves ~96h of padding while audio is
+  visible.
+- Deleted the now-unused `quran_font_sheet.dart`, `audio_slider.dart`,
+  `audio_controllers.dart` and `infinate_download_icon.dart`.
+- Fixed the crash thrown when tapping the audio play button:
+  `setState() callback argument returned a Future` was caused by an arrow
+  closure (`setState(() => _x = _checkDownloaded())`) returning the future
+  from the callback; switched to a block body and added `didUpdateWidget` so
+  the download status re-checks when the surah changes while the card stays
+  alive.
+
+### Verification
+- `flutter test`: 140/140 passing (added `audio_player_card_test.dart` — 2
+  widget tests: play tap doesn't crash + status icon, and status updates on
+  surah change).
+- `flutter analyze`: no issues.
+- `flutter build ios --simulator --debug` + `simctl install/launch`: app runs.
+- Not committed (user asked to pause pushing).
+
+## 54. Elapsed / total time in the compact audio bar
+- **(Removed again in §60 — the time label caused enough friction that it was
+  dropped.)**
+- The slim audio bar now shows the playback position and total duration next
+  to the seek slider (`0:12 / 3:04`, `h:mm:ss` for surahs over an hour), e.g.
+  Al-Baqarah. The time only applies while the loaded surah is on screen;
+  otherwise it reads `0:00 / 0:00` like the slider.
+- Added a `_formatTime` helper and a `textContaining(' / ')` assertion to the
+  audio bar widget test.
+
+### Verification
+- `flutter test`: 142/142 passing.
+- `flutter analyze`: no issues.
+- `flutter build ios --simulator --debug` + `simctl install/launch`: app runs.
+- Not committed (user asked to pause pushing).
+
+## 58. Reader bottom bar: page pill only (swipe-driven navigation)
+- Removed the four arrow buttons (prev/next surah + page) from the reader
+  bottom bar. Page turns are done by horizontal swipes (the PageView), and
+  surah jumps via the surah-list icon in the app bar.
+- The bottom bar now holds only the centered page pill (`X / ٦٠٤`) in a slim
+  44h strip for at-a-glance orientation.
+- Removed the now-unused `_buildBarButton` helper and the `_goTo*Page` /
+  `_goTo*Surah` methods.
+
+### Verification
+- `flutter test`: 142/142 passing.
+- `flutter analyze`: no issues.
+- `flutter build ios --simulator --debug` + `simctl install/launch`: app runs.
+- Not committed (user asked to pause pushing).
+
+## 55. Bookmark icon updates on tap + audio bar floats over the page
+- Fixed the bookmark not updating when tapped: the reader page read the
+  provider with `listen: false` and never rebuilt on `notifyListeners()`, so
+  the icon stayed stale until a page flip. The bookmark button now renders
+  inside a `Consumer<QuranProvider>` (same wiring as before, but subscribed).
+- The audio bar is now a true floating overlay: the reserved `96h` bottom
+  padding on the mushaf page was removed, so opening audio no longer pushes the
+  page text up. Added a 250ms `AnimatedSwitcher` for show/hide.
+- Enlarged the audio bar: height 62→76h, play button 42→46h, surah name
+  13→16sp, time 10→12sp, status icon 16→18, close 18→20, play icon 26→28h.
+- Tests: extracted shared doubles to `test/helpers/quran_test_doubles.dart`
+  and `fake_just_audio_platform.dart`; added `quran_bookmark_test.dart`
+  (bookmark icon toggles immediately on tap via the Consumer wiring).
+
+### Verification
+- `flutter test`: 142/142 passing.
+- `flutter analyze`: no issues.
+- `flutter build ios --simulator --debug` + `simctl install/launch`: app runs.
+- Not committed (user asked to pause pushing).
+
+## 59. Quran audio: play while downloading (stream + cache in one transfer)
+- **(Reverted in §60 at the user's request — the reader downloads the full surah
+  before playing again. Kept here for history.)**
+- Surah audio no longer has to finish downloading before it can play. The
+  provider now uses just_audio's `LockCachingAudioSource`, which streams the
+  surah to the player **while writing it to disk in the same single transfer**,
+  so long surahs (Al-Baqarah etc.) start playing within seconds instead of
+  after a multi-minute full download. Bandwidth is not doubled.
+- Offline caching is preserved: the file is written to a `.part` file and only
+  promoted to its final name when the download completes, so the "downloaded"
+  check stays truthful. Already-cached surahs still play instantly from the
+  local file (`setFilePath`), no network.
+- Added `GetSurahAudioPathUseCase` (returns the local path without downloading)
+  and registered it in DI. Removed the now-unused `GetSurahAudioUseCase`
+  (the dio pre-download that blocked playback).
+- Provider: added `downloadProgress` (0..1), an `isBuffering` getter, and
+  internal progress tracking tied to the caching source. `resetAudio()` and
+  `dispose()` tear down the progress subscription.
+- Audio bar: the status icon now shows a determinate progress ring while a
+  surah is being cached while playing, and flips to the "available offline"
+  check automatically when caching finishes (no re-tap needed). The play button
+  spinner now means "buffering/loading", not "downloading".
+- `LockCachingAudioSource` is marked `@experimental` in just_audio; it is
+  wrapped in a single `CachingAudioSource` typedef with one ignore comment to
+  avoid scattered analyzer warnings.
+
+### Verification
+- `flutter test`: 142/142 passing.
+- `flutter analyze`: no issues.
+- `flutter build ios --simulator --debug` + `simctl install/launch`: app runs.
+- Not committed (user asked to pause pushing).
+
+## 56. Crash on popping the Quran reader screen (locked widget tree)
+- Popping back from the Quran reader crashed with
+  `setState() or markNeedsBuild() called when widget tree was locked` on the
+  `_InheritedProviderScope<QuranProvider?>`. The page's `dispose()` calls
+  `provider.resetAudio()`, which called `notifyListeners()` synchronously
+  while the framework was finalizing the route (`finalizeTree` locks the tree).
+- Fix: notifications that can originate from teardown/reset-on-pop
+  (`resetAudio()` and the audio playback-event listener) are now deferred via
+  `scheduleMicrotask` with a `hasListeners` guard (`_notifyListenersSafely`).
+- Added `quran_provider_pop_test.dart` that pops a screen whose `dispose()`
+  calls `resetAudio()` while a `Consumer` listens. Confirmed it reproduces the
+  exact lock error on the old code and passes after the fix.
+
+### Verification
+- `flutter test`: 142/142 passing.
+- `flutter analyze`: no issues.
+- `flutter build ios --simulator --debug` + `simctl install/launch`: app runs.
+- Not committed (user asked to pause pushing).
+
+## 57. Quran reader nav arrows look like page chevrons, not media controls
+- Replaced the Cupertino `forward_end`/`backward_end` double-triangle glyphs
+  (which read as "skip to next/previous track" media controls) with chevrons:
+  pages use `Icons.chevron_left`/`chevron_right`, surahs use the double
+  chevrons `keyboard_double_arrow_left`/`right` for the bigger jump.
+- The bottom bar `Row` already lays out right→left under the app's RTL
+  locale, so "previous" sits on the right (chevrons point right) and "next"
+  on the left (chevrons point left); no ordering change was needed.
+
+### Verification
+- `flutter test`: 142/142 passing.
+- `flutter analyze`: no issues.
+- `flutter build ios --simulator --debug` + `simctl install/launch`: app runs.
+- Not committed (user asked to pause pushing).
+
+## 60. Audio back to full download, no time label, slider assertion fixed
+- Undid the §59 stream-while-downloading implementation. `QuranProvider` is back
+  to `GetSurahAudioUseCase`: the surah is downloaded completely to its local path
+  and only then `setFilePath()` + `play()` run. `GetSurahAudioPathUseCase` and its
+  DI registration are gone; `QuranRepository.downloadSurah` and the full-download
+  behaviour are unchanged.
+- Removed the elapsed/total time text from the audio bar (added in §54, then
+  restored in §61 with the fix below).
+- Fixed the crash reported when stopping playback:
+  `'value >= min && value <= max': Value 12318.0 is not between minimum 0.0 and
+  maximum 1.0`. The position stream can still carry the last position while the
+  duration is unknown, which collapsed `Slider.max` to 1ms. The value is now
+  clamped to `[0, max]` before the `Slider` is built.
+- Restored the status icon to the plain download spinner (no progress ring), and
+  the play button spinner again means "downloading", not "buffering".
+- Tests: `ControllableQuranProvider` in `test/helpers/quran_test_doubles.dart`
+  exposes the position stream and the playing surah directly, so
+  `audio_player_card_test.dart` can reproduce the stale-position/unknown-duration
+  case without depending on just_audio internals. Verified the test throws the
+  exact assertion when the clamp is removed.
+
+### Verification
+- `flutter test`: 143/143 passing.
+- `flutter analyze`: no issues.
+- `flutter build ios --simulator --debug` + `simctl install/launch`: app runs.
+- Not committed (user asked to pause pushing).
+
+## 61. Play time is back in the audio bar and actually updates
+- Restored the `0:12 / 3:04` counter in the audio bar (dropped in §60) and fixed
+  why it never showed in the first place: the label was built inside a
+  `StreamBuilder` on `positionStream` only, and it read `player.duration`
+  synchronously. just_audio learns the duration *after* loading, and no position
+  event arrives while the surah is paused, so the text stayed `0:00 / 0:00` and
+  was never refreshed even once the duration was known.
+- The counter now also listens to `player.durationStream`, so the total appears
+  as soon as the surah loads — even before playback starts — and the elapsed part
+  follows the position stream. The `Slider` keeps the §60 clamp, so a stale
+  position with an unknown duration can no longer trip
+  `'value >= min && value <= max'`.
+- Tests: `ControllableQuranProvider` exposes `emitDuration()` alongside
+  `emitPosition()`, so `audio_player_card_test.dart` covers the "duration
+  arrives without any position event" case. Verified the test fails against the
+  old `positionStream`-only implementation.
+
+### Verification
+- `flutter test`: 144/144 passing.
+- `flutter analyze`: no issues.
+- Not committed (user asked to pause pushing).
+
+## 62. Opening the Quran reader starts at the bookmarked page
+- The reader now prefers the bookmark over the auto-saved "last read" position
+  when it opens: `QuranDetailPage.initState()` starts at
+  `provider.bookmarkPage` if a bookmark exists, and only falls back to
+  `provider.savedLatestQuranPageNumber` when there is none (or the value is
+  outside the 1..604 mushaf range, which is treated as corrupt and ignored).
+  Previously the bookmark was display-only — the reader always resumed from the
+  auto-saved page, so the bookmark icon pointed at a page you had to hunt for.
+- Flipping pages still re-saves the auto-resume position, so removing the
+  bookmark returns the reader to where you left off.
+- Tests: `quran_details_page_bookmark_test.dart` mounts the real reader and
+  covers all three cases (bookmark wins, fallback without a bookmark, invalid
+  bookmark ignored). Verified they fail against the old resume-only logic.
+  `buildTestQuranProvider` gained a `getQuranPageNumberUseCase` seam.
+
+### Verification
+- `flutter test`: 147/147 passing.
+- `flutter analyze`: no issues.
+- Not committed (user asked to pause pushing).

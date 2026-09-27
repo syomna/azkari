@@ -107,8 +107,7 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
                       Expanded(
                         child: Row(
                           children: [
-                            Icon(
-                                CupertinoIcons.calendar,
+                            Icon(CupertinoIcons.calendar,
                                 color: isDark ? Colors.grey : Colors.white,
                                 size: 14.sp),
                             SizedBox(width: 5.w),

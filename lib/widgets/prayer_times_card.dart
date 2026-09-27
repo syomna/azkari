@@ -70,8 +70,11 @@ class _PrayerTimesCardState extends State<PrayerTimesCard> {
                     nextPrayer == Prayer.fajr, isDark),
               ),
               Expanded(
-                child: _buildPrayerItem('الشروق', widget.displayTimes['sunrise'],
-                    nextPrayer == Prayer.sunrise, isDark),
+                child: _buildPrayerItem(
+                    'الشروق',
+                    widget.displayTimes['sunrise'],
+                    nextPrayer == Prayer.sunrise,
+                    isDark),
               ),
               Expanded(
                 child: _buildPrayerItem('الظهر', widget.displayTimes['dhuhr'],
@@ -82,8 +85,11 @@ class _PrayerTimesCardState extends State<PrayerTimesCard> {
                     nextPrayer == Prayer.asr, isDark),
               ),
               Expanded(
-                child: _buildPrayerItem('المغرب', widget.displayTimes['maghrib'],
-                    nextPrayer == Prayer.maghrib, isDark),
+                child: _buildPrayerItem(
+                    'المغرب',
+                    widget.displayTimes['maghrib'],
+                    nextPrayer == Prayer.maghrib,
+                    isDark),
               ),
               Expanded(
                 child: _buildPrayerItem('العشاء', widget.displayTimes['isha'],

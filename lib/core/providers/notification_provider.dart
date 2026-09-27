@@ -130,8 +130,7 @@ class NotificationProvider extends ChangeNotifier {
   Future<void> refreshNotifications() async {
     _areNotificationsEnabled = _prefs.getBool(_notificationsEnabledKey) ?? true;
 
-    if (_areNotificationsEnabled &&
-        !_hasUnchangedSchedulePlan()) {
+    if (_areNotificationsEnabled && !_hasUnchangedSchedulePlan()) {
       await _rescheduleNotifications();
       log('Notifications refreshed on app launch');
     }
@@ -237,8 +236,7 @@ class NotificationProvider extends ChangeNotifier {
           e = await _notificationService.scheduleDayNightNotifications(
               lat, lng);
           error ??= e;
-          e = await _notificationService.scheduleDayNightNotifications(
-              lat, lng,
+          e = await _notificationService.scheduleDayNightNotifications(lat, lng,
               isDay: true);
           error ??= e;
         }
@@ -247,8 +245,7 @@ class NotificationProvider extends ChangeNotifier {
           error ??= e;
         }
         if (isQuranAfterSalahEnabled) {
-          e =
-              await _notificationService.scheduleQuranReminderAfterSalah();
+          e = await _notificationService.scheduleQuranReminderAfterSalah();
           error ??= e;
         }
       } else {
@@ -262,8 +259,7 @@ class NotificationProvider extends ChangeNotifier {
     // --- Location-independent notifications ---
     try {
       if (isPeriodicAzkarEnabled) {
-        final e =
-            await _notificationService.periodicallyShowNotification();
+        final e = await _notificationService.periodicallyShowNotification();
         error ??= e;
       }
       if (isProphetBlessingsEnabled) {

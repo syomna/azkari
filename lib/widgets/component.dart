@@ -65,8 +65,8 @@ class Component extends StatelessWidget {
                     text,
                     textAlign: TextAlign.center,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        fontSize: 11.sp, fontWeight: FontWeight.bold),
+                    style:
+                        TextStyle(fontSize: 11.sp, fontWeight: FontWeight.bold),
                     maxLines: 1,
                   ),
                 ),

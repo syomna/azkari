@@ -8,8 +8,9 @@ class ThemeProvider extends ChangeNotifier {
 
   ThemeProvider({required this.prefs}) {
     _themeMode = _readMode();
-    _textScaleFactor =
-        (prefs.getDouble(_textScaleFactorKey) ?? 1.0).clamp(0.8, 1.5).toDouble();
+    _textScaleFactor = (prefs.getDouble(_textScaleFactorKey) ?? 1.0)
+        .clamp(0.8, 1.5)
+        .toDouble();
   }
 
   static const String _themeModeKey = 'themeMode';
@@ -34,8 +35,9 @@ class ThemeProvider extends ChangeNotifier {
 
   Future<void> loadTheme() async {
     _themeMode = _readMode();
-    _textScaleFactor =
-        (prefs.getDouble(_textScaleFactorKey) ?? 1.0).clamp(0.8, 1.5).toDouble();
+    _textScaleFactor = (prefs.getDouble(_textScaleFactorKey) ?? 1.0)
+        .clamp(0.8, 1.5)
+        .toDouble();
     notifyListeners();
   }
 

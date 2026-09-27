@@ -43,13 +43,25 @@ class QuranProvider with ChangeNotifier {
       required this.getQuranBookmarkPageUseCase,
       required this.clearQuranBookmarkUseCase}) {
     _playerSubscription = _player.playbackEventStream.listen(
-      (event) => notifyListeners(),
+      (event) => _notifyListenersSafely(),
       onError: (Object e, StackTrace st) {
         _isDownloading = false;
         _errorMessage = 'حدث خطأ في مشغل الصوت';
-        notifyListeners();
+        _notifyListenersSafely();
       },
     );
+  }
+
+  // `resetAudio` يمكن استداؤه من دالة `dispose` للصفحة أثناء الرجوع، وهناك
+  // يكون الـ widget tree مقفلاً (finalizeTree)؛ لذا لا يجوز استدعاء
+  // notifyListeners() بشكل متزامن وإلا انكسرت التطبيق. التأجيل إلى microtask
+  // يضمن تحديث الواجهة بعد انتهاء القفل.
+  void _notifyListenersSafely() {
+    scheduleMicrotask(() {
+      if (hasListeners) {
+        notifyListeners();
+      }
+    });
   }
 
   late final StreamSubscription<PlaybackEvent> _playerSubscription;
@@ -98,8 +110,10 @@ class QuranProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> saveBookmark({required int surahNumber, required int pageNumber}) async {
-    await saveQuranBookmarkUseCase(surahNumber: surahNumber, pageNumber: pageNumber);
+  Future<void> saveBookmark(
+      {required int surahNumber, required int pageNumber}) async {
+    await saveQuranBookmarkUseCase(
+        surahNumber: surahNumber, pageNumber: pageNumber);
     notifyListeners();
   }
 
@@ -211,7 +225,7 @@ class QuranProvider with ChangeNotifier {
     _progress = 0;
     _currentPlayingSurah = null;
 
-    notifyListeners();
+    _notifyListenersSafely();
   }
 
   void pauseForNotification() {

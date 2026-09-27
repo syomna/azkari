@@ -27,12 +27,13 @@ class _NamesOfAllahPageState extends State<NamesOfAllahPage> {
 
   @override
   Widget build(BuildContext context) {
-    final status =
-        context.select<NamesOfAllahProvider, AppLoadingStatus>((p) => p.namesOfAllahStatus);
-    final errorMessage = context
-        .select<NamesOfAllahProvider, String?>((p) => p.namesOfAllahErrorMessage);
-    final namesList = context.select<NamesOfAllahProvider, List<NamesOfAllahEntity>>(
-        (p) => p.namesOfAllahList);
+    final status = context.select<NamesOfAllahProvider, AppLoadingStatus>(
+        (p) => p.namesOfAllahStatus);
+    final errorMessage = context.select<NamesOfAllahProvider, String?>(
+        (p) => p.namesOfAllahErrorMessage);
+    final namesList =
+        context.select<NamesOfAllahProvider, List<NamesOfAllahEntity>>(
+            (p) => p.namesOfAllahList);
 
     return Scaffold(
       appBar: AppBar(
@@ -41,9 +42,7 @@ class _NamesOfAllahPageState extends State<NamesOfAllahPage> {
         elevation: 0,
       ),
       body: switch (status) {
-        AppLoadingStatus.loading ||
-        AppLoadingStatus.initial =>
-          const Center(
+        AppLoadingStatus.loading || AppLoadingStatus.initial => const Center(
             child: CircularProgressIndicator(color: AppPalette.mainColor),
           ),
         AppLoadingStatus.error => _buildErrorState(errorMessage),
@@ -78,9 +77,9 @@ class _NamesOfAllahPageState extends State<NamesOfAllahPage> {
           ),
           SizedBox(height: 16.h),
           ElevatedButton(
-            onPressed: () => Provider.of<NamesOfAllahProvider>(context,
-                    listen: false)
-                .loadNamesOfAllah(),
+            onPressed: () =>
+                Provider.of<NamesOfAllahProvider>(context, listen: false)
+                    .loadNamesOfAllah(),
             child: const Text('إعادة المحاولة'),
           ),
         ],

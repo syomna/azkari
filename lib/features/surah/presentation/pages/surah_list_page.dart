@@ -43,8 +43,8 @@ class _SurahListPageState extends State<SurahListPage> {
   List<SurahEntity> _filterSurahs(String query, List<SurahEntity> baseList) {
     if (query.isEmpty) return baseList;
     return baseList
-        .where((surah) =>
-            surah.name.toLowerCase().contains(query.toLowerCase()))
+        .where(
+            (surah) => surah.name.toLowerCase().contains(query.toLowerCase()))
         .toList();
   }
 
@@ -82,9 +82,8 @@ class _SurahListPageState extends State<SurahListPage> {
                   case AppLoadingStatus.error:
                     return _buildErrorState(surahProvider.surahErrorMessage);
                   case AppLoadingStatus.loaded:
-                    final surahs =
-                        _filterSurahs(_searchController.text,
-                            surahProvider.surahList);
+                    final surahs = _filterSurahs(
+                        _searchController.text, surahProvider.surahList);
                     if (surahs.isEmpty) {
                       return _buildEmptyState();
                     }

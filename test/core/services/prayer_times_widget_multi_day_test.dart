@@ -26,7 +26,14 @@ void main() {
       final d = DateTime.parse(keys[i]);
       expect(d.difference(first).inDays, i, reason: 'days must be sequential');
       final day = map[keys[i]]!;
-      for (final prayer in ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha']) {
+      for (final prayer in [
+        'fajr',
+        'sunrise',
+        'dhuhr',
+        'asr',
+        'maghrib',
+        'isha'
+      ]) {
         final raw = day[prayer]!;
         expect(
           RegExp(r'^\d{1,2}:\d{2} (ص|م)$').hasMatch(raw),

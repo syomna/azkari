@@ -34,7 +34,8 @@ class _FakeAzkarRepository implements AzkarRepository {
       const Right(unit);
 
   @override
-  Future<Either<Failure, void>> deleteCustomCategory(String categoryName) async =>
+  Future<Either<Failure, void>> deleteCustomCategory(
+          String categoryName) async =>
       const Right(null);
 
   @override
@@ -70,8 +71,7 @@ void main() {
       getCustomAzkarUseCase: GetCustomAzkarUseCase(azkarRepository: repo),
       saveCustomAzkarUseCase: SaveCustomAzkarUseCase(azkarRepository: repo),
       deleteCustomAzkarUseCase: DeleteCustomAzkarUseCase(azkarRepository: repo),
-      updateCustomAzkarUseCase:
-          UpdateCustomAzkarUseCase(azkarRepository: repo),
+      updateCustomAzkarUseCase: UpdateCustomAzkarUseCase(azkarRepository: repo),
     );
   });
 

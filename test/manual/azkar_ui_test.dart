@@ -1220,5 +1220,4 @@ void main() {
     _expectNoException(tester);
     expect(harness.favorites.isCategoryFav('قسم سريع'), isFalse);
   });
-
 }

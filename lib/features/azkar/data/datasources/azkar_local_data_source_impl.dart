@@ -47,16 +47,18 @@ class AzkarLocalDataSourceImpl extends AzkarLocalDataSource {
       return Left(DatabaseFailure('Failed to save custom azkar to SQLite: $e'));
     }
   }
+
   @override
   Future<void> deleteCustomCategory(String categoryName) async {
-    await dbHelper.deleteCustomCategory(categoryName); 
+    await dbHelper.deleteCustomCategory(categoryName);
   }
 
   @override
   Future<Either<Failure, Unit>> replaceCustomCategory(
       String oldCategory, List<AzkarModel> items) async {
     try {
-      await dbHelper.replaceCustomCategory(oldCategory: oldCategory, items: items);
+      await dbHelper.replaceCustomCategory(
+          oldCategory: oldCategory, items: items);
       return const Right(unit);
     } catch (e) {
       return Left(

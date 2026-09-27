@@ -55,188 +55,184 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Builder(
-      builder: (context) {
-        final azkarStatus = context
-            .select<AzkarProvider, AppLoadingStatus>((p) => p.azkarStatus);
-        if (azkarStatus == AppLoadingStatus.initial ||
-            azkarStatus == AppLoadingStatus.loading) {
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(
-                color: AppPalette.mainColor,
+    return Builder(builder: (context) {
+      final azkarStatus =
+          context.select<AzkarProvider, AppLoadingStatus>((p) => p.azkarStatus);
+      if (azkarStatus == AppLoadingStatus.initial ||
+          azkarStatus == AppLoadingStatus.loading) {
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(
+              color: AppPalette.mainColor,
+            ),
+          ),
+        );
+      } else if (azkarStatus == AppLoadingStatus.error) {
+        final error =
+            context.select<AzkarProvider, String?>((p) => p.azkarErrorMessage);
+        return Scaffold(
+          body: Center(child: Text('حدث خطأ أثناء تحميل الأذكار: $error')),
+        );
+      } else {
+        return Scaffold(
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isDark
+                    ? [const Color(0xFF1A1A1A), const Color(0xFF121212)]
+                    : [const Color(0xFFFDFDFD), const Color(0xFFF5F5F5)],
               ),
             ),
-          );
-        } else if (azkarStatus == AppLoadingStatus.error) {
-          final error = context.select<AzkarProvider, String?>(
-              (p) => p.azkarErrorMessage);
-          return Scaffold(
-            body: Center(
-                child: Text('حدث خطأ أثناء تحميل الأذكار: $error')),
-          );
-        } else {
-          return Scaffold(
-            body: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: isDark
-                      ? [const Color(0xFF1A1A1A), const Color(0xFF121212)]
-                      : [const Color(0xFFFDFDFD), const Color(0xFFF5F5F5)],
-                ),
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 5.h),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Flexible(
-                              fit: FlexFit.loose,
-                              child: CityDropdownButton(),
-                            ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _buildHeaderAction(
-                                    context,
-                                    isDark
-                                        ? CupertinoIcons.sun_max
-                                        : CupertinoIcons.moon_stars,
-                                    () => context
-                                        .read<ThemeProvider>()
-                                        .toggleTheme()),
-                                SizedBox(width: 10.w),
-                                _buildHeaderAction(
-                                    context,
-                                    CupertinoIcons.bubble_left_bubble_right,
-                                    () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const ContactUsPage()))),
-                                SizedBox(width: 10.w),
-                                _buildHeaderAction(
-                                    context,
-                                    CupertinoIcons.settings,
-                                    () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const SettingsPage()))),
-                              ],
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 10.h),
-                        const WelcomingWidget(),
-                        SizedBox(height: 15.h),
-                        Consumer<PrayerTimesProvider>(
-                          builder: (context, provider, _) {
-                            if (provider.prayerTimes == null) {
-                              return const SizedBox.shrink();
-                            }
-                            return PrayerTimesCard(
-                              times: provider.prayerTimes!,
-                              displayTimes: provider.allDisplayTimes,
-                              cityName: provider.cityName,
-                            );
-                          },
-                        ),
-                        SizedBox(height: 12.h),
-                        const WidgetGuideCard(),
-                        SizedBox(height: 15.h),
-                        _buildTitle('ذكر اليوم'),
-                        SizedBox(height: 15.h),
-                        const DayZekrWidget(),
-                        SizedBox(height: 10.h),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                                child: _buildTitle('الأذكار والأدعية')),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) => const AllAzkarPage()));
-                              },
-                              child: const Text(
-                                'عرض الكل',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    color: AppPalette.mainColor,
-                                    fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 5.h),
-                        GridView(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 10,
-                            childAspectRatio: 1,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 5.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Flexible(
+                            fit: FlexFit.loose,
+                            child: CityDropdownButton(),
                           ),
-                          children: azkarList,
-                        ),
-                        if (Platform.isAndroid) SizedBox(height: 10.h),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                                child: _buildTitle('أسماء الله الحسنى')),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) =>
-                                            const NamesOfAllahPage()));
-                              },
-                              child: const Text(
-                                'عرض الكل',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    color: AppPalette.mainColor,
-                                    fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 10.h),
-                        Builder(builder: (context) {
-                          final names = context
-                              .read<NamesOfAllahProvider>()
-                              .namesOfAllahList;
-                          if (names.isEmpty) return const SizedBox.shrink();
-                          return NamesOfAllahCard(
-                            item: names[_randomNameIndex % names.length],
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildHeaderAction(
+                                  context,
+                                  isDark
+                                      ? CupertinoIcons.sun_max
+                                      : CupertinoIcons.moon_stars,
+                                  () => context
+                                      .read<ThemeProvider>()
+                                      .toggleTheme()),
+                              SizedBox(width: 10.w),
+                              _buildHeaderAction(
+                                  context,
+                                  CupertinoIcons.bubble_left_bubble_right,
+                                  () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              const ContactUsPage()))),
+                              SizedBox(width: 10.w),
+                              _buildHeaderAction(
+                                  context,
+                                  CupertinoIcons.settings,
+                                  () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              const SettingsPage()))),
+                            ],
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10.h),
+                      const WelcomingWidget(),
+                      SizedBox(height: 15.h),
+                      Consumer<PrayerTimesProvider>(
+                        builder: (context, provider, _) {
+                          if (provider.prayerTimes == null) {
+                            return const SizedBox.shrink();
+                          }
+                          return PrayerTimesCard(
+                            times: provider.prayerTimes!,
+                            displayTimes: provider.allDisplayTimes,
+                            cityName: provider.cityName,
                           );
-                        }),
-                        SizedBox(height: 40.h),
-                      ],
-                    ),
+                        },
+                      ),
+                      SizedBox(height: 12.h),
+                      const WidgetGuideCard(),
+                      SizedBox(height: 15.h),
+                      _buildTitle('ذكر اليوم'),
+                      SizedBox(height: 15.h),
+                      const DayZekrWidget(),
+                      SizedBox(height: 10.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(child: _buildTitle('الأذكار والأدعية')),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const AllAzkarPage()));
+                            },
+                            child: const Text(
+                              'عرض الكل',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  color: AppPalette.mainColor,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 5.h),
+                      GridView(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          childAspectRatio: 1,
+                        ),
+                        children: azkarList,
+                      ),
+                      if (Platform.isAndroid) SizedBox(height: 10.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(child: _buildTitle('أسماء الله الحسنى')),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) =>
+                                          const NamesOfAllahPage()));
+                            },
+                            child: const Text(
+                              'عرض الكل',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  color: AppPalette.mainColor,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10.h),
+                      Builder(builder: (context) {
+                        final names = context
+                            .read<NamesOfAllahProvider>()
+                            .namesOfAllahList;
+                        if (names.isEmpty) return const SizedBox.shrink();
+                        return NamesOfAllahCard(
+                          item: names[_randomNameIndex % names.length],
+                        );
+                      }),
+                      SizedBox(height: 40.h),
+                    ],
                   ),
                 ),
               ),
             ),
-          );
-        }
-      });
+          ),
+        );
+      }
+    });
   }
 
   Text _buildTitle(String title) {

@@ -100,9 +100,7 @@ class SurahItem extends StatelessWidget {
                           .read<FavoritesProvider>()
                           .toggleItemFavorite(surah.surah),
                       child: Icon(
-                        isFav
-                            ? Icons.star_rounded
-                            : Icons.star_outline_rounded,
+                        isFav ? Icons.star_rounded : Icons.star_outline_rounded,
                         size: 22.sp,
                         color: isFav
                             ? const Color(0xFFF59E0B)

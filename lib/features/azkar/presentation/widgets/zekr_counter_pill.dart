@@ -1,4 +1,3 @@
-
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:flutter/material.dart';

@@ -9,8 +9,7 @@ class WidgetGuideHelper {
   static Future<void> showIfNeeded(
     BuildContext context,
   ) async {
-    final preferences =
-        await SharedPreferences.getInstance();
+    final preferences = await SharedPreferences.getInstance();
 
     final hasSeenGuide = preferences.getBool(
           WidgetGuidePage.seenPreferenceKey,

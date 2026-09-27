@@ -62,25 +62,23 @@ class QiblaProvider extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
     _compassUnavailable = false;
-    _compassSubscription = FlutterCompass.events!
-        .distinct((prev, next) {
-          final prevHeading = prev.heading;
-          final nextHeading = next.heading;
-          if (prevHeading == null || nextHeading == null) return false;
-          return (prevHeading - nextHeading).abs() < 0.5;
-        })
-        .listen(
-          (event) {
-            if (_disposed) return;
-            _currentHeading = event.heading ?? 0;
-            _notify();
-          },
-          onError: (Object error, StackTrace stackTrace) {
-            if (_disposed) return;
-            _compassUnavailable = true;
-            _notify();
-          },
-        );
+    _compassSubscription = FlutterCompass.events!.distinct((prev, next) {
+      final prevHeading = prev.heading;
+      final nextHeading = next.heading;
+      if (prevHeading == null || nextHeading == null) return false;
+      return (prevHeading - nextHeading).abs() < 0.5;
+    }).listen(
+      (event) {
+        if (_disposed) return;
+        _currentHeading = event.heading ?? 0;
+        _notify();
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        if (_disposed) return;
+        _compassUnavailable = true;
+        _notify();
+      },
+    );
   }
 
   @override

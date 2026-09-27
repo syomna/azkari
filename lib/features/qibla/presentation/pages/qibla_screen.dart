@@ -75,7 +75,8 @@ class QiblaScreen extends StatelessWidget {
                   Text(
                     'البوصلة غير متوفرة على هذا الجهاز',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
+                    style:
+                        TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
                   ),
                   Text(
                     'لا يمكن تحديد اتجاه القبلة دون مستشعر البوصلة.',

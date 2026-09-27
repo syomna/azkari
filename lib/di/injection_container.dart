@@ -65,7 +65,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetAzkarUseCase(azkarRepository: sl()));
   sl.registerLazySingleton(() => GetCustomAzkarUseCase(azkarRepository: sl()));
   sl.registerLazySingleton(() => SaveCustomAzkarUseCase(azkarRepository: sl()));
-  sl.registerLazySingleton(() => DeleteCustomAzkarUseCase(azkarRepository: sl()));
+  sl.registerLazySingleton(
+      () => DeleteCustomAzkarUseCase(azkarRepository: sl()));
   sl.registerLazySingleton(
       () => UpdateCustomAzkarUseCase(azkarRepository: sl()));
 

@@ -226,8 +226,10 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
 
                     for (int i = 0; i < zikrControllers.length; i++) {
                       final text = zikrControllers[i].text.trim();
-                      final countVal =
-                          int.tryParse(AppHelpers.normalizeArabicIndicDigits(countControllers[i].text)) ?? 1;
+                      final countVal = int.tryParse(
+                              AppHelpers.normalizeArabicIndicDigits(
+                                  countControllers[i].text)) ??
+                          1;
                       if (text.isNotEmpty) {
                         if (countVal <= 0) {
                           AppHelpers.showToast(
@@ -243,8 +245,7 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
                     }
 
                     if (newTitle.isNotEmpty && structuredAzkar.isNotEmpty) {
-                      final favorites =
-                          context.read<FavoritesProvider>();
+                      final favorites = context.read<FavoritesProvider>();
                       // 1️⃣ معرفة ما إذا كان الاسم القديم موجود في المفضلة قبل التعديل
                       final bool isOriginallyFavorited =
                           favorites.isCategoryFav(widget.category);
@@ -281,8 +282,7 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
                           structuredAzkar.length) {
                         for (int i = 0; i < structuredAzkar.length; i++) {
                           final oldZekr = widget.currentAzkar[i].zekr;
-                          final newZekr =
-                              structuredAzkar[i]['text'] as String;
+                          final newZekr = structuredAzkar[i]['text'] as String;
                           if (oldZekr != newZekr) {
                             await favorites.renameItemFavorite(
                                 newTitle, oldZekr, newZekr);

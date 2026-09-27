@@ -1,10 +1,7 @@
-import 'package:azkar_app/core/constants/app_constants.dart';
-import 'package:azkar_app/core/providers/theme_provider.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/audio_player_card.dart';
-import 'package:azkar_app/features/quran/presentation/widgets/quran_font_sheet.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/quran_list.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/tafseer_sheet.dart';
 import 'package:flutter/cupertino.dart';
@@ -44,9 +41,17 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
   void initState() {
     super.initState();
     _generateVirtualPages();
-
     _provider = Provider.of<QuranProvider>(context, listen: false);
-    int savedPage = _provider.savedLatestQuranPageNumber ?? 1;
+
+    // الإشارة المرجعية (أيقونة الـ bookmark) لها الأولوية عند الفتح: إن وُجدت
+    // نبدأ من صفحتها، وإلا نرجع لآخر صفحة قُرئت تلقائياً. قيمة خارج حدود
+    // المصحف (1..604) تُعتبر تالفة وتُتجاهل.
+    final int? bookmarkPage = _provider.bookmarkPage;
+    final bool bookmarkIsValid =
+        bookmarkPage != null && bookmarkPage >= 1 && bookmarkPage <= 604;
+    int savedPage = (bookmarkIsValid ? bookmarkPage : null) ??
+        _provider.savedLatestQuranPageNumber ??
+        1;
     if (savedPage < 1) savedPage = 1;
     if (savedPage > 604) savedPage = 604;
 
@@ -76,7 +81,6 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
     final theme = Theme.of(context);
     final int currentSurahNumber = _currentSurah;
     final int currentPageNumber = _currentIndex + 1;
@@ -86,26 +90,34 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
       bottomNavigationBar: _buildBottomBar(theme),
       body: Stack(
         children: [
-          Padding(
-            // إفساح مساحة كافية كي لا يغطي كارت الصوت آخر سطر في الصفحة
-            padding: EdgeInsets.only(bottom: _isAudioVisible ? 190.h : 0),
-            child: quran.QuranPageView(
-              pageController: _pageController,
-              onPageChanged: _onPageChanged,
-              onLongPressStart: (surah, verse, details) {
-                HapticFeedback.mediumImpact();
-                _showTafseer(surah, verse);
-              },
-              ayahStyle: TextStyle(
-                fontSize: 23.55 * themeProvider.textScaleFactor,
-              ),
-              pageBackgroundColor: theme.scaffoldBackgroundColor,
-            ),
+          // مشغل الصوت يطفو فوق الصفحة كـ overlay ولا يزاحم نص المصحف:
+          // لا يتم حجز مساحة أسفل الصفحة عند ظهوره.
+          quran.QuranPageView(
+            pageController: _pageController,
+            onPageChanged: _onPageChanged,
+            onLongPressStart: (surah, verse, details) {
+              HapticFeedback.mediumImpact();
+              _showTafseer(surah, verse);
+            },
+            ayahStyle: const TextStyle(fontSize: 23.55),
+            pageBackgroundColor: theme.scaffoldBackgroundColor,
           ),
-          Align(
-            alignment: Alignment.bottomCenter,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
             child: _isAudioVisible
-                ? AudioPlayerCard(surahNumber: currentSurahNumber)
+                ? Align(
+                    key: const ValueKey('audio_overlay'),
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: 12.h),
+                      child: AudioPlayerCard(
+                        surahNumber: currentSurahNumber,
+                        onClose: () => setState(() => _isAudioVisible = false),
+                      ),
+                    ),
+                  )
                 : const SizedBox.shrink(),
           ),
         ],
@@ -129,11 +141,13 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
       centerTitle: true,
       leading: const BackButton(),
       title: Text(
-        AppConstants.holyQuran,
+        'سورة ${quran.getSurahNameArabic(currentSurahNumber)}',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontFamily: AppPalette.amiriFontFamily,
           fontWeight: FontWeight.bold,
-          fontSize: 20.sp,
+          fontSize: 18.sp,
         ),
       ),
       actions: [
@@ -141,17 +155,6 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
           tooltip: 'قائمة السور',
           icon: const Icon(CupertinoIcons.list_bullet),
           onPressed: _showSurahPicker,
-        ),
-        IconButton(
-          tooltip: 'حجم الخط',
-          icon: const Icon(Icons.format_size_rounded),
-          onPressed: () {
-            showModalBottomSheet<void>(
-              context: context,
-              isScrollControlled: true,
-              builder: (_) => const QuranFontSheet(),
-            );
-          },
         ),
         _buildBookmarkButton(),
         IconButton(
@@ -181,7 +184,7 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 5.h),
               child: Text(
-                'سورة ${quran.getSurahNameArabic(currentSurahNumber)} • الجزء ${AppHelpers.getArabicNumber(juz)} • صفحة ${AppHelpers.getArabicNumber(currentPageNumber)}',
+                'الجزء ${AppHelpers.getArabicNumber(juz)} • صفحة ${AppHelpers.getArabicNumber(currentPageNumber)}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
@@ -200,31 +203,41 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
   }
 
   Widget _buildBookmarkButton() {
-    final int currentSurahNumber = _currentSurah;
-    final int currentPageNumber = _currentIndex + 1;
-    final bool isBookmarked = _provider.bookmarkSurah == currentSurahNumber &&
-        _provider.bookmarkPage == currentPageNumber;
+    return Consumer<QuranProvider>(
+      builder: (context, provider, child) {
+        final int currentSurahNumber = _currentSurah;
+        final int currentPageNumber = _currentIndex + 1;
+        final bool isBookmarked =
+            provider.bookmarkSurah == currentSurahNumber &&
+                provider.bookmarkPage == currentPageNumber;
 
-    return IconButton(
-      tooltip: isBookmarked ? 'إزالة الإشارة المرجعية' : 'إضافة إشارة مرجعية',
-      icon: Icon(
-        isBookmarked ? CupertinoIcons.bookmark_fill : CupertinoIcons.bookmark,
-        color: isBookmarked ? Colors.amber : null,
-      ),
-      onPressed: () {
-        if (isBookmarked) {
-          _provider.clearBookmark();
-        } else {
-          _provider.saveBookmark(
-            surahNumber: currentSurahNumber,
-            pageNumber: currentPageNumber,
-          );
-        }
+        return IconButton(
+          tooltip:
+              isBookmarked ? 'إزالة الإشارة المرجعية' : 'إضافة إشارة مرجعية',
+          icon: Icon(
+            isBookmarked
+                ? CupertinoIcons.bookmark_fill
+                : CupertinoIcons.bookmark,
+            color: isBookmarked ? Colors.amber : null,
+          ),
+          onPressed: () {
+            if (isBookmarked) {
+              provider.clearBookmark();
+            } else {
+              provider.saveBookmark(
+                surahNumber: currentSurahNumber,
+                pageNumber: currentPageNumber,
+              );
+            }
+          },
+        );
       },
     );
   }
 
   Widget _buildBottomBar(ThemeData theme) {
+    // شريط سفلي ضئيل: مؤشر الصفحة فقط. التقليب يتم بالتمرير الأفقي والتسور
+    // من قائمة السور في الـ AppBar.
     return Container(
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
@@ -235,41 +248,9 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 54.h,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildBarButton(
-                theme: theme,
-                icon: CupertinoIcons.forward_end_alt,
-                tooltip: 'السورة السابقة',
-                enabled: _currentSurah > 1,
-                onTap: _goToPreviousSurah,
-              ),
-              _buildBarButton(
-                theme: theme,
-                icon: CupertinoIcons.forward_end,
-                tooltip: 'الصفحة السابقة',
-                enabled: _currentIndex > 0,
-                onTap: _goToPreviousPage,
-              ),
-              _buildPagePill(theme),
-              _buildBarButton(
-                theme: theme,
-                icon: CupertinoIcons.backward_end,
-                tooltip: 'الصفحة التالية',
-                enabled: _currentIndex < _virtualPages.length - 1,
-                onTap: _goToNextPage,
-              ),
-              _buildBarButton(
-                theme: theme,
-                icon: CupertinoIcons.backward_end_alt,
-                tooltip: 'السورة التالية',
-                enabled: _currentSurah < 114,
-                onTap: _goToNextSurah,
-              ),
-            ],
-          ),
+          height: 44.h,
+          width: double.infinity,
+          child: Center(child: _buildPagePill(theme)),
         ),
       ),
     );
@@ -298,39 +279,6 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
     );
   }
 
-  Widget _buildBarButton({
-    required ThemeData theme,
-    required IconData icon,
-    required String tooltip,
-    required bool enabled,
-    required VoidCallback onTap,
-  }) {
-    final Color enabledColor = theme.colorScheme.onSurface;
-    final Color disabledColor = theme.colorScheme.onSurface.withValues(
-      alpha: 0.25,
-    );
-
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: enabled ? onTap : null,
-          borderRadius: BorderRadius.circular(18.r),
-          child: SizedBox(
-            width: 38.w,
-            height: 38.h,
-            child: Icon(
-              icon,
-              size: 20.sp,
-              color: enabled ? enabledColor : disabledColor,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   // السورة المقصودة في الصفحة الحالية (أول سورة تظهر أعلى الصفحة)
   int get _currentSurah {
     final segments = _virtualPages[_currentIndex].surahSegments;
@@ -352,36 +300,6 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
 
     _provider.saveQuranPageNumber(pageNumber);
     _provider.saveLatestQuranSurahNumber(savedSurah);
-  }
-
-  void _goToNextPage() {
-    if (_currentIndex == _virtualPages.length - 1) return;
-
-    _pageController.nextPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-  }
-
-  void _goToPreviousPage() {
-    if (_currentIndex == 0) return;
-
-    _pageController.previousPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-  }
-
-  void _goToNextSurah() {
-    if (_currentSurah >= 114) return;
-
-    _jumpToSurah(_currentSurah + 1, animate: true);
-  }
-
-  void _goToPreviousSurah() {
-    if (_currentSurah <= 1) return;
-
-    _jumpToSurah(_currentSurah - 1, animate: true);
   }
 
   void _jumpToSurah(int surahNumber, {bool animate = false}) {

@@ -64,7 +64,8 @@ class FavoriteItemsPage extends StatelessWidget {
                             ZekrActionButton(
                               icon: Icons.copy_rounded,
                               isDark: isDark,
-                              onTap: () => AppHelpers.copyText(items[index].split('\u0000').last),
+                              onTap: () => AppHelpers.copyText(
+                                  items[index].split('\u0000').last),
                             ),
                             SizedBox(width: 6.w),
 

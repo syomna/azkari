@@ -120,14 +120,14 @@ class PrayerTimesWidgetService {
     final map = <String, Map<String, String>>{};
     for (var offset = 0; offset < widgetDays; offset++) {
       final date = tz.TZDateTime(loc, base.year, base.month, base.day + offset);
-      final daily = service.dailyTimes(la, ln, date, method: m, timezone: tzName);
+      final daily =
+          service.dailyTimes(la, ln, date, method: m, timezone: tzName);
 
       final entry = <String, String>{};
       for (final key in _prayerKeys) {
         final override =
             prefs.getString('${PrefsKeys.prayerOverridePrefix}$key');
-        final raw = override ??
-            '${daily[key]!.hour}:${daily[key]!.minute}';
+        final raw = override ?? '${daily[key]!.hour}:${daily[key]!.minute}';
         entry[key] = _to12Hour(raw);
       }
       entry['hijri'] = _hijriDate(date);

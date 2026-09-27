@@ -47,7 +47,8 @@ class AzkarRepositoryImpl extends AzkarRepository {
   }
 
   @override
-  Future<Either<Failure, void>> deleteCustomCategory(String categoryName) async {
+  Future<Either<Failure, void>> deleteCustomCategory(
+      String categoryName) async {
     try {
       await azkarLocalDataSource.deleteCustomCategory(categoryName);
       return const Right(null);

@@ -45,10 +45,9 @@ void main() {
       await provider.removeCategoryItemFavorites('مساء');
 
       expect(provider.favIndividualItems, contains('صباح\u0000ذكر أول'));
-      expect(provider.favIndividualItems,
-          isNot(contains('مساء\u0000ذكر ثان')));
-      expect(provider.favIndividualItems,
-          isNot(contains('مساء\u0000ذكر ثالث')));
+      expect(provider.favIndividualItems, isNot(contains('مساء\u0000ذكر ثان')));
+      expect(
+          provider.favIndividualItems, isNot(contains('مساء\u0000ذكر ثالث')));
       expect(provider.favCategories, contains('مساء'));
     });
   });

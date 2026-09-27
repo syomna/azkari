@@ -34,8 +34,8 @@ class FavoritesProvider extends ChangeNotifier {
     } else {
       updated.add(categoryName);
     }
-    final ok =
-        await sharedPreferences.setStringList(PrefsKeys.favoriteCategories, updated);
+    final ok = await sharedPreferences.setStringList(
+        PrefsKeys.favoriteCategories, updated);
     if (ok) {
       _favCategories = updated;
       notifyListeners();
@@ -49,8 +49,8 @@ class FavoritesProvider extends ChangeNotifier {
     } else {
       updated.add(itemIdentifier);
     }
-    final ok = await sharedPreferences.setStringList(
-        PrefsKeys.favoriteItems, updated);
+    final ok =
+        await sharedPreferences.setStringList(PrefsKeys.favoriteItems, updated);
     if (ok) {
       _favIndividualItems = updated;
       notifyListeners();
@@ -97,11 +97,10 @@ class FavoritesProvider extends ChangeNotifier {
     final oldKey = '$category\u0000$oldZekr';
     if (!_favIndividualItems.contains(oldKey)) return;
     final newKey = '$category\u0000$newZekr';
-    final updated = _favIndividualItems
-        .map((id) => id == oldKey ? newKey : id)
-        .toList();
-    final ok = await sharedPreferences.setStringList(
-        PrefsKeys.favoriteItems, updated);
+    final updated =
+        _favIndividualItems.map((id) => id == oldKey ? newKey : id).toList();
+    final ok =
+        await sharedPreferences.setStringList(PrefsKeys.favoriteItems, updated);
     if (ok) {
       _favIndividualItems = updated;
       notifyListeners();
@@ -117,11 +116,12 @@ class FavoritesProvider extends ChangeNotifier {
     final prefix = '$oldName\u0000';
     if (!_favIndividualItems.any((id) => id.startsWith(prefix))) return;
     final updated = _favIndividualItems
-        .map((id) =>
-            id.startsWith(prefix) ? '$newName${id.substring(oldName.length)}' : id)
+        .map((id) => id.startsWith(prefix)
+            ? '$newName${id.substring(oldName.length)}'
+            : id)
         .toList();
-    final ok = await sharedPreferences.setStringList(
-        PrefsKeys.favoriteItems, updated);
+    final ok =
+        await sharedPreferences.setStringList(PrefsKeys.favoriteItems, updated);
     if (ok) {
       _favIndividualItems = updated;
       notifyListeners();
@@ -134,11 +134,10 @@ class FavoritesProvider extends ChangeNotifier {
   Future<void> removeCategoryItemFavorites(String categoryName) async {
     final prefix = '$categoryName\u0000';
     if (!_favIndividualItems.any((id) => id.startsWith(prefix))) return;
-    final updated = _favIndividualItems
-        .where((id) => !id.startsWith(prefix))
-        .toList();
-    final ok = await sharedPreferences.setStringList(
-        PrefsKeys.favoriteItems, updated);
+    final updated =
+        _favIndividualItems.where((id) => !id.startsWith(prefix)).toList();
+    final ok =
+        await sharedPreferences.setStringList(PrefsKeys.favoriteItems, updated);
     if (ok) {
       _favIndividualItems = updated;
       notifyListeners();

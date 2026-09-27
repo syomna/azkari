@@ -66,17 +66,16 @@ class PrayerTimesProvider extends ChangeNotifier {
     await sharedPreferences.setDouble(PrefsKeys.longitude, position.longitude);
 
     final deviceTz = sharedPreferences.getString(PrefsKeys.cityTimezone);
-    await prayerTimeService.calculateAndStore(position.latitude,
-        position.longitude, sharedPreferences,
+    await prayerTimeService.calculateAndStore(
+        position.latitude, position.longitude, sharedPreferences,
         timezone: deviceTz);
     await sharedPreferences.setString(
       PrefsKeys.prayerTimeDate,
       DateTime.now().toIso8601String().substring(0, 10),
     );
 
-    _prayerTimes = prayerTimeService.getTimes(position.latitude,
-        position.longitude,
-        timezone: deviceTz);
+    _prayerTimes = prayerTimeService
+        .getTimes(position.latitude, position.longitude, timezone: deviceTz);
     notifyListeners();
     PrayerTimesWidgetService.updateWidget(
         prayerTimes: _prayerTimes, prefs: sharedPreferences);
@@ -182,9 +181,8 @@ class PrayerTimesProvider extends ChangeNotifier {
       await sharedPreferences.setString(PrefsKeys.prayerTimeDate, today);
     }
 
-    _prayerTimes =
-        prayerTimeService.getTimes(lat, lng, method: city?.method,
-            timezone: timezone);
+    _prayerTimes = prayerTimeService.getTimes(lat, lng,
+        method: city?.method, timezone: timezone);
 
     if (changed || wasUnset) {
       notifyListeners();

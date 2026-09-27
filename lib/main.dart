@@ -169,8 +169,7 @@ void main() async {
               getCustomAzkarUseCase: di.sl<GetCustomAzkarUseCase>(),
               saveCustomAzkarUseCase: di.sl<SaveCustomAzkarUseCase>(),
               deleteCustomAzkarUseCase: di.sl<DeleteCustomAzkarUseCase>(),
-              updateCustomAzkarUseCase:
-                  di.sl<UpdateCustomAzkarUseCase>()),
+              updateCustomAzkarUseCase: di.sl<UpdateCustomAzkarUseCase>()),
         ),
         ChangeNotifierProvider(
           create: (_) => FavoritesProvider(
@@ -213,14 +212,12 @@ void main() async {
                   getSurahAudioUseCase: di.sl<GetSurahAudioUseCase>(),
                   checkSurahDownloadedUseCase:
                       di.sl<CheckSurahDownloadedUseCase>(),
-                  saveQuranBookmarkUseCase:
-                      di.sl<SaveQuranBookmarkUseCase>(),
+                  saveQuranBookmarkUseCase: di.sl<SaveQuranBookmarkUseCase>(),
                   getQuranBookmarkSurahUseCase:
                       di.sl<GetQuranBookmarkSurahUseCase>(),
                   getQuranBookmarkPageUseCase:
                       di.sl<GetQuranBookmarkPageUseCase>(),
-                  clearQuranBookmarkUseCase:
-                      di.sl<ClearQuranBookmarkUseCase>(),
+                  clearQuranBookmarkUseCase: di.sl<ClearQuranBookmarkUseCase>(),
                 )),
         ChangeNotifierProvider(
             create: (_) => NotificationProvider(

@@ -20,7 +20,8 @@ class _MemoryAzkarRepository implements AzkarRepository {
   bool failUpdate = false;
 
   @override
-  Future<Either<Failure, List<ZekrEntity>>> getAzkar() async => Right(assetAzkar);
+  Future<Either<Failure, List<ZekrEntity>>> getAzkar() async =>
+      Right(assetAzkar);
 
   @override
   Future<Either<Failure, List<ZekrEntity>>> getCustomAzkar() async =>
@@ -61,8 +62,7 @@ AzkarProvider _buildProvider(_MemoryAzkarRepository repo) {
     getCustomAzkarUseCase: GetCustomAzkarUseCase(azkarRepository: repo),
     saveCustomAzkarUseCase: SaveCustomAzkarUseCase(azkarRepository: repo),
     deleteCustomAzkarUseCase: DeleteCustomAzkarUseCase(azkarRepository: repo),
-    updateCustomAzkarUseCase:
-        UpdateCustomAzkarUseCase(azkarRepository: repo),
+    updateCustomAzkarUseCase: UpdateCustomAzkarUseCase(azkarRepository: repo),
   );
 }
 
@@ -72,25 +72,32 @@ void main() {
       final repo = _MemoryAzkarRepository([])
         ..customAzkar.addAll([
           const ZekrEntity(
-              category: 'دعاء', zekr: 'اللهم اغفر لي', count: '3',
-              description: '', reference: ''),
+              category: 'دعاء',
+              zekr: 'اللهم اغفر لي',
+              count: '3',
+              description: '',
+              reference: ''),
           const ZekrEntity(
-              category: 'دعاء', zekr: 'اللهم اغفر لي', count: '3',
-              description: '', reference: ''),
+              category: 'دعاء',
+              zekr: 'اللهم اغفر لي',
+              count: '3',
+              description: '',
+              reference: ''),
           const ZekrEntity(
-              category: 'دعاء', zekr: 'يا حي يا قيوم', count: '2',
-              description: '', reference: ''),
+              category: 'دعاء',
+              zekr: 'يا حي يا قيوم',
+              count: '2',
+              description: '',
+              reference: ''),
         ]);
       final provider = _buildProvider(repo);
       await provider.loadCustomAzkar();
 
       expect(
-          provider.remainingFor('اللهم اغفر لي', 3,
-              category: 'دعاء', index: 0),
+          provider.remainingFor('اللهم اغفر لي', 3, category: 'دعاء', index: 0),
           3);
       expect(
-          provider.remainingFor('اللهم اغفر لي', 3,
-              category: 'دعاء', index: 1),
+          provider.remainingFor('اللهم اغفر لي', 3, category: 'دعاء', index: 1),
           3);
 
       provider.decrement('اللهم اغفر لي', 3, category: 'دعاء', index: 0);
@@ -98,12 +105,10 @@ void main() {
       provider.decrement('اللهم اغفر لي', 3, category: 'دعاء', index: 0);
 
       expect(
-          provider.remainingFor('اللهم اغفر لي', 3,
-              category: 'دعاء', index: 0),
+          provider.remainingFor('اللهم اغفر لي', 3, category: 'دعاء', index: 0),
           0);
       expect(
-          provider.remainingFor('اللهم اغفر لي', 3,
-              category: 'دعاء', index: 1),
+          provider.remainingFor('اللهم اغفر لي', 3, category: 'دعاء', index: 1),
           3);
 
       provider.decrement('اللهم اغفر لي', 3, category: 'دعاء', index: 1);
@@ -114,8 +119,7 @@ void main() {
 
       provider.resetCategoryCounts('دعاء');
       expect(
-          provider.remainingFor('اللهم اغفر لي', 3,
-              category: 'دعاء', index: 0),
+          provider.remainingFor('اللهم اغفر لي', 3, category: 'دعاء', index: 0),
           3);
       expect(provider.completedIndexOf('دعاء'), 0);
     });
@@ -127,11 +131,17 @@ void main() {
       final repo = _MemoryAzkarRepository([])
         ..customAzkar.addAll([
           const ZekrEntity(
-              category: 'مذكراتي', zekr: 'استغفر الله', count: '1',
-              description: '', reference: ''),
+              category: 'مذكراتي',
+              zekr: 'استغفر الله',
+              count: '1',
+              description: '',
+              reference: ''),
           const ZekrEntity(
-              category: 'مذكراتي', zekr: 'الحمد لله', count: '1',
-              description: '', reference: ''),
+              category: 'مذكراتي',
+              zekr: 'الحمد لله',
+              count: '1',
+              description: '',
+              reference: ''),
         ]);
       final provider = _buildProvider(repo);
       await provider.loadCustomAzkar();
@@ -167,8 +177,11 @@ void main() {
       final repo = _MemoryAzkarRepository([])
         ..customAzkar.addAll([
           const ZekrEntity(
-              category: 'مذكراتي', zekr: 'استغفر الله', count: '1',
-              description: '', reference: ''),
+              category: 'مذكراتي',
+              zekr: 'استغفر الله',
+              count: '1',
+              description: '',
+              reference: ''),
         ]);
       final provider = _buildProvider(repo);
       await provider.loadCustomAzkar();
@@ -205,8 +218,7 @@ void main() {
       expect(provider.customAzkarList, isEmpty);
     });
 
-    test('returns true and reloads the list when the save succeeds',
-        () async {
+    test('returns true and reloads the list when the save succeeds', () async {
       final repo = _MemoryAzkarRepository([]);
       final provider = _buildProvider(repo);
       await provider.loadCustomAzkar();
@@ -229,8 +241,11 @@ void main() {
       final repo = _MemoryAzkarRepository([])
         ..customAzkar.addAll([
           const ZekrEntity(
-              category: 'مذكراتي', zekr: 'استغفر الله', count: '1',
-              description: '', reference: ''),
+              category: 'مذكراتي',
+              zekr: 'استغفر الله',
+              count: '1',
+              description: '',
+              reference: ''),
         ]);
       final provider = _buildProvider(repo);
       await provider.loadCustomAzkar();
@@ -246,8 +261,11 @@ void main() {
       final repo = _MemoryAzkarRepository([])
         ..customAzkar.addAll([
           const ZekrEntity(
-              category: 'مذكراتي', zekr: 'استغفر الله', count: '1',
-              description: '', reference: ''),
+              category: 'مذكراتي',
+              zekr: 'استغفر الله',
+              count: '1',
+              description: '',
+              reference: ''),
         ]);
       final provider = _buildProvider(repo);
       await provider.loadCustomAzkar();

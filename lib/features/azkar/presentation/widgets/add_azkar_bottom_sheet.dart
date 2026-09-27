@@ -217,8 +217,10 @@ class _AddAzkarBottomSheetState extends State<AddAzkarBottomSheet> {
                     final List<Map<String, dynamic>> structuredAzkar = [];
                     for (int i = 0; i < zikrControllers.length; i++) {
                       final text = zikrControllers[i].text.trim();
-                      final countVal =
-                          int.tryParse(AppHelpers.normalizeArabicIndicDigits(countControllers[i].text)) ?? 1;
+                      final countVal = int.tryParse(
+                              AppHelpers.normalizeArabicIndicDigits(
+                                  countControllers[i].text)) ??
+                          1;
                       if (text.isNotEmpty) {
                         if (countVal <= 0) {
                           AppHelpers.showToast(

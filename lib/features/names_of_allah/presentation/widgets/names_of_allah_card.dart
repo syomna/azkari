@@ -14,7 +14,7 @@ class NamesOfAllahCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 5.w, vertical: 10.h),
