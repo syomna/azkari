@@ -8,83 +8,92 @@ class NamesOfAllahCard extends StatelessWidget {
   const NamesOfAllahCard({
     super.key,
     required this.item,
+    this.onTap,
   });
 
   final NamesOfAllahEntity item;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 5.w, vertical: 10.h),
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 10.h),
+      child: Material(
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(25.r),
-        border: Border.all(
-          color: AppPalette.mainColor.withValues(alpha: 0.15),
-        ),
-        // Glow shadow using mainColor instead of grey for a spiritual look
-        boxShadow: [
-          BoxShadow(
-            color: AppPalette.mainColor.withValues(alpha: 0.1),
-            blurRadius: 15,
-            spreadRadius: 1,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          // Stylized Background Number
-          Align(
-            alignment: Alignment.topLeft,
-            child: Text(
-              AppHelpers.getArabicNumber(item.id),
-              style: TextStyle(
-                fontSize: 35.sp,
-                fontWeight: FontWeight.w900,
-                color: AppPalette.mainColor.withValues(alpha: 0.07),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(25.r),
+          child: Ink(
+            decoration: BoxDecoration(
+              color:
+                  isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+              borderRadius: BorderRadius.circular(25.r),
+              border: Border.all(
+                color: AppPalette.mainColor.withValues(alpha: 0.15),
+              ),
+              boxShadow: AppPalette.cardShadow(Theme.of(context).brightness),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(20.w),
+              child: Stack(
+                children: [
+                  // Stylized Background Number
+                  Align(
+                    alignment: Alignment.topLeft,
+                    child: Text(
+                      AppHelpers.getArabicNumber(item.id),
+                      style: TextStyle(
+                        fontSize: 35.sp,
+                        fontWeight: FontWeight.w900,
+                        color: AppPalette.mainColor.withValues(alpha: 0.07),
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          item.name,
+                          style: TextStyle(
+                            fontFamily: AppPalette.amiriFontFamily,
+                            fontSize: 28.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppPalette.mainColor,
+                            shadows: [
+                              Shadow(
+                                color:
+                                    AppPalette.mainColor.withValues(alpha: 0.1),
+                                offset: const Offset(0, 2),
+                                blurRadius: 4,
+                              )
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        Text(
+                          item.text,
+                          textAlign: TextAlign.center,
+                          // maxLines: 2,
+                          // overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            height: 1.4, // Improved line spacing for Arabic
+                            color: isDark ? Colors.white70 : Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  item.name,
-                  style: TextStyle(
-                    fontFamily: AppPalette.amiriFontFamily,
-                    fontSize: 28.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppPalette.mainColor,
-                    shadows: [
-                      Shadow(
-                        color: AppPalette.mainColor.withValues(alpha: 0.1),
-                        offset: const Offset(0, 2),
-                        blurRadius: 4,
-                      )
-                    ],
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                Text(
-                  item.text,
-                  textAlign: TextAlign.center,
-                  // maxLines: 2,
-                  // overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    height: 1.4, // Improved line spacing for Arabic
-                    color: isDark ? Colors.white70 : Colors.grey[700],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

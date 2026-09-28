@@ -22,13 +22,7 @@ class Component extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(25.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          )
-        ],
+        boxShadow: AppPalette.tileShadow(Theme.of(context).brightness),
       ),
       child: Material(
         color: Colors.transparent,

@@ -36,6 +36,7 @@ import 'package:azkar_app/features/widget_guide/presentation/widget_guide_page.d
 import 'package:azkar_app/pages/home_page.dart';
 import 'package:azkar_app/pages/splash_page.dart';
 import 'package:azkar_app/widgets/custom_text_field.dart';
+import 'package:azkar_app/widgets/prayer_times_card.dart';
 import 'package:azkar_app/widgets/search_bar_widget.dart';
 import 'package:dartz/dartz.dart' show Either, Left, Right, Unit, unit;
 import 'package:flutter/cupertino.dart';
@@ -101,9 +102,13 @@ class _FakeAzkarRepository implements AzkarRepository {
 }
 
 class _FakeNamesRepository implements NamesOfAllahRepository {
+  _FakeNamesRepository([this.items = const []]);
+
+  final List<NamesOfAllahEntity> items;
+
   @override
   Future<Either<Failure, List<NamesOfAllahEntity>>> getNamesOfAllah() async =>
-      const Right([]);
+      Right(items);
 }
 
 class _FakeSurahRepository implements SurahRepository {
@@ -179,6 +184,7 @@ class _AzkarHarness {
 Future<_AzkarHarness> _createHarness({
   List<ZekrEntity> assetAzkar = const [],
   List<ZekrEntity> customAzkar = const [],
+  List<NamesOfAllahEntity> assetNames = const [],
   Map<String, Object> extraPreferences = const {},
 }) async {
   final today = DateTime.now().toIso8601String().substring(0, 10);
@@ -211,7 +217,7 @@ Future<_AzkarHarness> _createHarness({
   );
   final names = NamesOfAllahProvider(
     getNamesOfAllahUseCase: GetNamesOfAllahUseCase(
-      namesOfAllahRepository: _FakeNamesRepository(),
+      namesOfAllahRepository: _FakeNamesRepository(assetNames),
     ),
   );
   final surah = SurahProvider(
@@ -490,7 +496,137 @@ void main() {
     await _settle(tester);
 
     expect(find.byType(HomePage), findsOneWidget);
+    expect(find.byType(DayZekrWidget), findsOneWidget);
+    expect(find.byType(PrayerTimesCard), findsOneWidget);
+    _expectNoException(tester);
+  });
+
+  testWidgets('home leads with navigation and keeps one header action',
+      (tester) async {
+    // 430x932 هو مقاس التصميم المرجعي للتطبيق (ScreenUtil designSize).
+    await _setSurface(tester, const Size(430, 932));
+    final harness = await _createHarness(
+      assetNames: const [
+        NamesOfAllahEntity(id: 1, name: 'الرحمن', text: 'رحيم'),
+      ],
+      assetAzkar: List.generate(
+        6,
+        (index) => ZekrEntity(
+          category: _morning,
+          zekr: 'ذكر $index',
+          count: '1',
+          description: '',
+          reference: '',
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      _testApp(
+        home: const HomePage(),
+        providers: _harnessProviders(harness),
+      ),
+    );
+    await _settle(tester);
+
+    // لا توجد بطاقة ترويجية للويدجيت: الدليل الأولي يظهر تلقائياً عند أول
+    // تشغيل عبر WidgetGuideHelper.showIfNeeded.
+    expect(find.text('إضافة ويدجيت مواقيت الصلاة'), findsNothing);
+
+    // زر الإعداد هو الإجراء الوحيد في الهيدر (المظهر والتواصل في الإعدادات).
+    expect(find.byIcon(CupertinoIcons.settings), findsOneWidget);
+    expect(find.byIcon(CupertinoIcons.bubble_left_bubble_right), findsNothing);
+    expect(
+      find.byIcon(CupertinoIcons.moon_stars).evaluate().isEmpty &&
+          find.byIcon(CupertinoIcons.sun_max).evaluate().isEmpty,
+      isTrue,
+    );
+
+    // ترتيب الصفحة: مواقيت الصلاة ثم ذكر اليوم ثم شبكة التنقل.
+    final double prayerTop = tester.getTopLeft(find.byType(PrayerTimesCard)).dy;
+    final double dayZekrTop = tester.getTopLeft(find.byType(DayZekrWidget)).dy;
+    final double quranTileTop =
+        tester.getTopLeft(find.text(AppConstants.holyQuran)).dy;
+    expect(prayerTop, lessThan(dayZekrTop));
+    expect(dayZekrTop, lessThan(quranTileTop));
+
+    // عناوين الأقسام موجودة مع رابط "عرض الكل" لكل قسم.
     expect(find.text('ذكر اليوم'), findsOneWidget);
+    expect(find.text(AppConstants.allAzkarPageTitle), findsOneWidget);
+    expect(find.text('أسماء الله الحسنى'), findsOneWidget);
+    expect(find.text('عرض الكل'), findsNWidgets(2));
+
+    // الرابط لا يترك فراغاً كبيراً بجانب العنوان: بدون حد اللمس الافتراضي
+    // (48h) يبقى ارتفاعه قريباً من سطر النص الواحد.
+    final Finder seeAll = find.text('عرض الكل');
+    for (int i = 0; i < seeAll.evaluate().length; i++) {
+      final Finder button =
+          find.ancestor(of: seeAll.at(i), matching: find.byType(TextButton));
+      expect(tester.getSize(button).height, lessThan(36));
+    }
+
+    // إيقاع الفراغات موحّد: نفس الفارق بين العنوان ومحتواه، والفراغ بين
+    // الأقسام 24h بالضبط في كل المواضع.
+    double gapBetween(Finder a, Finder b) =>
+        tester.getTopLeft(b).dy - tester.getBottomLeft(a).dy;
+    final Finder dayZekrTitle = find.text('ذكر اليوم');
+    final Finder azkarTitle = find.text(AppConstants.allAzkarPageTitle);
+    final Finder namesTitle = find.text('أسماء الله الحسنى');
+    final Finder dayZekrCard = find.byType(DayZekrWidget);
+
+    final double titleToCard = gapBetween(dayZekrTitle, dayZekrCard);
+    final double titleToGrid = gapBetween(azkarTitle, find.byType(GridView));
+    expect(titleToGrid, closeTo(titleToCard, 1));
+
+    // الفراغ بين الأقسام (24h) ضعف فراغ العنوان عن محتواه (12h)، ونفس
+    // القيمة في كل المواضع (لا 18 ولا 15 ولا 10 ولا فراغ قبل الشبكة).
+    final double cardToTitle = gapBetween(dayZekrCard, azkarTitle);
+    final double gridToTitle = gapBetween(find.byType(GridView), namesTitle);
+    expect(cardToTitle, closeTo(titleToCard * 2, 0.5));
+    expect(gridToTitle, closeTo(cardToTitle, 0.5));
+
+    _expectNoException(tester);
+  });
+
+  testWidgets('day zekr card shadow is neutral, not a colored glow',
+      (tester) async {
+    await _setSurface(tester, const Size(430, 932));
+    final harness = await _createHarness(
+      assetAzkar: const [
+        ZekrEntity(
+          category: _morning,
+          zekr: 'ذكر الصباح',
+          count: '1',
+          description: '',
+          reference: '',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _testApp(
+        home: const HomePage(),
+        providers: _harnessProviders(harness),
+      ),
+    );
+    await _settle(tester);
+
+    final Finder cardContainer = find
+        .descendant(
+          of: find.byType(DayZekrWidget),
+          matching: find.byType(Container),
+        )
+        .first;
+    final BoxDecoration decoration =
+        tester.widget<Container>(cardContainer).decoration! as BoxDecoration;
+    final List<BoxShadow> shadows = decoration.boxShadow!;
+
+    // Was mainColor @25% with offset (0,10); now a neutral black shadow.
+    expect(shadows.length, 1);
+    expect(shadows.single.color,
+        AppPalette.cardShadow(Brightness.light).single.color);
+    expect(shadows.single.offset, const Offset(0, 6));
+
     _expectNoException(tester);
   });
 

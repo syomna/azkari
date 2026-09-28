@@ -27,6 +27,32 @@ class AppPalette {
 
   static const List<String> emojiFallback = [emojiFontFamily];
 
+  /// الظل الموحّد لبطاقات الشاشة الرئيسية. كان كل بطاقة تختار لونه بنفسه
+  /// (أخضر 25% تحت بطاقة ذكر اليوم) فيظهر هالة ملونة أسفلها؛ الظل هنا محايد
+  /// ومتناسب مع الوضعين.
+  static List<BoxShadow> cardShadow(Brightness brightness) => [
+        BoxShadow(
+          color: brightness == Brightness.dark
+              ? Colors.black.withValues(alpha: 0.35)
+              : Colors.black.withValues(alpha: 0.06),
+          blurRadius: 16,
+          spreadRadius: 0,
+          offset: const Offset(0, 6),
+        ),
+      ];
+
+  /// ظل أخف لعناصر GridView الصغيرة.
+  static List<BoxShadow> tileShadow(Brightness brightness) => [
+        BoxShadow(
+          color: brightness == Brightness.dark
+              ? Colors.black.withValues(alpha: 0.25)
+              : Colors.black.withValues(alpha: 0.04),
+          blurRadius: 8,
+          spreadRadius: 0,
+          offset: const Offset(0, 3),
+        ),
+      ];
+
   static TextTheme _withEmojiFallback(TextTheme theme) {
     TextStyle? fb(TextStyle? style) =>
         style?.copyWith(fontFamilyFallback: emojiFallback);

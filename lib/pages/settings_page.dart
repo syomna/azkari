@@ -6,8 +6,11 @@ import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
+import 'package:azkar_app/features/widget_guide/presentation/widget_guide_page.dart';
+import 'package:azkar_app/pages/contact_us_page.dart';
 import 'package:azkar_app/pages/notifications_screen.dart';
 import 'package:azkar_app/pages/prayer_times_settings_page.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -110,6 +113,15 @@ class _SettingsPageState extends State<SettingsPage> {
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const PrayerTimesSettingsScreen()));
               }, subtitle: 'ضبط أوقات الصلاة وأذكار الصباح والمساء'),
+            ]),
+            SizedBox(height: 12.h),
+            _buildSettingsCard([
+              _buildListTile(
+                'إضافة ويدجت مواقيت الصلاة',
+                Icons.widgets_rounded,
+                () => WidgetGuidePage.open(context, openedFromSettings: true),
+                subtitle: 'خطوات إضافة الودجت إلى الشاشة الرئيسية',
+              ),
             ]),
             SizedBox(height: 25.h),
             _buildSectionHeader('المظهر العام'),
@@ -214,6 +226,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 }
                 await SharePlus.instance.share(params);
               }),
+              _divider(),
+              _buildListTile(
+                  'تواصل معنا', CupertinoIcons.bubble_left_bubble_right_fill,
+                  () {
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ContactUsPage()));
+              }, subtitle: 'تواصل معنا عبر واتساب أو بريد إلكتروني'),
               _divider(),
               _buildListTile('عن التطبيق', Icons.info_rounded,
                   () => _showAboutAppDialog(context, packageInfo)),

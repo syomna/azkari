@@ -2,6 +2,7 @@ class AppConstants {
   static const String morningAzkarCategory = 'أذكار الصباح';
   static const String eveningAzkarCategory = 'أذكار المساء';
   static const String favoriteCategory = 'المفضلة';
+  static const String allAzkarCategory = 'جميع الأذكار';
   static const String holyQuran = 'القرآن الكريم';
 
   static const String shortSurahsTitle = 'سور قصيرة للصلاة';

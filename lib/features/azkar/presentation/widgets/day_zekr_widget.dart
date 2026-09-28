@@ -69,16 +69,9 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
                 color: AppPalette.mainColor.withValues(alpha: 0.15),
                 width: 1) // Subtle border for definition
             : null,
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.3)
-                : AppPalette.mainColor.withValues(alpha: 0.25),
-            blurRadius: 20,
-            spreadRadius: 2,
-            offset: const Offset(0, 10),
-          )
-        ],
+        // ظل محايد من AppPalette: الظل الأخضر القديم (mainColor 25%، offset
+        // 10) كان يترك هالة ملوّنة أسفل البطاقة.
+        boxShadow: AppPalette.cardShadow(Theme.of(context).brightness),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(25.r),

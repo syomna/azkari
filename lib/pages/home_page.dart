@@ -1,9 +1,7 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/core/enums/app_loading_status.dart';
-import 'package:azkar_app/core/providers/theme_provider.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/presentation/pages/all_azkar_page.dart';
 import 'package:azkar_app/features/azkar/presentation/pages/azkar_details_page.dart';
@@ -17,9 +15,7 @@ import 'package:azkar_app/features/names_of_allah/presentation/widgets/names_of_
 import 'package:azkar_app/features/qibla/presentation/pages/qibla_screen.dart';
 import 'package:azkar_app/features/quran/presentation/pages/quran_details_page.dart';
 import 'package:azkar_app/features/tasbeh/presentation/pages/tasbeh_page.dart';
-import 'package:azkar_app/features/widget_guide/presentation/widget_guide_card.dart';
 import 'package:azkar_app/features/widget_guide/widget_guide_helper.dart';
-import 'package:azkar_app/pages/contact_us_page.dart';
 import 'package:azkar_app/pages/settings_page.dart';
 import 'package:azkar_app/widgets/component.dart';
 import 'package:azkar_app/widgets/prayer_times_card.dart';
@@ -37,6 +33,15 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // إيقاع فراغات واحد للصفحة كلها: بين الأقسام 24، بين العنوان ومحتواه 12،
+  // وبين البطاقات المتتالية 16. كان كل سطر يستخدم رقماً مختلفاً (5/10/12/15/
+  // 18/24) فيبدو التخطيط غير متسق.
+  static final double _gapTop = 8.h;
+  static final double _gap = 16.h;
+  static final double _gapSection = 24.h;
+  static final double _gapTitle = 12.h;
+  static final double _gapBottom = 32.h;
+
   int _randomNameIndex = 0;
 
   @override
@@ -93,7 +98,7 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(height: 5.h),
+                      SizedBox(height: _gapTop),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -101,42 +106,22 @@ class _HomePageState extends State<HomePage> {
                             fit: FlexFit.loose,
                             child: CityDropdownButton(),
                           ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _buildHeaderAction(
-                                  context,
-                                  isDark
-                                      ? CupertinoIcons.sun_max
-                                      : CupertinoIcons.moon_stars,
-                                  () => context
-                                      .read<ThemeProvider>()
-                                      .toggleTheme()),
-                              SizedBox(width: 10.w),
-                              _buildHeaderAction(
-                                  context,
-                                  CupertinoIcons.bubble_left_bubble_right,
-                                  () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (_) =>
-                                              const ContactUsPage()))),
-                              SizedBox(width: 10.w),
-                              _buildHeaderAction(
-                                  context,
-                                  CupertinoIcons.settings,
-                                  () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (_) =>
-                                              const SettingsPage()))),
-                            ],
+                          // The other two header actions (theme, contact) now
+                          // live in Settings, so the header keeps one entry
+                          // point and the home screen stays scannable.
+                          _buildHeaderAction(
+                            context,
+                            CupertinoIcons.settings,
+                            () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const SettingsPage())),
                           ),
                         ],
                       ),
-                      SizedBox(height: 10.h),
+                      SizedBox(height: _gap),
                       const WelcomingWidget(),
-                      SizedBox(height: 15.h),
+                      SizedBox(height: _gap),
                       Consumer<PrayerTimesProvider>(
                         builder: (context, provider, _) {
                           if (provider.prayerTimes == null) {
@@ -149,35 +134,22 @@ class _HomePageState extends State<HomePage> {
                           );
                         },
                       ),
-                      SizedBox(height: 12.h),
-                      const WidgetGuideCard(),
-                      SizedBox(height: 15.h),
-                      _buildTitle('ذكر اليوم'),
-                      SizedBox(height: 15.h),
-                      const DayZekrWidget(),
-                      SizedBox(height: 10.h),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(child: _buildTitle('الأذكار والأدعية')),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => const AllAzkarPage()));
-                            },
-                            child: const Text(
-                              'عرض الكل',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  color: AppPalette.mainColor,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
+                      SizedBox(height: _gapSection),
+                      _buildSectionHeader(
+                        'ذكر اليوم',
                       ),
-                      SizedBox(height: 5.h),
+                      SizedBox(height: _gapTitle),
+                      const DayZekrWidget(),
+                      SizedBox(height: _gapSection),
+                      _buildSectionHeader(
+                        AppConstants.allAzkarPageTitle,
+                        actionLabel: 'عرض الكل',
+                        onAction: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const AllAzkarPage())),
+                      ),
+                      SizedBox(height: _gapTitle),
                       GridView(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -190,30 +162,16 @@ class _HomePageState extends State<HomePage> {
                         ),
                         children: azkarList,
                       ),
-                      if (Platform.isAndroid) SizedBox(height: 10.h),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(child: _buildTitle('أسماء الله الحسنى')),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) =>
-                                          const NamesOfAllahPage()));
-                            },
-                            child: const Text(
-                              'عرض الكل',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  color: AppPalette.mainColor,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
+                      SizedBox(height: _gapSection),
+                      _buildSectionHeader(
+                        'أسماء الله الحسنى',
+                        actionLabel: 'عرض الكل',
+                        onAction: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const NamesOfAllahPage())),
                       ),
-                      SizedBox(height: 10.h),
+                      SizedBox(height: _gapTitle - 10.h),
                       Builder(builder: (context) {
                         final names = context
                             .read<NamesOfAllahProvider>()
@@ -221,9 +179,14 @@ class _HomePageState extends State<HomePage> {
                         if (names.isEmpty) return const SizedBox.shrink();
                         return NamesOfAllahCard(
                           item: names[_randomNameIndex % names.length],
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const NamesOfAllahPage()),
+                          ),
                         );
                       }),
-                      SizedBox(height: 40.h),
+                      SizedBox(height: _gapBottom),
                     ],
                   ),
                 ),
@@ -235,13 +198,46 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Text _buildTitle(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 18.sp,
-        fontWeight: FontWeight.bold,
-      ),
+  // عنوان قسم مع رابط "عرض الكل" اختياري. الرابط مضغوط بدون حد اللمس
+  // الافتراضي (48h) حتى لا يضيف فراغاً كبيراً بجانب العنوان.
+  Widget _buildSectionHeader(
+    String title, {
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        if (actionLabel != null && onAction != null)
+          TextButton(
+            onPressed: onAction,
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+            child: Text(
+              actionLabel,
+              style: TextStyle(
+                color: AppPalette.mainColor,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+      ],
     );
   }
 

@@ -805,3 +805,69 @@ selected city's UTC offset.
 - `flutter test`: 147/147 passing.
 - `flutter analyze`: no issues.
 - Not committed (user asked to pause pushing).
+
+## 63. Home screen: navigation first, less chrome
+- Removed the always-on `WidgetGuideCard` promo from the home screen. The
+  first-run `WidgetGuidePage` already auto-opens ~700ms after launch
+  (`WidgetGuideHelper.showIfNeeded`), so the widget was being pitched twice.
+- Header now has a single action (settings). The theme toggle moved out
+  permanently (Settings → المظهر العام already offers light/dark/system) and
+  contact moved to Settings → عام → تواصل معنا, so `ContactUsPage` stays
+  reachable.
+- Moved the 6-tile navigation grid directly under the prayer times card, above
+  the content cards: the tiles are the app's real navigation and were buried
+  below a promo and a random zekr. Section count 7 → 5.
+- Dropped the "الأذكار والأدعية" title row and kept one compact
+  "كل الأذكار والأدعية ›" link under the grid, since the tiles are
+  self-explanatory and `AllAzkarPage` must stay reachable.
+- Section titles removed on the home screen (the cards are self-explanatory);
+  each section ends with a compact "عرض كل ..." link instead:
+  `عرض كل الأذكار والأدعية` and `عرض كل أسماء الله الحسنى`.
+- The links are built by `_buildSeeAllLink()`, which strips Material's default
+  48h tap target (`tapTargetSize: shrinkWrap`, `minimumSize: Size.zero`,
+  `visualDensity: compact`). Without it each link carried ~48h of invisible box
+  on top of the 24h gap, which is what made the space under the grid look huge.
+- `NamesOfAllahCard` takes an optional `onTap` (wrapped in `Material` +
+  `InkWell` for a proper ripple) and the home screen uses it to reach
+  `NamesOfAllahPage`, so that page is not orphaned now that the title row is
+  gone.
+- One spacing scale for the whole page (`home_page.dart`): 8h top, 16h between
+  the header/greeting/prayer card, 24h between sections, 12h between a section
+  title and its content, 32h at the bottom. The previous mix (5/10/15/18/24 and
+  a missing gap before the grid) is gone, and the Android-only spacer is no
+  longer needed.
+- `_buildSectionHeader(title, actionLabel:, onAction:)` replaces the two
+  hand-copied title + "عرض الكل" rows. The link is compact (no 48h tap target)
+  and the "ذكر اليوم" row (no link) no longer forces an empty button into the
+  layout. The azkar row's link pointed at `NamesOfAllahPage` by mistake; it now
+  opens `AllAzkarPage`.
+- Shadows are centralized in `AppPalette.cardShadow()` / `tileShadow()`. The day
+  zekr card had a green glow (`mainColor` 25%, blur 20, spread 2, offset (0,10))
+  that read as a colored stain under the card; it and `NamesOfAllahCard` now use
+  the same neutral shadow, and the grid tiles use the lighter one.
+- Test: `home leads with navigation and keeps one header action` in
+  `azkar_ui_test.dart` asserts the promo is gone, one header action remains, the
+  current section order, the compact links, and the 2:1 ratio between the
+  section gap and the title-to-content gap. A second test asserts the day zekr
+  card's shadow colour/offset, so the colored glow cannot come back.
+
+### Verification
+### Home widget guide card lives in settings
+- The widget guide entry now lives in the settings page, in the "مواقيت الصلاة"
+  section, as its own card (12h below the prayer-times card, before "المظهر
+  العام").
+- It is built with the settings page's own `_buildSettingsCard` + `_buildListTile`,
+  so it matches the other cards exactly (same surface, same `mainColor` 10%
+  border, same 22.h `mainColor` icon, same 15.sp w500 title, 12.sp subtitle).
+  The previous version reused `WidgetGuideCard`, an `AppCard` with its own
+  shadow and a 14.sp w700 title, which looked like a foreign card in that list;
+  `widget_guide_card.dart` is deleted since nothing referenced it anymore.
+- The row opens the guide with `openedFromSettings: true`, so closing it from
+  settings does **not** write `has_seen_home_widget_guide_v1`; the first-run
+  home guide still appears for users who have not seen it.
+- Tests cover the row's position inside the section, that its title/icon styling
+  equals the other settings rows, that there are five bordered settings cards,
+  and that opening then closing the guide leaves the seen flag untouched.
+- `flutter test`: 150/150 passing.
+- `flutter analyze`: no issues.
+- Not committed (user asked to review before pushing).

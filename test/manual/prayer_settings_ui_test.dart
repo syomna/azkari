@@ -15,6 +15,7 @@ import 'package:azkar_app/pages/adhan_page.dart';
 import 'package:azkar_app/pages/contact_us_page.dart';
 import 'package:azkar_app/pages/notifications_screen.dart';
 import 'package:azkar_app/pages/prayer_times_settings_page.dart';
+import 'package:azkar_app/features/widget_guide/presentation/widget_guide_page.dart';
 import 'package:azkar_app/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -746,6 +747,81 @@ void main() {
     await tester.tap(find.text('إلغاء'));
     await _pumpRoute(tester);
     expect(quranProvider.cleared, isFalse);
+  });
+
+  testWidgets(
+      'prayer times section holds the home widget card and does not mark the '
+      'guide as seen', (tester) async {
+    final preferences = await _preferences(<String, Object>{});
+    final themeProvider = ThemeProvider(prefs: preferences);
+    final tasbehProvider = TasbehProvider(sharedPreferences: preferences);
+    final quranProvider = _FakeQuranProvider();
+    addTearDown(themeProvider.dispose);
+    addTearDown(tasbehProvider.dispose);
+    addTearDown(quranProvider.dispose);
+
+    await _pumpApp(
+      tester,
+      home: const SettingsPage(),
+      themeProvider: themeProvider,
+      providers: <SingleChildWidget>[
+        ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
+        ChangeNotifierProvider<TasbehProvider>.value(value: tasbehProvider),
+        ChangeNotifierProvider<QuranProvider>.value(value: quranProvider),
+      ],
+    );
+    await _pumpChecked(tester);
+
+    // البطاقة داخل قسم مواقيت الصلاة: بعد صف المواقيت وقبل "المظهر العام".
+    final Finder widgetRow = find.text('إضافة ويدجت مواقيت الصلاة');
+    expect(widgetRow, findsOneWidget);
+    final double prayerTileBottom =
+        tester.getBottomLeft(find.text('مواقيت الصلاة والأذكار')).dy;
+    final double rowTop = tester.getTopLeft(widgetRow).dy;
+    final double appearanceTop =
+        tester.getTopLeft(find.text('المظهر العام')).dy;
+    expect(rowTop, greaterThan(prayerTileBottom));
+    expect(rowTop, lessThan(appearanceTop));
+
+    // الصف بنفس واجهة بقية بطاقات الإعدادات: نفس حجم ووزن خط العنوان،
+    // ونفس الأيقونة (لون التطبيق وحجمها)، داخل بطاقة بنفس الحد والفاصل.
+    TextStyle titleStyleOf(String text) =>
+        tester.widget<Text>(find.text(text)).style!;
+    final String prayerTitle = 'مواقيت الصلاة والأذكار';
+    expect(titleStyleOf('إضافة ويدجت مواقيت الصلاة').fontSize,
+        titleStyleOf(prayerTitle).fontSize);
+    expect(titleStyleOf('إضافة ويدجت مواقيت الصلاة').fontWeight,
+        titleStyleOf(prayerTitle).fontWeight);
+    Finder leadingIconOf(String text) => find.descendant(
+          of: find.ancestor(
+              of: find.text(text), matching: find.byType(ListTile)),
+          matching: find.byType(Icon),
+        );
+    final Finder prayerIcon = leadingIconOf(prayerTitle);
+    final Finder widgetIcon = leadingIconOf('إضافة ويدجت مواقيت الصلاة');
+    expect(tester.widget<Icon>(widgetIcon.first).color,
+        tester.widget<Icon>(prayerIcon.first).color);
+    expect(tester.getSize(widgetIcon.first).height,
+        closeTo(tester.getSize(prayerIcon.first).height, 0.01));
+    final Finder settingsCards = find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is Material &&
+          widget.shape is RoundedRectangleBorder &&
+          (widget.shape as RoundedRectangleBorder).side.width > 0,
+    );
+    // أربع بطاقات أقسام + بطاقة الودجت.
+    expect(settingsCards, findsNWidgets(5));
+
+    await tester.tap(widgetRow);
+    await _pumpRoute(tester);
+    expect(find.byType(WidgetGuidePage), findsOneWidget);
+
+    // إغلاق الدليل من هنا لا يُسجَّل كـ"شوهد من قبل"، فدليل أول التشغيل في
+    // الرئيسية يبقى ظاهراً لمن لم يره بعد.
+    await tester.tap(find.byIcon(Icons.close_rounded));
+    await tester.pumpAndSettle();
+    expect(find.byType(WidgetGuidePage), findsNothing);
+    expect(preferences.getBool(WidgetGuidePage.seenPreferenceKey), isNull);
   });
 
   testWidgets('about dialog has no overflow at 320px and 2x text',
