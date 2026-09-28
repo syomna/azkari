@@ -2,6 +2,15 @@ import 'package:azkar_app/features/quran/data/services/tafseer_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('TafseerService.edition', () {
+    test('uses the valid alquran.cloud tafsir identifier', () {
+      // ar.al-muyassar كان معرّفاً غير موجود فيرجع الـ API نص الآية نفسها
+      // بدل التفسير، فيظهر التفسير مساوياً للآية. المعرّف الصحيح هو
+      // ar.muyassar (تفسير مجمع الملك فهد) من قائمة editions في الـ API.
+      expect(TafseerService().edition, 'ar.muyassar');
+    });
+  });
+
   group('TafseerService.cleanTafseerText', () {
     test('removes HTML tags', () {
       const raw = 'قوله تعالى <b>اهْدِنَا</b> أي دُلَّنا.';

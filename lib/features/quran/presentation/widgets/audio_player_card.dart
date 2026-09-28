@@ -29,11 +29,26 @@ class _AudioPlayerCardState extends State<AudioPlayerCard> {
   void initState() {
     super.initState();
     _isDownloadedFuture = _checkDownloaded();
+    _loadKnownDuration();
   }
 
   Future<bool> _checkDownloaded() {
     final provider = Provider.of<QuranProvider>(context, listen: false);
     return provider.checkSurahDownloadedUseCase(widget.surahNumber);
+  }
+
+  // المدة الكاملة للسورة المنزّلة تُقرأ من الملف نفسه قبل التشغيل، حتى
+  // يظهر الشريط "0:00 / المدة الكاملة" بدل "0:00 / 0:00" عند فتحه.
+  Duration? _knownDuration;
+
+  Future<void> _loadKnownDuration() async {
+    final provider = Provider.of<QuranProvider>(context, listen: false);
+    final Duration? duration = await provider.surahDurationIfDownloaded(
+      widget.surahNumber,
+      QuranAudioSource.urlForSurah(widget.surahNumber),
+    );
+    if (!mounted) return;
+    setState(() => _knownDuration = duration);
   }
 
   void _refreshDownloadStatus() {
@@ -48,8 +63,10 @@ class _AudioPlayerCardState extends State<AudioPlayerCard> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.surahNumber != widget.surahNumber) {
       // عند تبديل السورة من خارج الكارت (تقليب صفحات القارئ) يجب تحديث
-      // حالة التحميل للسورة الجديدة فوراً.
+      // حالة التحميل للسورة الجديدة فوراً مع مدة الملف الجديد.
       _isDownloadedFuture = _checkDownloaded();
+      _knownDuration = null;
+      _loadKnownDuration();
     }
   }
 
@@ -62,7 +79,12 @@ class _AudioPlayerCardState extends State<AudioPlayerCard> {
 
     return Container(
       key: const ValueKey('floating_audio_player'),
-      height: 76.h,
+      // الشريط معلّق بـ Stack+Align (قيود مرنة بلا حد أقصى)، وColumn الداخل
+      // كانت بـ MainAxisSize.max فامتدّت لتعبئ كل الشاشة عند إزالة الارتفاع
+      // الثابت. العمود الآن بـ MainAxisSize.min فيصير حجم البطاقة = حجم
+      // محتواها تماماً: لا يتمدّد للشاشة، ولا يتجاوزه نصٌّ عند تكبير الخط
+      // (على اللوحي ينمو الـ .sp مع العرض أسرع من الـ .h مع الارتفاع).
+      constraints: BoxConstraints(minHeight: 76.h),
       margin: EdgeInsets.symmetric(horizontal: 14.w),
       padding: EdgeInsets.only(left: 12.w, right: 6.w),
       decoration: BoxDecoration(
@@ -87,6 +109,7 @@ class _AudioPlayerCardState extends State<AudioPlayerCard> {
           SizedBox(width: 12.w),
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -203,10 +226,8 @@ class _AudioPlayerCardState extends State<AudioPlayerCard> {
                 ? (positionSnapshot.data ?? Duration.zero)
                 : Duration.zero;
             final Duration duration = isSameSurah
-                ? (durationSnapshot.data ??
-                    provider.player.duration ??
-                    Duration.zero)
-                : Duration.zero;
+                ? (durationSnapshot.data ?? _knownDuration ?? Duration.zero)
+                : (_knownDuration ?? Duration.zero);
 
             // عند الإيقاف أو تبديل السورة تبقى قيمة الموضع الأخيرة في الـ
             // stream بينما تصير المدة صفراً، فيصبح max = 1 وتُفشل قيمة الموضع

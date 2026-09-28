@@ -232,7 +232,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   () {
                 Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const ContactUsPage()));
-              }, subtitle: 'تواصل معنا عبر واتساب أو بريد إلكتروني'),
+              }),
               _divider(),
               _buildListTile('عن التطبيق', Icons.info_rounded,
                   () => _showAboutAppDialog(context, packageInfo)),

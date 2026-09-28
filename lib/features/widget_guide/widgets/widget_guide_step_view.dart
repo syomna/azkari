@@ -104,11 +104,15 @@ class WidgetGuideStepView extends StatelessWidget {
             color: AppPalette.mainColor,
           ),
           SizedBox(width: 6),
-          Text(
-            'ميزة جديدة',
-            style: TextStyle(
-              color: AppPalette.mainColor,
-              fontWeight: FontWeight.w800,
+          // النصوص بلا Flexible لا تنكمش تحت عرضها الطبيعي، فكان الشارة
+          // تفيض 56px أفقياً على شاشة 320px مع نص بحجم ×2.
+          Flexible(
+            child: Text(
+              'ميزة جديدة',
+              style: TextStyle(
+                color: AppPalette.mainColor,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ],

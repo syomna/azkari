@@ -100,7 +100,8 @@ void main() {
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.reset);
 
-    final controllable = ControllableQuranProvider(downloaded: {2});
+    // سورة غير منزّلة: لا مدة معروفة قبل التشغيل، فتظل "0:00 / 0:00".
+    final controllable = ControllableQuranProvider(downloaded: {});
     provider = controllable;
     controllable.playingSurah = 2;
 
@@ -123,6 +124,27 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(find.text('0:12 / 3:04'), findsOneWidget);
+  });
+
+  testWidgets(
+      'downloaded surah shows its full duration before any playback',
+      (tester) async {
+    tester.view.physicalSize = const Size(1290, 2796);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.reset);
+
+    provider = ControllableQuranProvider(
+      downloaded: {2},
+      knownDuration: const Duration(minutes: 3),
+    );
+
+    await tester.pumpWidget(_wrap(provider, 2));
+    await tester.pumpAndSettle();
+
+    // لم يُلمس زر التشغيل إطلاقاً: المدة معروفة من ملف السورة المنزّلة
+    // فتظهر "0:00 / 3:00" بدل "0:00 / 0:00".
+    expect(tester.takeException(), isNull);
+    expect(find.text('0:00 / 3:00'), findsOneWidget);
   });
 
   testWidgets('download status updates when the surah changes', (tester) async {

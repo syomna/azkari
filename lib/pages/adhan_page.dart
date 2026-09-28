@@ -105,136 +105,153 @@ class _AdhanPageState extends State<AdhanPage>
             ),
           ),
           child: SafeArea(
-            child: Column(
-              children: [
-                const Spacer(flex: 2),
-                // Pulsing glow
-                AnimatedBuilder(
-                  animation: _pulseController,
-                  builder: (context, child) {
-                    final glowOpacity = 0.15 + (_pulseController.value * 0.2);
-                    return Container(
-                      width: 180.w,
-                      height: 180.w,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppPalette.mainColor
-                                .withValues(alpha: glowOpacity),
-                            blurRadius: 60 + (_pulseController.value * 30),
-                            spreadRadius: 10 + (_pulseController.value * 10),
+            // المحتوى ثابت الارتفاع تقريباً (دائرة + نصوص + زر) مع Spacer
+            // قبل وبعده. عند تكبير النص أو على شاشة قصيرة تفوق العناصر
+            // الساكنة الارتفاع المتاح ولا ينكمش Spacer تحت الصفر، فيفيض
+            // العمود. القيد الأدنى + التمرير يبقيان التوزيع كما هو على
+            // المقاسات العادية ويمنعان الفيضان على الكبيرة.
+            child: LayoutBuilder(
+              builder: (context, constraints) => SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        const Spacer(flex: 2),
+                        // Pulsing glow
+                        AnimatedBuilder(
+                          animation: _pulseController,
+                          builder: (context, child) {
+                            final glowOpacity =
+                                0.15 + (_pulseController.value * 0.2);
+                            return Container(
+                              width: 180.w,
+                              height: 180.w,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppPalette.mainColor
+                                        .withValues(alpha: glowOpacity),
+                                    blurRadius:
+                                        60 + (_pulseController.value * 30),
+                                    spreadRadius:
+                                        10 + (_pulseController.value * 10),
+                                  ),
+                                ],
+                              ),
+                              child: child,
+                            );
+                          },
+                          child: Container(
+                            width: 180.w,
+                            height: 180.w,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.08),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                width: 2,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                'ﷲ',
+                                style: TextStyle(
+                                  fontSize: 64.sp,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
                           ),
-                        ],
-                      ),
-                      child: child,
-                    );
-                  },
-                  child: Container(
-                    width: 180.w,
-                    height: 180.w,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.08),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        width: 2,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'ﷲ',
-                        style: TextStyle(
-                          fontSize: 64.sp,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
                         ),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 30.h),
-                // "Allahu Akbar"
-                Text(
-                  'الله أكبر',
-                  style: TextStyle(
-                    fontSize: 36.sp,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    height: 1.4,
-                  ),
-                ),
-                SizedBox(height: 12.h),
-                // Prayer name
-                Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(50.r),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Text(
-                    _prayerName,
-                    style: TextStyle(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16.h),
-                // Playing indicator
-                if (_isPlaying)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.volume_up_rounded,
-                          color: Colors.white.withValues(alpha: 0.6),
-                          size: 18.sp),
-                      SizedBox(width: 8.w),
-                      Text(
-                        'جاري الأذان...',
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: Colors.white.withValues(alpha: 0.6),
+                        SizedBox(height: 30.h),
+                        // "Allahu Akbar"
+                        Text(
+                          'الله أكبر',
+                          style: TextStyle(
+                            fontSize: 36.sp,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            height: 1.4,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                const Spacer(flex: 3),
-                // Dismiss button
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 40.w),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 56.h,
-                    child: OutlinedButton(
-                      onPressed: _dismiss,
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.3),
-                          width: 1.5,
+                        SizedBox(height: 12.h),
+                        // Prayer name
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 24.w, vertical: 10.h),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(50.r),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          child: Text(
+                            _prayerName,
+                            style: TextStyle(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16.r),
+                        SizedBox(height: 16.h),
+                        // Playing indicator
+                        if (_isPlaying)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.volume_up_rounded,
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  size: 18.sp),
+                              SizedBox(width: 8.w),
+                              Text(
+                                'جاري الأذان...',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                ),
+                              ),
+                            ],
+                          ),
+                        const Spacer(flex: 3),
+                        // Dismiss button
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 40.w),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 56.h,
+                            child: OutlinedButton(
+                              onPressed: _dismiss,
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  width: 1.5,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16.r),
+                                ),
+                              ),
+                              child: Text(
+                                'إغلاق',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        'إغلاق',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
+                        SizedBox(height: 40.h),
+                      ],
                     ),
                   ),
                 ),
-                SizedBox(height: 40.h),
-              ],
+              ),
             ),
           ),
         ),

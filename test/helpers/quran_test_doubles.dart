@@ -101,8 +101,10 @@ QuranProvider buildTestQuranProvider({
 /// [QuranProvider] يتحكم فيه الاختبار مباشرة في موضع التشغيل ورقم السورة
 /// المشغَّلة، دون الاعتماد على أحداث just_audio الداخلية.
 class ControllableQuranProvider extends QuranProvider {
-  ControllableQuranProvider({Set<int> downloaded = const {}})
-      : super(
+  ControllableQuranProvider({
+    this.downloaded = const {},
+    this.knownDuration,
+  }) : super(
           getQuranPageNumberUseCase: _MGetPage(),
           saveQuranPageNumberUseCase: _MSavePage(),
           getLatestSurahNumberUseCase: _MGetSurah(),
@@ -123,6 +125,19 @@ class ControllableQuranProvider extends QuranProvider {
       StreamController<Duration?>.broadcast();
 
   int? playingSurah;
+
+  final Set<int> downloaded;
+
+  /// المدة التي تُعيدها [surahDurationIfDownloaded] لسورة منزّلة في الاختبار،
+  /// بدل تجربة قراءة ملف حقيقي (مستحيل داخل FakeAsync).
+  Duration? knownDuration;
+
+  @override
+  Future<Duration?> surahDurationIfDownloaded(
+    int surahNumber,
+    String url,
+  ) async =>
+      downloaded.contains(surahNumber) ? knownDuration : null;
 
   @override
   Stream<Duration?> get positionStream => _positionController.stream;

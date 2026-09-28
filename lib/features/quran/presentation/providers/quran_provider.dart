@@ -234,4 +234,54 @@ class QuranProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // المدة الكاملة للسورة المنزّلة لا تتوفر من _player قبل بدء التشغيل،
+  // فكان الشريط يعرض "0:00 / 0:00" حتى أول ضغطة. نقرأ مدة الملف المحلي
+  // كما هو (بدون تشغيل) عبر مشغّل مؤقت نتخلص منه فوراً، ونخزّن النتيجة.
+  final Map<int, Duration> _surahDurationCache = {};
+  final Map<int, Future<Duration?>> _durationLoads = {};
+
+  Future<Duration?> surahDurationIfDownloaded(
+    int surahNumber,
+    String url,
+  ) async {
+    if (_currentPlayingSurah == surahNumber && _player.audioSource != null) {
+      return _player.duration;
+    }
+    final Duration? cached = _surahDurationCache[surahNumber];
+    if (cached != null) return cached;
+    return _durationLoads.putIfAbsent(
+      surahNumber,
+      () => _loadOfflineDuration(surahNumber, url),
+    );
+  }
+
+  Future<Duration?> _loadOfflineDuration(int surahNumber, String url) async {
+    try {
+      // لا ننزّل شيئاً من أجل المؤقت: إن لم تكن السورة منزّلة نعود بنتيجة
+      // فارغة فتبقى "0:00 / 0:00" حتى أول تشغيل كما كانت.
+      if (!await checkSurahDownloadedUseCase(surahNumber)) return null;
+      final String path =
+          await getSurahAudioUseCase(surahNumber: surahNumber, url: url);
+      final AudioPlayer probe = AudioPlayer();
+      try {
+        await probe.setFilePath(path);
+        final Duration? duration = probe.duration;
+        if (duration != null) _surahDurationCache[surahNumber] = duration;
+        return duration;
+      } catch (_) {
+        // بيئة بلا منصة (اختبارات/لم يُفعّل الصوت) أو ملف تالف: لا نكسر
+        // الواجهة، فقط نترك المدة مجهولة.
+        return null;
+      } finally {
+        try {
+          await probe.dispose();
+        } catch (_) {}
+      }
+    } catch (_) {
+      return null;
+    } finally {
+      _durationLoads.remove(surahNumber);
+    }
+  }
 }

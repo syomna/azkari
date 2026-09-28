@@ -24,17 +24,39 @@ class FakeJustAudioPlatform extends JustAudioPlatform {
 class FakeAudioPlayerPlatform extends AudioPlayerPlatform {
   FakeAudioPlayerPlatform(super.id);
 
+  static const _duration = Duration(minutes: 3);
+
+  final StreamController<PlaybackEventMessage> _playbackEvents =
+      StreamController<PlaybackEventMessage>.broadcast();
+  final StreamController<PlayerDataMessage> _playerData =
+      StreamController<PlayerDataMessage>.broadcast();
+
   @override
   Stream<PlaybackEventMessage> get playbackEventMessageStream =>
-      StreamController<PlaybackEventMessage>.broadcast().stream;
+      _playbackEvents.stream;
 
   @override
-  Stream<PlayerDataMessage> get playerDataMessageStream =>
-      StreamController<PlayerDataMessage>.broadcast().stream;
+  Stream<PlayerDataMessage> get playerDataMessageStream => _playerData.stream;
 
   @override
-  Future<LoadResponse> load(LoadRequest request) async =>
-      LoadResponse(duration: const Duration(minutes: 3));
+  Future<LoadResponse> load(LoadRequest request) async {
+    // يحاكي المنصّة الحقيقية: بعد تحميل الملف تُبثّ حالة "جاهز" مع المدة،
+    // وإلا بقي `setFilePath` معلّقاً في انتظار انتهاء التحميل. يُبثّ الحدث
+    // بعد العودة حتى يسبق الاشتراك في `processingStateStream`.
+    Timer.run(() {
+      _playbackEvents.add(PlaybackEventMessage(
+        processingState: ProcessingStateMessage.ready,
+        updateTime: DateTime.now(),
+        updatePosition: Duration.zero,
+        bufferedPosition: _duration,
+        duration: _duration,
+        icyMetadata: null,
+        currentIndex: 0,
+        androidAudioSessionId: null,
+      ));
+    });
+    return LoadResponse(duration: _duration);
+  }
 
   @override
   Future<PlayResponse> play(PlayRequest request) async => PlayResponse();

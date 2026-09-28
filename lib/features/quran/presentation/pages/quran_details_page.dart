@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/audio_player_card.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/quran_list.dart';
@@ -37,6 +40,13 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
   bool _isAudioVisible = false;
   late QuranProvider _provider;
 
+  // التفسير يُفتح بالضغط المطول على الآية، وهي حركة لا يعرفها أحد من أول
+  // مرة. نعرض تلميحاً صغيراً مرة واحدة فقط (محفوظ في الإعدادات) ثم نخفيه
+  // بنقرة عليه أو بعد ثوانٍ معدودة حتى لا يعيق قراءة المصحف.
+  static const String _tafseerHintSeenKey = 'quran_tafseer_hint_seen';
+  bool _showTafseerHint = false;
+  Timer? _tafseerHintTimer;
+
   @override
   void initState() {
     super.initState();
@@ -57,6 +67,28 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
 
     _currentIndex = savedPage - 1;
     _pageController = PageController(initialPage: _currentIndex);
+    _maybeShowTafseerHint();
+  }
+
+  // التلميح لا يُعرض إلا مرة واحدة أبداً، ثم يُحفظ في الإعدادات.
+  Future<void> _maybeShowTafseerHint() async {
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    final bool seen = preferences.getBool(_tafseerHintSeenKey) ?? false;
+    if (seen) return;
+    setState(() => _showTafseerHint = true);
+    _tafseerHintTimer = Timer(const Duration(seconds: 6), () {
+      if (mounted) setState(() => _showTafseerHint = false);
+    });
+  }
+
+  Future<void> _dismissTafseerHint() async {
+    if (_showTafseerHint) {
+      (await SharedPreferences.getInstance())
+          .setBool(_tafseerHintSeenKey, true);
+    }
+    _tafseerHintTimer?.cancel();
+    if (mounted) setState(() => _showTafseerHint = false);
   }
 
   // صفحة مصحف واحدة لكل entry (1..604)، بدون تقسيم صفحات افتراضية لأن
@@ -73,6 +105,7 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
 
   @override
   void dispose() {
+    _tafseerHintTimer?.cancel();
     // Stop any playing surah audio before leaving the reader
     _provider.resetAudio();
     _pageController.dispose();
@@ -106,6 +139,14 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
             duration: const Duration(milliseconds: 250),
             switchInCurve: Curves.easeOut,
             switchOutCurve: Curves.easeIn,
+            child: _showTafseerHint
+                ? _buildTafseerHint(theme)
+                : const SizedBox.shrink(),
+          ),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
             child: _isAudioVisible
                 ? Align(
                     key: const ValueKey('audio_overlay'),
@@ -121,6 +162,79 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
                 : const SizedBox.shrink(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTafseerHint(ThemeData theme) {
+    final bool isDark = theme.brightness == Brightness.dark;
+    return SafeArea(
+      bottom: false,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(12.w, 4.h, 12.w, 0),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10.r),
+              onTap: _dismissTafseerHint,
+              child: Container(
+                padding: EdgeInsets.fromLTRB(10.w, 2.h, 2.w, 2.h),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF232B36)
+                      : const Color(0xFFEFF3F9),
+                  borderRadius: BorderRadius.circular(10.r),
+                  border: Border.all(
+                    color: AppPalette.mainColor.withValues(alpha: 0.3),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      CupertinoIcons.lightbulb_fill,
+                      size: 13,
+                      color: AppPalette.mainColor,
+                    ),
+                    SizedBox(width: 6.w),
+                    Flexible(
+                      child: Text(
+                        'اضغط مطولاً على أي آية لعرض تفسيرها، من التفسير الميسّر',
+                        style: TextStyle(
+                          fontFamily: AppPalette.amiriFontFamily,
+                          fontSize: 12.sp,
+                          color: isDark ? Colors.white70 : Colors.black87,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 4.w),
+                    IconButton(
+                      onPressed: _dismissTafseerHint,
+                      tooltip: 'إغلاق',
+                      padding: const EdgeInsets.all(6),
+                      constraints: const BoxConstraints(),
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(
+                        CupertinoIcons.xmark,
+                        size: 12,
+                        color: isDark ? Colors.white38 : Colors.black38,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -170,7 +284,13 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
         SizedBox(width: 4.w),
       ],
       bottom: PreferredSize(
-        preferredSize: Size.fromHeight(34.h),
+        // PreferredSize height ثابت، لكن سطر «الجزء • صفحة» يرسم بخط .sp
+        // فينمو مع تكبير الخط أكثر مما ينمو الارتفاع المحجوز، فتجاوزه سطر
+        // واحد (١٤px على اللوحي عند ×٢). نضرب الارتفاع في معامل تكبير الخط
+        // فيكبر معه؛ ومعامل ١ يبقى الارتفاع كما هو تماماً.
+        preferredSize: Size.fromHeight(
+          34.h * MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 2.0),
+        ),
         child: Column(
           children: [
             LinearProgressIndicator(

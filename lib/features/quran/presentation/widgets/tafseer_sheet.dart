@@ -78,25 +78,6 @@ class _TafseerSheetState extends State<TafseerSheet> {
               ),
             ),
             SizedBox(height: 12.h),
-            Container(
-              padding: EdgeInsets.all(14.w),
-              decoration: BoxDecoration(
-                color: AppPalette.mainColor.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(15.r),
-              ),
-              child: Text(
-                verseText,
-                textAlign: TextAlign.right,
-                textDirection: TextDirection.rtl,
-                style: TextStyle(
-                  fontFamily: AppPalette.amiriFontFamily,
-                  fontSize: 17.sp,
-                  height: 1.9,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-              ),
-            ),
-            SizedBox(height: 12.h),
             Expanded(
               child: FutureBuilder<TafseerEntry>(
                 future: _future,
@@ -105,7 +86,8 @@ class _TafseerSheetState extends State<TafseerSheet> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (snapshot.hasError) {
-                    return Center(
+                    return SingleChildScrollView(
+                      padding: EdgeInsets.only(bottom: 8.h),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -128,10 +110,34 @@ class _TafseerSheetState extends State<TafseerSheet> {
                     );
                   }
                   final entry = snapshot.data!;
+                  // الآية والتفسير في ممرّ تمرير واحد: كانت الآية Container
+                  // بارتفاعه الطبيعي داخل Column بارتفاع ثابت
+                  // (FractionallySizedBox 0.6)، فكلما زاد حجم الخط تجاوز
+                  // نصُّ الآية ارتفاع الورقة وارتفع الـ RenderFlex. الآن
+                  // يمرّر الاثنان معاً فلا يبقى نص غير قابل للوصول.
                   return SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        Container(
+                          padding: EdgeInsets.all(14.w),
+                          decoration: BoxDecoration(
+                            color: AppPalette.mainColor.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(15.r),
+                          ),
+                          child: Text(
+                            verseText,
+                            textAlign: TextAlign.right,
+                            textDirection: TextDirection.rtl,
+                            style: TextStyle(
+                              fontFamily: AppPalette.amiriFontFamily,
+                              fontSize: 17.sp,
+                              height: 1.9,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 12.h),
                         Text(
                           entry.text,
                           textAlign: TextAlign.justify,

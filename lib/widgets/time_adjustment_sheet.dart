@@ -127,9 +127,21 @@ class _TimeAdjustmentSheetState extends State<TimeAdjustmentSheet> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label,
-            style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade600)),
+        // العنوان كان Text عادياً بلا سمة مرونة، فعلى الشاشات العريضة (ورقة
+        // السحب محدودة بـ 640px بينما يقيس ScreenUtil كل شيء على 430) يتجاوز
+        // العنوان + أزرار التعديل العرض المتاح. Flexible يترك للخطوة أفضلية
+        // ويقصّ العنوان فقط عند الضرورة القصوى.
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade600),
+          ),
+        ),
+        SizedBox(width: 8.w),
         Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             _roundButton(Icons.remove, onRemove),
             Container(

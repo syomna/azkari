@@ -17,8 +17,12 @@ class TafseerEntry {
 
 /// خدمة التفسير: تجلب تفسير آية واحدة عند الطلب (تحميل كسول بدل حزم
 /// البيانات الضخمة) من أرشيف القرآن المجاني، مع تخزين مؤقت في الذاكرة.
+///
+/// نسخة التفسير الصحيحة في alquran.cloud هي ar.muyassar؛ و ar.al-muyassar
+/// مُعرّف غير موجود فيرجع الـ API نص الآية نفسها بدل التفسير (كان يظهر
+/// التفسير = الآية دون أي شرح).
 class TafseerService {
-  TafseerService({Dio? dio, this.edition = 'ar.al-muyassar'})
+  TafseerService({Dio? dio, this.edition = 'ar.muyassar'})
       : _dio = dio ?? Dio();
 
   final Dio _dio;
