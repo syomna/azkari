@@ -286,14 +286,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_compass:
+  flutter_device_compass:
     dependency: "direct main"
     description:
-      name: flutter_compass
-      sha256: "1b4d7e6c95a675ec8482b5c9c9ccf1ebf0ced3dbec59dce28ad609da953de850"
+      name: flutter_device_compass
+      sha256: "39820e627728c470b494596c04da6d5102eef8c1cbb60d3b54c829b0c0fabef6"
       url: "https://pub.dev"
     source: hosted
-    version: "0.8.1"
+    version: "2.2.0"
   flutter_driver:
     dependency: transitive
     description: flutter
@@ -543,6 +543,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.2"
+  in_app_review:
+    dependency: "direct main"
+    description:
+      name: in_app_review
+      sha256: "364db0c160b37fe7fad9cdaa18f968473924b17368869010af902760421b6bf8"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.12"
+  in_app_review_platform_interface:
+    dependency: transitive
+    description:
+      name: in_app_review_platform_interface
+      sha256: fed2c755f2125caa9ae10495a3c163aa7fab5af3585a9c62ef4a6920c5b45f10
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.5"
   integration_test:
     dependency: "direct dev"
     description: flutter

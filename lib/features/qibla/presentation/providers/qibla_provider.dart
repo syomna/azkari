@@ -4,7 +4,7 @@ import 'dart:developer';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/qibla/domain/usecases/get_qibla_direction_usecase.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_compass/flutter_compass.dart';
+import 'package:flutter_device_compass/flutter_device_compass.dart';
 import 'package:geolocator/geolocator.dart';
 
 class QiblaProvider extends ChangeNotifier with WidgetsBindingObserver {

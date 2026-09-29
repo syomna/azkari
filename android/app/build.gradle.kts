@@ -46,7 +46,7 @@ android {
                 storePassword = System.getenv()["CM_KEYSTORE_PASSWORD"]
                 keyAlias = System.getenv()["CM_KEY_ALIAS"]
                 keyPassword = System.getenv()["CM_KEY_PASSWORD"]
-            } else {
+            } else if (keystoreProperties.containsKey("storeFile")) {
                 storeFile = file(keystoreProperties.getProperty("storeFile"))
                 storePassword = keystoreProperties.getProperty("storePassword")
                 keyAlias = keystoreProperties.getProperty("keyAlias")

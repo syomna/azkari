@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/core/providers/theme_provider.dart';
+import 'package:azkar_app/core/services/app_review_service.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
@@ -199,6 +200,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   AppHelpers.showToast('تم مسح التقدم!');
                 });
               }),
+              _divider(),
+              _buildListTile('قيم التطبيق', Icons.star_rounded,
+                  () => AppReviewService.requestReview(),
+                  subtitle: 'قيّم أذكاري على المتجر'),
               _divider(),
               _buildListTile('مشاركة التطبيق', Icons.share_rounded, () async {
                 final box = context.findRenderObject() as RenderBox?;

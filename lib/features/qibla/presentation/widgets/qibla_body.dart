@@ -86,11 +86,12 @@ class QiblaBody extends StatelessWidget {
                   ? 'أنت باتجاه القبلة الآن'
                   : 'قم بتدوير الهاتف نحو القبلة',
               style: TextStyle(
-                fontSize: 22.sp,
+                fontSize: 20.sp,
                 fontWeight: FontWeight.bold,
                 color: isAligned ? Colors.green : null,
               ),
             ),
+            SizedBox(height: 40.h),
           ],
         );
       },

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:azkar_app/core/providers/notification_provider.dart';
 import 'package:azkar_app/core/providers/theme_provider.dart';
+import 'package:azkar_app/core/services/app_review_service.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/prayer_times_provider.dart';
@@ -116,6 +117,9 @@ class _SplashPageState extends State<SplashPage> {
       // the Adhan/Azkar navigation to an arbitrary later moment (or never).
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) widget.onReady?.call();
+        // يُحتسب هذا كفتحة للتطبيق، ويُعرض تقييم المتجر الأصلي بعد عدة فتحات.
+        // ignore: unawaited_futures
+        AppReviewService.handleAppLaunch();
       });
     }
   }

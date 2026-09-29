@@ -40,9 +40,14 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
   bool _isAudioVisible = false;
   late QuranProvider _provider;
 
-  // التفسير يُفتح بالضغط المطول على الآية، وهي حركة لا يعرفها أحد من أول
-  // مرة. نعرض تلميحاً صغيراً مرة واحدة فقط (محفوظ في الإعدادات) ثم نخفيه
-  // بنقرة عليه أو بعد ثوانٍ معدودة حتى لا يعيق قراءة المصحف.
+  // الآية المختارة: تُمتلئ بالنقر عليها، ويُظلَّل معناها في المصحف طوال
+  // فترة فتح تفسيرها حتى يتضح أي آية يشير إليه النص المعروض.
+  int? _selectedAyahSurah;
+  int? _selectedAyahVerse;
+
+  // التفسير يُفتح بالنقر على الآية (وليس بالضغط المطوّل) لأنه الإجراء
+  // المتوقّع من أي قارئ. نعرض تلميحاً صغيراً مرة واحدة فقط (محفوظ في
+  // الإعدادات) ثم نخفيه بنقرة عليه أو بعد ثوانٍ معدودة حتى لا يعيق القراءة.
   static const String _tafseerHintSeenKey = 'quran_tafseer_hint_seen';
   bool _showTafseerHint = false;
   Timer? _tafseerHintTimer;
@@ -128,9 +133,15 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
           quran.QuranPageView(
             pageController: _pageController,
             onPageChanged: _onPageChanged,
+            highlights: _highlightedVerses,
+            highlightBorderRadius: BorderRadius.circular(6.r),
+            onTap: (surah, verse) {
+              HapticFeedback.selectionClick();
+              _openTafseer(surah, verse);
+            },
             onLongPressStart: (surah, verse, details) {
               HapticFeedback.mediumImpact();
-              _showTafseer(surah, verse);
+              _openTafseer(surah, verse);
             },
             ayahStyle: const TextStyle(fontSize: 23.55),
             pageBackgroundColor: theme.scaffoldBackgroundColor,
@@ -208,7 +219,7 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
                     SizedBox(width: 6.w),
                     Flexible(
                       child: Text(
-                        'اضغط مطولاً على أي آية لعرض تفسيرها، من التفسير الميسّر',
+                        'اضغط على أي آية لعرض تفسيرها، من التفسير الميسّر',
                         style: TextStyle(
                           fontFamily: AppPalette.amiriFontFamily,
                           fontSize: 12.sp,
@@ -416,7 +427,13 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
       _provider.resetAudio();
     }
 
-    setState(() => _currentIndex = pageNumber - 1);
+    setState(() {
+      _currentIndex = pageNumber - 1;
+      // التظليل يخص صفحة واحدة: نتخلّص منه عند الانتقال حتى لا يبقى أثر آية
+      // مختارة على صفحة لم تعد معروضة.
+      _selectedAyahSurah = null;
+      _selectedAyahVerse = null;
+    });
 
     _provider.saveQuranPageNumber(pageNumber);
     _provider.saveLatestQuranSurahNumber(savedSurah);
@@ -456,6 +473,42 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
         },
       ),
     );
+  }
+
+  /// الآية المظلَّلة حالياً، إن وُجدت. الحزمة تطابق التظليل بالسورة ورقم
+  /// الآية فقط، فرقم الصفحة في [quran.HighlightVerse] بيانات وصفية.
+  List<quran.HighlightVerse> get _highlightedVerses {
+    final int? surah = _selectedAyahSurah;
+    final int? verse = _selectedAyahVerse;
+    if (surah == null || verse == null) return const [];
+    return <quran.HighlightVerse>[
+      quran.HighlightVerse(
+        surah: surah,
+        verseNumber: verse,
+        page: _currentIndex + 1,
+        color: AppPalette.mainColor,
+      ),
+    ];
+  }
+
+  /// نقر/ضغط على آية: نظلّلها ثم نفتح تفسيرها، ونزيل التظليل بانتظار الورقة.
+  /// إذا فتح المستخدم تفسيراً آخر قبل إغلاق الأول، نحتفظ بتظليل الجديد:
+  /// المقارنة تمنع إغلاق الورقة الأولى من مسح تظليل الثانية.
+  Future<void> _openTafseer(int surahNumber, int verseNumber) async {
+    setState(() {
+      _selectedAyahSurah = surahNumber;
+      _selectedAyahVerse = verseNumber;
+    });
+
+    await _showTafseer(surahNumber, verseNumber);
+
+    if (!mounted) return;
+    if (_selectedAyahSurah == surahNumber && _selectedAyahVerse == verseNumber) {
+      setState(() {
+        _selectedAyahSurah = null;
+        _selectedAyahVerse = null;
+      });
+    }
   }
 
   Future<void> _showTafseer(int surahNumber, int verseNumber) {
