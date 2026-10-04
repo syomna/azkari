@@ -18,6 +18,7 @@ class NotificationProvider extends ChangeNotifier {
   static const String preAdhanKey = 'notif_pre_adhan';
   static const String quranAfterSalahKey = 'notif_quran_after_salah';
   static const String prophetBlessingsKey = 'notif_prophet_blessings';
+  static const String islamicEventsKey = 'notif_islamic_events';
 
   bool _areNotificationsEnabled = true;
   bool get areNotificationsEnabled => _areNotificationsEnabled;
@@ -31,6 +32,7 @@ class NotificationProvider extends ChangeNotifier {
       _prefs.getBool(quranAfterSalahKey) ?? true;
   bool get isProphetBlessingsEnabled =>
       _prefs.getBool(prophetBlessingsKey) ?? true;
+bool get isIslamicEventsEnabled => _prefs.getBool(islamicEventsKey) ?? true;
 
   final NotificationService _notificationService;
   final PrayerTimeService _prayerTimeService;
@@ -159,6 +161,7 @@ class NotificationProvider extends ChangeNotifier {
       isPreAdhanEnabled.toString(),
       isQuranAfterSalahEnabled.toString(),
       isProphetBlessingsEnabled.toString(),
+      isIslamicEventsEnabled.toString(),
       '${lat.toStringAsFixed(6)},${lng.toStringAsFixed(6)}',
       _prefs.getString(PrefsKeys.morningAzkarTime) ?? '',
       _prefs.getString(PrefsKeys.eveningAzkarTime) ?? '',
@@ -264,6 +267,13 @@ class NotificationProvider extends ChangeNotifier {
       }
       if (isProphetBlessingsEnabled) {
         final e = await _notificationService.scheduleProphetBlessings();
+        error ??= e;
+      }
+      // Islamic events are calendar-based and need no location, so they live
+      // here rather than behind the latitude/longitude guard: a user who has
+      // not granted location should still be told about Ashura or Laylatul Qadr.
+      if (isIslamicEventsEnabled) {
+        final e = await _notificationService.scheduleIslamicEventNotifications();
         error ??= e;
       }
     } catch (e) {

@@ -87,6 +87,12 @@ class _FakeNotificationService implements NotificationService {
   Future<String?> scheduleQuranReminderAfterSalah() async => null;
 
   @override
+  Future<String?> scheduleIslamicEventNotifications({
+    DateTime? referenceDate,
+  }) async =>
+      null;
+
+  @override
   Never noSuchMethod(Invocation invocation) => throw UnimplementedError(
         '${invocation.memberName} is not implemented by the fake',
       );

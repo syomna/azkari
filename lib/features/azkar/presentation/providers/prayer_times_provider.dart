@@ -28,6 +28,13 @@ class PrayerTimesProvider extends ChangeNotifier {
   /// automatic GPS location.
   String? get cityName => sharedPreferences.getString(PrefsKeys.cityName);
 
+  /// The IANA timezone the displayed prayer times are expressed in, or `null`
+  /// when no city has been resolved yet. Kept alongside [cityName] so surfaces
+  /// that reason about dates (e.g. Islamic events) can anchor "today" on the
+  /// same calendar the prayer times use.
+  String? get cityTimezone =>
+      sharedPreferences.getString(PrefsKeys.cityTimezone);
+
   /// Switches the app to a fixed city's coordinates and recalculates today's
   /// prayer times (and the home-screen widget) right away.
   Future<void> setCity(AppCity city) async {

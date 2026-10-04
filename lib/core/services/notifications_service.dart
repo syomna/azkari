@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:azkar_app/core/constants/duaa_notifications.dart';
 import 'package:azkar_app/core/constants/app_constants.dart';
+import 'package:azkar_app/core/services/islamic_events_service.dart';
 import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:flutter/material.dart';
@@ -48,6 +49,10 @@ class NotificationService {
     'blessing_2': 401,
     'blessing_3': 402,
     'blessing_4': 403,
+    // Base of the Islamic-events range. Individual occurrences derive their own
+    // id via IslamicEventsService.notificationIdFor(eventId, hijriDay) because a
+    // dated event recurs yearly and therefore cannot share one fixed id.
+    'islamic_event': 500,
   };
 
   // 1. Private Constructor with required dependencies
@@ -222,6 +227,21 @@ class NotificationService {
     ),
   );
 
+  NotificationDetails islamicEventDetails = const NotificationDetails(
+    android: AndroidNotificationDetails(
+      'islamic_event_channel_v1',
+      'المناسبات الإسلامية',
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+    ),
+    iOS: DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    ),
+  );
+
   /// Ensures the local timezone is set before any scheduling call. If the
   /// device timezone name is not present in the bundled `timezone` data
   /// (e.g. an obscure IANA name), returns `false` so the caller can abort
@@ -297,6 +317,146 @@ class NotificationService {
       scheduled = scheduled.add(const Duration(days: 1));
     }
     return scheduled;
+  }
+
+  /// Builds a device-local [tz.TZDateTime] for an event's Gregorian calendar
+  /// day at the announcement time, or `null` when that moment has already
+  /// passed.
+  ///
+  /// Mirrors [_deviceDateForPrayer] but takes the calendar day as an argument
+  /// instead of assuming "today": an Islamic event is an absolute date, and
+  /// anchoring it on the current day would collapse every occurrence onto the
+  /// next instance of today.
+  ///
+  /// Returns `null` instead of rolling forward, which is what distinguishes a
+  /// dated event from a daily one. A prayer reminder that has already passed
+  /// simply moves to tomorrow, but an event whose date is behind us must be
+  /// dropped: pushing it forward would report the wrong occasion on the wrong
+  /// day.
+  tz.TZDateTime? _deviceDateForOccurrence(
+      DateTime date, TimeOfDay timeOfDay, {DateTime? notBefore}) {
+    final deviceNow = tz.TZDateTime.now(tz.local);
+    final cityTz = _cityTimezone;
+
+    tz.TZDateTime scheduled;
+    if (cityTz == null) {
+      scheduled = tz.TZDateTime(tz.local, date.year, date.month, date.day,
+          timeOfDay.hour, timeOfDay.minute);
+    } else {
+      // The user reasons about an event on the calendar of their selected city,
+      // so the wall-clock is interpreted there and converted to device time.
+      scheduled = tz.TZDateTime.from(
+        tz.TZDateTime(cityTz, date.year, date.month, date.day, timeOfDay.hour,
+            timeOfDay.minute),
+        tz.local,
+      );
+    }
+
+    // A city ahead of the device can put "today's" event a few hours behind us;
+    // anything at or before the cutoff can no longer be delivered on time. The
+    // cutoff never precedes the device clock either, because the OS plugin
+    // rejects any one-off schedule set in its own past.
+    final deviceCutoff = deviceNow.toUtc();
+    final requested = notBefore?.toUtc();
+    final cutoff =
+        (requested != null && requested.isAfter(deviceCutoff)) ? requested : deviceCutoff;
+    return scheduled.toUtc().isAfter(cutoff) ? scheduled : null;
+  }
+
+  /// The clock an Islamic-event notification is announced at: shortly after
+  /// Fajr, falling back to a fixed morning time before prayer times exist.
+  TimeOfDay _eventNotifyTimeOfDay() {
+    final fajr = prayerService.getEffectiveTimes(prefs)['fajr'];
+    if (fajr == null) return IslamicEventsService.fallbackNotifyTime;
+    final minutes =
+        fajr.hour * 60 + fajr.minute + IslamicEventsService.eventNotifyMinutesAfterFajr;
+    final clamped = minutes.clamp(0, 23 * 60 + 59);
+    return TimeOfDay(hour: clamped ~/ 60, minute: clamped % 60);
+  }
+
+  /// One-off notifications for upcoming Islamic events.
+  ///
+  /// These are scheduled as individual dated requests rather than a repeating
+  /// rule: `DateTimeComponents` can only repeat on a Gregorian day-of-month or
+  /// day-of-week, so a lunar month — which alternates between 29 and 30 days —
+  /// cannot be expressed as an OS-level repeat. Passing any
+  /// `matchDateTimeComponents` here would re-fire the notification on the same
+  /// Gregorian day every month. Instead the window is re-armed by the daily
+  /// reschedule the provider already performs.
+  ///
+  /// Most of the year the next 30 days contain no event at all — the observed
+  /// occasions cluster in Hijri months 1, 9, 10 and 12 — so a run that queues
+  /// nothing is a normal outcome, not a failure.
+  ///
+  /// [referenceDate] overrides "today" for the occurrence window so the
+  /// resolution can be tested against known dates.
+  Future<String?> scheduleIslamicEventNotifications({
+    DateTime? referenceDate,
+  }) async {
+    final timezoneError = await _guardTimezone();
+    if (timezoneError != null) return timezoneError;
+
+    // Resolve the window against the user's calendar, not the device's.
+    final cityTz = _cityTimezone;
+    final reference = referenceDate ??
+        (cityTz == null
+            ? tz.TZDateTime.now(tz.local)
+            : tz.TZDateTime.now(cityTz));
+
+    final occurrences = IslamicEventsService.upcoming(
+      fromDate: DateTime(reference.year, reference.month, reference.day),
+    );
+    if (occurrences.isEmpty) return null;
+
+    final notifyTime = _eventNotifyTimeOfDay();
+    String? firstError;
+
+    for (final occurrence in occurrences) {
+      final id = IslamicEventsService.notificationIdFor(
+          occurrence.eventId, occurrence.hijriDay);
+
+      // When a reference date is supplied the cutoff follows it, so a test can
+      // resolve a window that is not "now"; otherwise the device clock decides.
+      final scheduledDate = _deviceDateForOccurrence(
+        occurrence.gregorianDate,
+        notifyTime,
+        notBefore: referenceDate,
+      );
+      if (scheduledDate == null) continue;
+
+      _logSchedule('islamic_event', id, scheduledDate,
+          details: occurrence.type.name);
+
+      final error = await _scheduleExact(
+        id: id,
+        title: occurrence.title,
+        body: 'تذكير بالمناسبة الإسلامية — ${_formatOccurrenceDate(occurrence)}',
+        payload: 'islamic_event_${occurrence.type.name}',
+        scheduledDate: scheduledDate,
+        notificationDetails: islamicEventDetails,
+        matchDateTimeComponents: null,
+      );
+      firstError ??= error;
+    }
+
+    return firstError;
+  }
+
+  /// "الأحد ٢、何か/٣/١٤٤٧ هـ" — the occurrence's own Hijri day plus weekday, so
+  /// the notification names the occasion rather than only its Gregorian date.
+  String _formatOccurrenceDate(IslamicEventOccurrence occurrence) {
+    const weekdays = [
+      'الإثنين',
+      'الثلاثاء',
+      'الأربعاء',
+      'الخميس',
+      'الجمعة',
+      'السبت',
+      'الأحد',
+    ];
+    final hijri = '${occurrence.hijriDay}/${occurrence.hijriMonth}/'
+        '${occurrence.hijriYear}';
+    return '${weekdays[occurrence.gregorianDate.weekday - 1]} $hijri هـ';
   }
 
   /// Parses a stored "HH:mm" custom time into a [TimeOfDay], or `null` when the

@@ -9,6 +9,7 @@ import 'package:azkar_app/features/quran/presentation/providers/quran_provider.d
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
 import 'package:azkar_app/features/widget_guide/presentation/widget_guide_page.dart';
 import 'package:azkar_app/pages/contact_us_page.dart';
+import 'package:azkar_app/pages/islamic_events_page.dart';
 import 'package:azkar_app/pages/notifications_screen.dart';
 import 'package:azkar_app/pages/prayer_times_settings_page.dart';
 import 'package:flutter/cupertino.dart';
@@ -174,6 +175,11 @@ class _SettingsPageState extends State<SettingsPage> {
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const NotificationsScreen()));
               }, subtitle: 'أذان الصلاة وأذكار الصباح والمساء والتذكيرات'),
+              _divider(),
+              _buildListTile('المناسبات الإسلامية', Icons.event_rounded, () {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const IslamicEventsPage()));
+              }, subtitle: 'الأعياد وليالي القدر وأيام الصيام'),
             ]),
             SizedBox(height: 25.h),
             _buildSectionHeader('عام'),

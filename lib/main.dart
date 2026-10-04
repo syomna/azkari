@@ -34,6 +34,7 @@ import 'package:azkar_app/features/surah/domain/usecases/get_surah_usecase.dart'
 import 'package:azkar_app/features/surah/presentation/providers/surah_provider.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
 import 'package:azkar_app/pages/adhan_page.dart';
+import 'package:azkar_app/pages/islamic_events_page.dart';
 import 'package:azkar_app/pages/splash_page.dart';
 import 'dart:async';
 
@@ -88,6 +89,15 @@ void _handleNotificationTap(String payload) {
         builder: (_) => AdhanPage(prayerKey: prayerKey),
       ),
     );
+    return;
+  }
+
+  if (payload.startsWith('islamic_event_')) {
+    // The azkar library is not a useful landing spot for an event reminder, so
+    // open the event list instead of falling through to the default branch.
+    navigator.push(MaterialPageRoute(
+      builder: (_) => const IslamicEventsPage(),
+    ));
     return;
   }
 

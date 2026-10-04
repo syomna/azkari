@@ -250,6 +250,9 @@ class _FakeNotificationProvider extends ChangeNotifier
   bool get isProphetBlessingsEnabled => true;
 
   @override
+  bool get isIslamicEventsEnabled => true;
+
+  @override
   Future<String?> applyNotificationStates() async => null;
 
   @override

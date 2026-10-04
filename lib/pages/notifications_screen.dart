@@ -81,6 +81,13 @@ class NotificationsScreen extends StatelessWidget {
                 onChanged: (v) => notify.toggleNotificationType(
                     NotificationProvider.prophetBlessingsKey, v),
               ),
+              _divider(),
+              SwitchTile(
+                title: 'المناسبات الإسلامية',
+                value: notify.isIslamicEventsEnabled,
+                onChanged: (v) => notify.toggleNotificationType(
+                    NotificationProvider.islamicEventsKey, v),
+              ),
             ],
           ]),
         ),
