@@ -194,8 +194,8 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
                 padding: EdgeInsets.fromLTRB(10.w, 2.h, 2.w, 2.h),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF232B36)
-                      : const Color(0xFFEFF3F9),
+                      ? AppPalette.quranPageDark
+                      : AppPalette.quranPageLight,
                   borderRadius: BorderRadius.circular(10.r),
                   border: Border.all(
                     color: AppPalette.mainColor.withValues(alpha: 0.3),
@@ -255,8 +255,10 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
     int currentSurahNumber,
     int currentPageNumber,
   ) {
+    final List<Map<String, dynamic>> segments =
+        _virtualPages[_currentIndex].surahSegments;
     final int firstStart =
-        _virtualPages[_currentIndex].surahSegments.first['start'] as int;
+        segments.isEmpty ? 1 : segments.first['start'] as int;
     final int juz = quran.getJuzNumber(currentSurahNumber, firstStart);
 
     return AppBar(
@@ -503,7 +505,8 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
     await _showTafseer(surahNumber, verseNumber);
 
     if (!mounted) return;
-    if (_selectedAyahSurah == surahNumber && _selectedAyahVerse == verseNumber) {
+    if (_selectedAyahSurah == surahNumber &&
+        _selectedAyahVerse == verseNumber) {
       setState(() {
         _selectedAyahSurah = null;
         _selectedAyahVerse = null;

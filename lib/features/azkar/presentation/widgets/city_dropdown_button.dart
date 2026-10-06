@@ -7,14 +7,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-/// A dropdown-styled control in the top bar that shows the currently selected
-/// city (or a placeholder) and opens the [showCityPicker] sheet on tap.
+/// A dropdown-styled control that shows the currently selected city (or a
+/// placeholder) and opens the [showCityPicker] sheet on tap.
 class CityDropdownButton extends StatelessWidget {
-  const CityDropdownButton({super.key});
+  /// Small variant for tight spaces such as the prayer-times section header,
+  /// where the control has to read as a caption next to the title rather than
+  /// as a toolbar action. Behaviour and colours are identical; only the
+  /// metrics shrink.
+  final bool compact;
+
+  const CityDropdownButton({super.key, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final labelSize = compact ? 10.5 : 13.0;
+    final placeIconSize = compact ? 12.0 : 16.0;
+    final arrowSize = compact ? 14.0 : 18.0;
+    final borderWidth = compact ? 1.0 : 1.2;
+
     return Consumer<PrayerTimesProvider>(
       builder: (context, provider, _) {
         final isAuto = provider.cityName == null;
@@ -23,14 +34,17 @@ class CityDropdownButton extends StatelessWidget {
           shape: StadiumBorder(
             side: BorderSide(
               color: isDark ? Colors.white24 : AppPalette.mainColor,
-              width: 1.2,
+              width: borderWidth,
             ),
           ),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: () => _openPicker(context, provider),
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+              padding: EdgeInsets.symmetric(
+                horizontal: compact ? 7.w : 12.w,
+                vertical: compact ? 4.h : 8.h,
+              ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -39,19 +53,23 @@ class CityDropdownButton extends StatelessWidget {
                         isAuto
                             ? Icons.my_location_rounded
                             : Icons.location_city_rounded,
-                        size: 16,
+                        size: placeIconSize,
                         color: AppPalette.mainColor),
                   ),
                   SizedBox(width: 4.w),
                   Flexible(
                     child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: 110.w),
+                      // The compact pill shares a row with the section title, so
+                      // it gives up width first and lets the name ellipsize.
+                      constraints: BoxConstraints(
+                        maxWidth: compact ? 74.w : 110.w,
+                      ),
                       child: Text(
                         isAuto ? 'تلقائي' : provider.cityName!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: labelSize.sp,
                           fontWeight: FontWeight.w600,
                           color: isDark ? Colors.white : AppPalette.mainColor,
                         ),
@@ -59,9 +77,9 @@ class CityDropdownButton extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: 4.w),
-                  const Flexible(
+                  Flexible(
                     child: Icon(Icons.arrow_drop_down,
-                        size: 18, color: AppPalette.mainColor),
+                        size: arrowSize, color: AppPalette.mainColor),
                   ),
                 ],
               ),

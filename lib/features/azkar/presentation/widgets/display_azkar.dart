@@ -180,7 +180,7 @@ class _DisplayAzkarState extends State<DisplayAzkar>
                                         : Icons.star_outline_rounded,
                                     size: 22.sp,
                                     color: widget.isFavorite
-                                        ? const Color(0xFFF59E0B)
+                                        ? AppPalette.favoriteColor
                                         : (isDark
                                             ? Colors.white38
                                             : Colors.black26),

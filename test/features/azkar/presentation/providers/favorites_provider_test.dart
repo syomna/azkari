@@ -11,6 +11,49 @@ void main() {
     return FavoritesProvider(sharedPreferences: prefs);
   }
 
+  group('azkar and dua favorites are separate lists', () {
+    test('each library sees only its own topics', () async {
+      final provider = await buildProvider({
+        PrefsKeys.favoriteCategories: [
+          'أذكار الصباح',
+          'دعاء الكرب',
+          'أدعية طلب العلم',
+          'دعاء السفر',
+        ],
+      });
+
+      expect(provider.favAzkarCategories, ['أذكار الصباح']);
+      expect(provider.favDuaCategories,
+          ['دعاء الكرب', 'أدعية طلب العلم', 'دعاء السفر']);
+      // القائمتان معاً كل المفضلة المخزّنة، فلا يضيع موضوع.
+      expect(
+          provider.favAzkarCategories.length + provider.favDuaCategories.length,
+          provider.favCategories.length);
+    });
+
+    test('a topic added later lands in the list of its own library', () async {
+      final provider = await buildProvider(const {});
+
+      await provider.toggleCategoryFavorite('دعاء الاستخارة');
+      await provider.toggleCategoryFavorite('أذكار السفر');
+
+      expect(provider.favDuaCategories, ['دعاء الاستخارة']);
+      expect(provider.favAzkarCategories, ['أذكار السفر']);
+      expect(provider.isCategoryFav('دعاء الاستخارة'), isTrue);
+    });
+
+    test('removing a dua favorite leaves the azkar list untouched', () async {
+      final provider = await buildProvider({
+        PrefsKeys.favoriteCategories: ['أذكار الصباح', 'دعاء الكرب'],
+      });
+
+      await provider.removeCategoryFavorite('دعاء الكرب');
+
+      expect(provider.favDuaCategories, isEmpty);
+      expect(provider.favAzkarCategories, ['أذكار الصباح']);
+    });
+  });
+
   group('renameCategoryItemFavorites', () {
     test('re-keys favourited items of the renamed category', () async {
       final provider = await buildProvider({

@@ -49,7 +49,7 @@ class SurahItem extends StatelessWidget {
             width: double.infinity,
             padding: EdgeInsets.all(22.w),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              color: isDark ? AppPalette.darkCardSurface : Colors.white,
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(18.r),
                 bottomRight: Radius.circular(18.r),
@@ -103,7 +103,7 @@ class SurahItem extends StatelessWidget {
                         isFav ? Icons.star_rounded : Icons.star_outline_rounded,
                         size: 22.sp,
                         color: isFav
-                            ? const Color(0xFFF59E0B)
+                            ? AppPalette.favoriteColor
                             : (isDark ? Colors.white38 : Colors.black26),
                       ),
                     ),

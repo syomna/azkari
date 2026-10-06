@@ -81,7 +81,7 @@ class PrayerTimeTile extends StatelessWidget {
                     'وقت معدّل يدوياً',
                     style: TextStyle(
                       fontSize: 11.sp,
-                      color: Colors.green.shade600,
+                      color: AppPalette.deepGreenLight,
                     ),
                   ),
               ],
@@ -101,16 +101,34 @@ class PrayerTimeTile extends StatelessWidget {
 
           // Reset or chevron
           if (onReset != null) ...[
-            SizedBox(width: 8.w),
-            GestureDetector(
-              onTap: onReset,
-              child:
-                  Icon(Icons.refresh_rounded, color: Colors.grey, size: 18.h),
+            SizedBox(width: 4.w),
+            // IconButton بمقيّدات صفرية بدل GestureDetector: tooltip تمنح اسماً
+            // لمحصّلي الوصول (قارئ الشاشة)، وقيود عرض صارمة (40px) كانت تفيض
+            // الصف 4px على 320px عند خط 2×.
+            IconButton(
+              onPressed: onReset,
+              tooltip: 'استعادة التوقيت الأصلي',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              visualDensity: VisualDensity.compact,
+              style: IconButton.styleFrom(
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: EdgeInsets.zero,
+              ),
+              icon: Icon(Icons.refresh_rounded,
+                  size: 18.h,
+                  color: isDark
+                      ? AppPalette.darkMutedText
+                      : AppPalette.lightMutedText),
             ),
           ] else ...[
             SizedBox(width: 8.w),
             Icon(Icons.chevron_right_rounded,
-                color: Colors.grey.shade400, size: 20.h),
+                color: isDark
+                    ? AppPalette.darkMutedText
+                    : AppPalette.lightMutedText,
+                size: 20.h),
           ],
         ],
       ),

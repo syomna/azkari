@@ -1,4 +1,5 @@
 import 'package:azkar_app/core/constants/app_constants.dart';
+import 'package:azkar_app/features/azkar/domain/dua_categories.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,6 +19,16 @@ class FavoritesProvider extends ChangeNotifier {
 
   List<String> get favCategories => _favCategories;
   List<String> get favIndividualItems => _favIndividualItems;
+
+  /// المفضلة مقسومة إلى قائمتين: موضوعات الأذكار وموضوعات الأدعية، كل واحدة
+  /// تُعرض في تبويب المفضلة بصفحتها. القسمة بالاسم كما في قاعدة البيانات
+  /// ([isDuaCategory]) لا بمفتاح تخزين ثانٍ، فتبقى المفضلة الحالية كما هي
+  /// وينتقل موضوع الدعاء المفضّل تلقائياً إلى قائمة الأدعية.
+  List<String> get favAzkarCategories =>
+      _favCategories.where((c) => !isDuaCategory(c)).toList();
+
+  List<String> get favDuaCategories =>
+      _favCategories.where(isDuaCategory).toList();
 
   void loadFavorites() {
     _favCategories =

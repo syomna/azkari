@@ -3,7 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class WelcomingWidget extends StatelessWidget {
-  const WelcomingWidget({super.key});
+  /// Optional control pinned to the end of the row, i.e. the left side in RTL.
+  ///
+  /// It is a slot rather than a concrete button so this widget stays free of
+  /// navigation concerns: the caller decides what the control does. Hosting it
+  /// here saves a whole row on a screen whose vertical space is the scarce one.
+  final Widget? action;
+
+  const WelcomingWidget({super.key, this.action});
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +46,11 @@ class WelcomingWidget extends StatelessWidget {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
+            // min لا max: يقتصر العمود على ارتفاع نصه فقط. مع max كان يتمدد
+            // ليأخذ كامل الارتفاع المتاح، فلا يتوسّط عموديًا إلا في صناديق
+            // محددة الارتفاع، وقد يفيض نصه عند تكبير الخط. التمركز على المحور
+            // الرأسي يوفّره Row نفسه عبر crossAxisAlignment.
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 _getTimeBasedGreeting(), // Dynamic greeting based on time
@@ -65,6 +76,10 @@ class WelcomingWidget extends StatelessWidget {
             ],
           ),
         ),
+        if (action != null) ...[
+          SizedBox(width: 10.w),
+          action!,
+        ],
       ],
     );
   }

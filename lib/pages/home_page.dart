@@ -3,8 +3,8 @@ import 'dart:math';
 import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/core/enums/app_loading_status.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
+import 'package:azkar_app/features/azkar/presentation/pages/ad3ya_page.dart';
 import 'package:azkar_app/features/azkar/presentation/pages/all_azkar_page.dart';
-import 'package:azkar_app/features/azkar/presentation/pages/azkar_details_page.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/prayer_times_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/city_dropdown_button.dart';
@@ -22,6 +22,7 @@ import 'package:azkar_app/widgets/prayer_times_card.dart';
 import 'package:azkar_app/widgets/welcoming_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_islamic_icons/flutter_islamic_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
@@ -33,15 +34,15 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // إيقاع فراغات واحد للصفحة كلها: بين الأقسام 24، بين العنوان ومحتواه 12،
-  // وبين البطاقات المتتالية 16. كان كل سطر يستخدم رقماً مختلفاً (5/10/12/15/
-  // 18/24) فيبدو التخطيط غير متسق.
+  // إيقاع فراغات واحد للصفحة كلها: 8 أعلى الودجت، 16 بين الودجتات
+  // المتتالية، 24 قبل شبكة التنقل، و32 أسفل الصفحة. كان كل سطر يستخدم رقماً
+  // مختلفاً (5/10/12/15/18/24) فيبدو التخطيط غير متسق.
   static final double _gapTop = 8.h;
   static final double _gap = 16.h;
   static final double _gapSection = 24.h;
-  static final double _gapTitle = 12.h;
   static final double _gapBottom = 32.h;
 
+  /// اسم من أسماء الله الحسنى يظهر في بطاقة اليوم، ويتغير بين فتحات الصفحة.
   int _randomNameIndex = 0;
 
   @override
@@ -86,8 +87,14 @@ class _HomePageState extends State<HomePage> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: isDark
-                    ? [const Color(0xFF1A1A1A), const Color(0xFF121212)]
-                    : [const Color(0xFFFDFDFD), const Color(0xFFF5F5F5)],
+                    ? [
+                        AppPalette.homeGradientDarkFrom,
+                        AppPalette.homeGradientDarkTo
+                      ]
+                    : [
+                        AppPalette.homeGradientLightFrom,
+                        AppPalette.homeGradientLightTo
+                      ],
               ),
             ),
             child: SafeArea(
@@ -99,28 +106,20 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(height: _gapTop),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Flexible(
-                            fit: FlexFit.loose,
-                            child: CityDropdownButton(),
-                          ),
-                          // The other two header actions (theme, contact) now
-                          // live in Settings, so the header keeps one entry
-                          // point and the home screen stays scannable.
-                          _buildHeaderAction(
-                            context,
-                            CupertinoIcons.settings,
-                            () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const SettingsPage())),
-                          ),
-                        ],
+                      // The city picker moved into the prayer-times header and
+                      // the settings entry point moved into the greeting row, so
+                      // the home screen no longer spends two full rows on
+                      // controls above the prayer times.
+                      WelcomingWidget(
+                        action: _buildHeaderAction(
+                          context,
+                          CupertinoIcons.settings,
+                          () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const SettingsPage())),
+                        ),
                       ),
-                      SizedBox(height: _gap),
-                      const WelcomingWidget(),
                       SizedBox(height: _gap),
                       Consumer<PrayerTimesProvider>(
                         builder: (context, provider, _) {
@@ -128,28 +127,16 @@ class _HomePageState extends State<HomePage> {
                             return const SizedBox.shrink();
                           }
                           return PrayerTimesCard(
-                            times: provider.prayerTimes!,
                             displayTimes: provider.allDisplayTimes,
-                            cityName: provider.cityName,
+                            timezone: provider.cityTimezone,
+                            locationSlot:
+                                const CityDropdownButton(compact: true),
                           );
                         },
                       ),
                       SizedBox(height: _gapSection),
-                      _buildSectionHeader(
-                        'ذكر اليوم',
-                      ),
-                      SizedBox(height: _gapTitle),
                       const DayZekrWidget(),
                       SizedBox(height: _gapSection),
-                      _buildSectionHeader(
-                        AppConstants.allAzkarPageTitle,
-                        actionLabel: 'عرض الكل',
-                        onAction: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const AllAzkarPage())),
-                      ),
-                      SizedBox(height: _gapTitle),
                       GridView(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -158,23 +145,18 @@ class _HomePageState extends State<HomePage> {
                           crossAxisCount: 3,
                           crossAxisSpacing: 10,
                           mainAxisSpacing: 10,
-                          childAspectRatio: 1,
+                          childAspectRatio: 1.2,
                         ),
                         children: azkarList,
                       ),
-                      SizedBox(height: _gapSection),
-                      _buildSectionHeader(
-                        'أسماء الله الحسنى',
-                        actionLabel: 'عرض الكل',
-                        onAction: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const NamesOfAllahPage())),
-                      ),
-                      SizedBox(height: _gapTitle - 10.h),
+                      // SizedBox(height: _gapSection),
                       Builder(builder: (context) {
+                        // watch لا read: الأسماء تُحمَّل من شاشة البداية
+                        // وقد تصل بعد بناء هذه البطاقة، وread لا يعيد البناء
+                        // عند وصولها فتبقى البطاقة مختفية إلى حين تفتح الصفحة
+                        // من جديد.
                         final names = context
-                            .read<NamesOfAllahProvider>()
+                            .watch<NamesOfAllahProvider>()
                             .namesOfAllahList;
                         if (names.isEmpty) return const SizedBox.shrink();
                         return NamesOfAllahCard(
@@ -198,94 +180,41 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // عنوان قسم مع رابط "عرض الكل" اختياري. الرابط مضغوط بدون حد اللمس
-  // الافتراضي (48h) حتى لا يضيف فراغاً كبيراً بجانب العنوان.
-  Widget _buildSectionHeader(
-    String title, {
-    String? actionLabel,
-    VoidCallback? onAction,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        if (actionLabel != null && onAction != null)
-          TextButton(
-            onPressed: onAction,
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.zero,
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
-            ),
-            child: Text(
-              actionLabel,
-              style: TextStyle(
-                color: AppPalette.mainColor,
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
+  /// شبكة التنقل: ست وجهات في صفين، الصف الأول فيه ما يُستعمل يومياً والثاني
+  /// فيه المراجع والأدوات. الأيقونات كلّها من طقم الأيقونات الإسلامية
+  /// (مصحف، تكبير، دعاء، أسماء الله الحسنى، تسبيح، قبلة) بنمط solid واحد
+  /// وباللون الأخضر الأساسي، حتى تبدو الشبكة وحدة واحدة.
   List<Component> get azkarList {
     return const [
       Component(
         text: AppConstants.holyQuran,
-        img: 'quran',
+        icon: FlutterIslamicIcons.quran,
         page: QuranDetailPage(),
-        isColumn: true,
       ),
       Component(
-        text: AppConstants.morningAzkarCategory,
-        img: 'sun',
-        page: AzkarDetailsPage(
-          title: AppConstants.morningAzkarCategory,
-          categoryName: AppConstants.morningAzkarCategory,
-        ),
-        isColumn: true,
+        text: AppConstants.azkarCategory,
+        icon: FlutterIslamicIcons.prayingPerson,
+        page: AllAzkarPage(),
       ),
       Component(
-        text: AppConstants.eveningAzkarCategory,
-        img: 'night',
-        page: AzkarDetailsPage(
-          title: AppConstants.eveningAzkarCategory,
-          categoryName: AppConstants.eveningAzkarCategory,
-        ),
-        isColumn: true,
+        text: AppConstants.ad3yaCategory,
+        icon: FlutterIslamicIcons.prayer,
+        page: Ad3yaPage(),
+      ),
+      Component(
+        text: AppConstants.namesOfAllah,
+        icon: FlutterIslamicIcons.allah99,
+        page: NamesOfAllahPage(),
       ),
       Component(
         text: AppConstants.tasbeh,
-        img: 'tasbih',
+        icon: FlutterIslamicIcons.tasbih,
         page: TasbehPage(),
-        isColumn: true,
-      ),
-      Component(
-        text: AppConstants.favoriteCategory,
-        img: 'duaa',
-        page: AllAzkarPage(
-          selectedFilter: AppConstants.favoriteCategory,
-        ),
-        isColumn: true,
       ),
       Component(
         text: AppConstants.qibla,
-        img: 'qibla',
+        icon: FlutterIslamicIcons.qibla,
         page: QiblaScreen(),
-        isColumn: true,
       ),
     ];
   }

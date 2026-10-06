@@ -16,7 +16,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 4.4.0+79
+version: 4.5.0+80
 
 environment:
   sdk: ">=3.1.2 <4.0.0"
@@ -51,7 +51,6 @@ dependencies:
   share_plus: ^12.0.2
   package_info_plus: ^9.0.0
   qcf_quran_lite: ^0.0.5
-  scrollable_positioned_list: ^0.3.8
   geolocator: ^14.0.2
   flutter_device_compass: ^2.2.0
   dio: ^5.9.1
@@ -62,11 +61,11 @@ dependencies:
   adhan_dart: ^2.0.1
   upgrader: ^13.2.0
   hijri_date: ^1.1.0
-  flutter_svg: ^2.2.4
   sqflite: ^2.4.2+1
   path: ^1.9.1
   home_widget: ^0.10.0
   in_app_review: ^2.0.12
+  flutter_islamic_icons: ^1.0.2
 
 dev_dependencies:
   flutter_test:
@@ -98,7 +97,6 @@ flutter:
   assets:
     - assets/images/
     - assets/db/
-    - assets/audio/
     - assets/images/widget_guide/
   #   - images/a_dot_ham.jpeg
 

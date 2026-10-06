@@ -65,7 +65,7 @@ class _MesbahaWidgetState extends State<MesbahaWidget>
           width: 220.w,
           height: 110.h,
           decoration: BoxDecoration(
-            color: const Color(0xFF2D3436),
+            color: AppPalette.mesbahInk,
             borderRadius: BorderRadius.circular(15.r),
             border:
                 Border.all(color: Colors.grey.withValues(alpha: 0.3), width: 4),
@@ -82,9 +82,8 @@ class _MesbahaWidgetState extends State<MesbahaWidget>
             child: Text(
               AppHelpers.getArabicNumber(provider.count),
               style: TextStyle(
-                fontFamily: 'Digital',
                 fontSize: 50.sp,
-                color: const Color(0xFFBDC3C7).withValues(alpha: 0.8),
+                color: AppPalette.mesbahHighlight.withValues(alpha: 0.8),
                 letterSpacing: 2,
               ),
             ),

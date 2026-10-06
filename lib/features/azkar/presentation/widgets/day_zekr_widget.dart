@@ -44,8 +44,10 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
     HijriDate.setLocal('ar');
     HijriDate fromGregorian = HijriDate.fromDate(DateTime.now());
     // String date = fromGregorian.fullDate();
-    String dateString =
-        '${fromGregorian.dayWeName}، ${AppHelpers.getArabicNumber(fromGregorian.hDay)} ${fromGregorian.longMonthName} ${AppHelpers.getArabicNumber(fromGregorian.hYear)}';
+    String dateString = '${fromGregorian.dayWeName}، '
+        '${AppHelpers.getArabicNumber(fromGregorian.hDay)} '
+        '${fromGregorian.longMonthName} '
+        '${AppHelpers.getArabicNumber(fromGregorian.hYear)}';
 
     return Container(
       width: double.infinity,
@@ -54,12 +56,12 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
         gradient: LinearGradient(
           colors: isDark
               ? [
-                  const Color(0xFF1E1E1E),
-                  const Color(0xFF121E1E),
+                  AppPalette.darkCardSurface,
+                  AppPalette.darkCardSurfaceAlt,
                 ]
               : [
-                  AppPalette.mainColor,
-                  const Color(0xFF3ABB7A),
+                  AppPalette.greenGradientStart,
+                  AppPalette.greenGradientEnd,
                 ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -98,25 +100,43 @@ class _DayZekrWidgetState extends State<DayZekrWidget> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
-                        child: Row(
-                          children: [
-                            Icon(CupertinoIcons.calendar,
-                                color: isDark ? Colors.grey : Colors.white,
-                                size: 14.sp),
-                            SizedBox(width: 5.w),
-                            Flexible(
-                              child: Text(
-                                dateString,
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                                style: TextStyle(
-                                  color: isDark ? Colors.grey : Colors.white,
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w500,
+                        child: Container(
+                          margin: EdgeInsetsDirectional.only(end: 8.w),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 10.w, vertical: 4.h),
+                          decoration: BoxDecoration(
+                            // «رقاقة» شبه بيضاء ترفع التباين فوق التدرّج الأخضر:
+                            // لا الأبيض ولا الأخضر الداكن وحدهما يبلغان AA على
+                            // تدرّج mainColor→greenGradientEnd.
+                            color: Colors.white
+                                .withValues(alpha: isDark ? 0.10 : 0.92),
+                            borderRadius: BorderRadius.circular(30.r),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(CupertinoIcons.calendar,
+                                  color: isDark
+                                      ? AppPalette.darkMutedText
+                                      : AppPalette.deepGreenLight,
+                                  size: 14.sp),
+                              SizedBox(width: 5.w),
+                              Flexible(
+                                child: Text(
+                                  dateString,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? AppPalette.darkMutedText
+                                        : AppPalette.deepGreenLight,
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                       _buildHeaderIcon(

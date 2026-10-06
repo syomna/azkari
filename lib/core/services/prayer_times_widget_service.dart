@@ -61,7 +61,28 @@ class PrayerTimesWidgetService {
             'prayer_name_$key', _arabicNames[key] ?? key);
       }
 
-      final now = DateTime.now();
+      // Anchor every date/header (and, via `widget_timezone`, the platform
+      // widgets' next-prayer logic) to the app's display timezone: the picked
+      // city's zone, or the device zone when on auto. The platforms have no way
+      // to know that zone from the wall-clock strings alone, and they would
+      // otherwise judge "now" with the device clock while the times belong to
+      // another timezone (picked city while traveling, or a mismatched device).
+      final displayTimezone = timezone ??
+          _cityFromPrefs(prefs)?.timezone ??
+          prefs.getString(PrefsKeys.cityTimezone) ??
+          '';
+      final service = PrayerTimeService();
+      final location = displayTimezone.isEmpty
+          ? null
+          : service.displayLocation(displayTimezone);
+      final now = location == null
+          ? DateTime.now()
+          : tz.TZDateTime.now(location);
+      if (displayTimezone.isNotEmpty) {
+        await HomeWidget.saveWidgetData<String>(
+            'widget_timezone', displayTimezone);
+      }
+
       await HomeWidget.saveWidgetData<String>('widget_date',
           '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}');
       await HomeWidget.saveWidgetData<String>('hijri_date', _hijriDate(now));
@@ -75,7 +96,7 @@ class PrayerTimesWidgetService {
         lat: lat,
         lng: lng,
         method: method,
-        timezone: timezone,
+        timezone: displayTimezone.isEmpty ? null : displayTimezone,
       );
       if (multiDay.isNotEmpty) {
         await HomeWidget.saveWidgetData<String>(
@@ -152,7 +173,9 @@ class PrayerTimesWidgetService {
   static String _hijriDate(DateTime date) {
     HijriDate.setLocal('ar');
     final hijri = HijriDate.fromDate(date);
-    return '${hijri.dayWeName}، ${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear}';
+    // The Gregorian label already carries the weekday, and the widget header
+    // has both side by side, so repeating it here just crowds the line.
+    return '${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear} هـ';
   }
 
   static String _gregorianDate(DateTime date) {

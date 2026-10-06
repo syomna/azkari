@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:azkar_app/core/enums/app_loading_status.dart';
+import 'package:azkar_app/features/azkar/domain/dua_categories.dart';
 import 'package:azkar_app/features/azkar/domain/entities/zekr_entity.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/delete_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart';
@@ -48,6 +49,13 @@ class AzkarProvider extends ChangeNotifier {
   List<String> get customCategories {
     return _customAzkarList.map((item) => item.category).toSet().toList();
   }
+
+  /// موضوعات الأدعية في البيانات الأصلية، لصفحة الأدعية.
+  List<String> get duaCategories => duaCategoriesFrom(_azkarList);
+
+  /// عدد أدعية موضوع معيّن.
+  int duaCountIn(String category) =>
+      _azkarList.where((item) => item.category == category).length;
 
   // Standard Azkar loading from JSON
   Future<void> loadAzkar() async {

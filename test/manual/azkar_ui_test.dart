@@ -11,22 +11,25 @@ import 'package:azkar_app/features/azkar/domain/usecases/get_azkar_usecase.dart'
 import 'package:azkar_app/features/azkar/domain/usecases/get_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/save_custom_azkar_usecase.dart';
 import 'package:azkar_app/features/azkar/domain/usecases/update_custom_azkar_usecase.dart';
+import 'package:azkar_app/features/azkar/presentation/pages/ad3ya_page.dart';
 import 'package:azkar_app/features/azkar/presentation/pages/all_azkar_page.dart';
 import 'package:azkar_app/features/azkar/presentation/pages/azkar_details_page.dart';
 import 'package:azkar_app/features/azkar/presentation/pages/favorite_items_page.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/favorites_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/prayer_times_provider.dart';
-import 'package:azkar_app/features/azkar/presentation/widgets/add_azkar_bottom_sheet.dart';
-import 'package:azkar_app/features/azkar/presentation/widgets/azkar_item.dart';
+import 'package:azkar_app/features/azkar/presentation/widgets/azkar_form_sheet.dart';
+import 'package:azkar_app/features/azkar/presentation/widgets/azkar_grid_item.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/city_picker_sheet.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/day_zekr_widget.dart';
-import 'package:azkar_app/features/azkar/presentation/widgets/edit_azkar_bottom_sheet.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/zekr_counter_pill.dart';
+import 'package:flutter_islamic_icons/flutter_islamic_icons.dart';
 import 'package:azkar_app/features/names_of_allah/domain/entities/names_of_allah_entity.dart';
 import 'package:azkar_app/features/names_of_allah/domain/repositories/names_of_allah_repository.dart';
 import 'package:azkar_app/features/names_of_allah/domain/usecases/get_names_of_allah_usecase.dart';
+import 'package:azkar_app/features/names_of_allah/presentation/pages/names_of_allah_page.dart';
 import 'package:azkar_app/features/names_of_allah/presentation/providers/names_of_allah_provider.dart';
+import 'package:azkar_app/features/names_of_allah/presentation/widgets/names_of_allah_card.dart';
 import 'package:azkar_app/features/surah/domain/entities/surah_entity.dart';
 import 'package:azkar_app/features/surah/domain/repositories/surah_repository.dart';
 import 'package:azkar_app/features/surah/domain/usecases/get_surah_usecase.dart';
@@ -35,12 +38,14 @@ import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider
 import 'package:azkar_app/features/widget_guide/presentation/widget_guide_page.dart';
 import 'package:azkar_app/pages/home_page.dart';
 import 'package:azkar_app/pages/splash_page.dart';
+import 'package:azkar_app/widgets/component.dart';
 import 'package:azkar_app/widgets/custom_text_field.dart';
 import 'package:azkar_app/widgets/prayer_times_card.dart';
 import 'package:azkar_app/widgets/search_bar_widget.dart';
 import 'package:dartz/dartz.dart' show Either, Left, Right, Unit, unit;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -223,6 +228,9 @@ Future<_AzkarHarness> _createHarness({
       namesOfAllahRepository: _FakeNamesRepository(assetNames),
     ),
   );
+  // شاشة البداية هي التي تحمّل الأسماء في التطبيق، والـ provider لا يحمّلها
+  // في مُنشئه، فلولا هذا السطر تبقى بطاقة اسم عشوائية فارغة في الاختبار.
+  await names.loadNamesOfAllah();
   final surah = SurahProvider(
     getSurahUseCase: GetSurahUseCase(
       surahRepository: _FakeSurahRepository(),
@@ -328,7 +336,7 @@ class _AddSheetHost extends StatelessWidget {
               showModalBottomSheet<void>(
                 context: context,
                 isScrollControlled: true,
-                builder: (_) => AddAzkarBottomSheet(onChangeFilter: onSaved),
+                builder: (_) => AzkarFormSheet(onChangeFilter: onSaved),
               );
             },
             child: const Text('open add'),
@@ -360,8 +368,8 @@ class _EditSheetHost extends StatelessWidget {
               showModalBottomSheet<void>(
                 context: context,
                 isScrollControlled: true,
-                builder: (_) => EditAzkarBottomSheet(
-                  category: category,
+                builder: (_) => AzkarFormSheet(
+                  initialCategory: category,
                   currentAzkar: currentAzkar,
                 ),
               );
@@ -451,7 +459,7 @@ class _FavoriteItemHost extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Consumer<FavoritesProvider>(
-        builder: (context, provider, _) => AzkarItem(
+        builder: (context, provider, _) => AzkarGridItem(
           title: category,
           count: 3,
           isFavorite: provider.isCategoryFav(category),
@@ -472,6 +480,13 @@ void main() {
     final loader = FontLoader('Tajawal')
       ..addFont(rootBundle.load('assets/fonts/tajawal.ttf'));
     await loader.load();
+    // PrayerTimesProvider re-pins the stored timezone to the platform one on
+    // every load, and the test binding never answers unmocked platform
+    // channels (no engine reply without runAsync). Report the same value the
+    // harness seeds so that re-pin stays a no-op.
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+            const MethodChannel('flutter_timezone'), (call) async => 'UTC');
   });
 
   testWidgets('home dashboard survives 320x600 and 2x text', (tester) async {
@@ -499,8 +514,8 @@ void main() {
     await _settle(tester);
 
     expect(find.byType(HomePage), findsOneWidget);
-    expect(find.byType(DayZekrWidget), findsOneWidget);
     expect(find.byType(PrayerTimesCard), findsOneWidget);
+    expect(find.byType(GridView), findsOneWidget);
     _expectNoException(tester);
   });
 
@@ -545,90 +560,114 @@ void main() {
       isTrue,
     );
 
-    // ترتيب الصفحة: مواقيت الصلاة ثم ذكر اليوم ثم شبكة التنقل.
-    final double prayerTop = tester.getTopLeft(find.byType(PrayerTimesCard)).dy;
+    // ترتيب الصفحة: مواقيت الصلاة ثم بطاقة ذكر اليوم ثم شبكة التنقل ثم
+    // بطاقة اسم من أسماء الله.
+    final double prayerBottom =
+        tester.getBottomLeft(find.byType(PrayerTimesCard)).dy;
     final double dayZekrTop = tester.getTopLeft(find.byType(DayZekrWidget)).dy;
-    final double quranTileTop =
-        tester.getTopLeft(find.text(AppConstants.holyQuran)).dy;
-    expect(prayerTop, lessThan(dayZekrTop));
-    expect(dayZekrTop, lessThan(quranTileTop));
+    final double gridTop = tester.getTopLeft(find.byType(GridView)).dy;
+    final double namesCardTop =
+        tester.getTopLeft(find.byType(NamesOfAllahCard)).dy;
+    expect(prayerBottom, lessThan(dayZekrTop));
+    expect(dayZekrTop, lessThan(gridTop));
+    expect(gridTop, lessThan(namesCardTop));
 
-    // عناوين الأقسام موجودة مع رابط "عرض الكل" لكل قسم.
-    expect(find.text('ذكر اليوم'), findsOneWidget);
-    expect(find.text(AppConstants.allAzkarPageTitle), findsOneWidget);
-    expect(find.text('أسماء الله الحسنى'), findsOneWidget);
-    expect(find.text('عرض الكل'), findsNWidgets(2));
+    // لا عناوين أقسام ولا روابط "عرض الكل": البطاقتان تقفان بلا عنوان.
+    expect(find.text('ذكر اليوم'), findsNothing);
+    expect(find.text(AppConstants.allAzkarPageTitle), findsNothing);
+    expect(find.text('عرض الكل'), findsNothing);
+    expect(find.byType(TextButton), findsNothing);
 
-    // الرابط لا يترك فراغاً كبيراً بجانب العنوان: بدون حد اللمس الافتراضي
-    // (48h) يبقى ارتفاعه قريباً من سطر النص الواحد.
-    final Finder seeAll = find.text('عرض الكل');
-    for (int i = 0; i < seeAll.evaluate().length; i++) {
-      final Finder button =
-          find.ancestor(of: seeAll.at(i), matching: find.byType(TextButton));
-      expect(tester.getSize(button).height, lessThan(36));
+    // الوجهات الست في الشبكة: القرآن ثم الأذكار ثم الأدعية في الصف الأول،
+    // وأسماء الله والتسبيح والقبلة في الصف الثاني.
+    final Finder quranTile = find.text(AppConstants.holyQuran);
+    final Finder azkarTile = find.text(AppConstants.azkarCategory);
+    final Finder ad3yaTile = find.text(AppConstants.ad3yaCategory);
+    // البطاقة السفلية تحمل العنوان نفسه، فنقصر بحثنا على داخل الشبكة.
+    final Finder namesTile = find.descendant(
+      of: find.byType(GridView),
+      matching: find.text(AppConstants.namesOfAllah),
+    );
+    final Finder tasbehTile = find.text(AppConstants.tasbeh);
+    final Finder qiblaTile = find.text(AppConstants.qibla);
+
+    expect(find.byType(Component), findsNWidgets(6));
+
+    // أيقونات إسلامية: كل بطاقة أيقونة واحدة من طقم الأيقونات الإسلامية
+    // (خط IslamicIcons) بلون واحد، ولا صور assets. كل الأيقونات من نفس الطقم
+    // حتى لا تتنافر الشبكة.
+    final Finder tileIcons = find.descendant(
+      of: find.byType(GridView),
+      matching: find.byType(Icon),
+    );
+    expect(tileIcons, findsNWidgets(6));
+    expect(
+      find.descendant(of: find.byType(GridView), matching: find.byType(Image)),
+      findsNothing,
+    );
+    for (int i = 0; i < 6; i++) {
+      final Icon tileIcon = tester.widget<Icon>(tileIcons.at(i));
+      expect(tileIcon.color, AppPalette.mainColor);
+      expect(tileIcon.icon!.fontFamily, 'IslamicIcons');
+      expect(tileIcon.icon!.fontPackage, 'flutter_islamic_icons');
+    }
+    for (final Finder tile in [
+      quranTile,
+      azkarTile,
+      ad3yaTile,
+      namesTile,
+      tasbehTile,
+      qiblaTile
+    ]) {
+      expect(tile, findsOneWidget);
+      // عنوان أطول بطاقة هو "أسماء الله الحسنى"، فلو اتقطع لظهر "أسماء الله..."
+      expect(
+        tester.renderObject<RenderParagraph>(tile).didExceedMaxLines,
+        isFalse,
+        reason: 'عنوان البطاقة اتقطع: ${tester.widget<Text>(tile).data}',
+      );
     }
 
-    // إيقاع الفراغات موحّد: نفس الفارق بين العنوان ومحتواه، والفراغ بين
-    // الأقسام 24h بالضبط في كل المواضع.
-    double gapBetween(Finder a, Finder b) =>
-        tester.getTopLeft(b).dy - tester.getBottomLeft(a).dy;
-    final Finder dayZekrTitle = find.text('ذكر اليوم');
-    final Finder azkarTitle = find.text(AppConstants.allAzkarPageTitle);
-    final Finder namesTitle = find.text('أسماء الله الحسنى');
-    final Finder dayZekrCard = find.byType(DayZekrWidget);
+    // أول ثلاثة في صف واحد بنفس الارتفاع، والثلاثة التالية تحته.
+    final double quranTop = tester.getTopLeft(quranTile).dy;
+    expect(tester.getTopLeft(azkarTile).dy, closeTo(quranTop, 1));
+    expect(tester.getTopLeft(ad3yaTile).dy, closeTo(quranTop, 1));
+    expect(tester.getTopLeft(namesTile).dy, greaterThan(quranTop + 50));
 
-    final double titleToCard = gapBetween(dayZekrTitle, dayZekrCard);
-    final double titleToGrid = gapBetween(azkarTitle, find.byType(GridView));
-    expect(titleToGrid, closeTo(titleToCard, 1));
+    // كل بطاقة تفتح صفحتها: الأذكار تفتح صفحة الأذكار، والأدعية تفتح صفحة
+    // الأدعية، وأسماء الله تفتح صفحة الأسماء. المفضلة لم تعد في الشبكة.
+    // انتقال الصفحة يستغرق أكثر من 100ms التي تم pump عليها في _settle، فتبقى
+    // المسار الخارج واقفاً فوق الشاشة ويبتلع النقرة التالية. لذلك نضخ حتى
+    // ينتهي الانتقال: pumpAndSettle غير صالح هنا لأن مؤقّت عدّاد المواقيت
+    // يجدّد الإطار كل ثانية فلا يستقر أبداً.
+    Future<void> settleRoute() async {
+      for (int i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
 
-    // الفراغ بين الأقسام (24h) ضعف فراغ العنوان عن محتواه (12h)، ونفس
-    // القيمة في كل المواضع (لا 18 ولا 15 ولا 10 ولا فراغ قبل الشبكة).
-    final double cardToTitle = gapBetween(dayZekrCard, azkarTitle);
-    final double gridToTitle = gapBetween(find.byType(GridView), namesTitle);
-    expect(cardToTitle, closeTo(titleToCard * 2, 0.5));
-    expect(gridToTitle, closeTo(cardToTitle, 0.5));
+    Future<void> popPage(Type page) async {
+      Navigator.of(tester.element(find.byType(page))).pop();
+      await settleRoute();
+      expect(find.byType(page), findsNothing);
+    }
 
-    _expectNoException(tester);
-  });
+    await tester.tap(ad3yaTile);
+    await settleRoute();
+    expect(find.byType(Ad3yaPage), findsOneWidget);
+    await popPage(Ad3yaPage);
 
-  testWidgets('day zekr card shadow is neutral, not a colored glow',
-      (tester) async {
-    await _setSurface(tester, const Size(430, 932));
-    final harness = await _createHarness(
-      assetAzkar: const [
-        ZekrEntity(
-          category: _morning,
-          zekr: 'ذكر الصباح',
-          count: '1',
-          description: '',
-          reference: '',
-        ),
-      ],
-    );
+    await tester.tap(azkarTile);
+    await settleRoute();
+    expect(find.byType(AllAzkarPage), findsOneWidget);
+    await popPage(AllAzkarPage);
 
-    await tester.pumpWidget(
-      _testApp(
-        home: const HomePage(),
-        providers: _harnessProviders(harness),
-      ),
-    );
-    await _settle(tester);
+    await tester.tap(namesTile);
+    await settleRoute();
+    expect(find.byType(NamesOfAllahPage), findsOneWidget);
+    await popPage(NamesOfAllahPage);
 
-    final Finder cardContainer = find
-        .descendant(
-          of: find.byType(DayZekrWidget),
-          matching: find.byType(Container),
-        )
-        .first;
-    final BoxDecoration decoration =
-        tester.widget<Container>(cardContainer).decoration! as BoxDecoration;
-    final List<BoxShadow> shadows = decoration.boxShadow!;
-
-    // Was mainColor @25% with offset (0,10); now a neutral black shadow.
-    expect(shadows.length, 1);
-    expect(shadows.single.color,
-        AppPalette.cardShadow(Brightness.light).single.color);
-    expect(shadows.single.offset, const Offset(0, 6));
+    expect(find.text(AppConstants.favoriteCategory), findsNothing);
 
     _expectNoException(tester);
   });
@@ -799,6 +838,230 @@ void main() {
     _expectNoException(tester);
   });
 
+  testWidgets('all azkar shows a two column grid with three tabs',
+      (tester) async {
+    await _setTallSurface(tester);
+    final harness = await _createHarness(
+      assetAzkar: const [
+        ZekrEntity(
+          category: _morning,
+          zekr: 'ذكر الصباح',
+          count: '1',
+          description: '',
+          reference: '',
+        ),
+        ZekrEntity(
+          category: 'أذكار المساء',
+          zekr: 'ذكر المساء',
+          count: '1',
+          description: '',
+          reference: '',
+        ),
+        ZekrEntity(
+          category: 'دعاء الكرب',
+          zekr: 'دعاء الكرب',
+          count: '4',
+          description: '',
+          reference: '',
+        ),
+      ],
+      extraPreferences: {
+        PrefsKeys.favoriteCategories: [_morning],
+      },
+    );
+
+    await tester.pumpWidget(
+      _testApp(
+          home: const AllAzkarPage(), providers: _harnessProviders(harness)),
+    );
+    await _settle(tester);
+
+    // ثلاثة تبويبات: الأذكار وأذكاري والمفضلة.
+    expect(find.byType(TabBar), findsOneWidget);
+    expect(find.text('الأذكار'), findsOneWidget);
+    expect(find.text('أذكاري'), findsOneWidget);
+    expect(find.text('المفضلة'), findsOneWidget);
+
+    // الأذكار في تبويب واحد، لا شرائح تصنيف.
+    expect(find.text('الصباح'), findsNothing);
+    expect(find.text('الأدعية'), findsNothing);
+
+    // موضوعات الأدعية لصفحتها هي، فلا تظهر هنا.
+    expect(find.text('دعاء الكرب'), findsNothing);
+
+    // شبكة بعمودين لموضوعَي أذكار، فالصفّ الأول عمودان.
+    final gridTiles = find.byType(AzkarGridItem);
+    expect(gridTiles, findsNWidgets(2));
+    final firstRow = tester.getRect(gridTiles.at(0));
+    final secondRow = tester.getRect(gridTiles.at(1));
+    expect((firstRow.top - secondRow.top).abs(), lessThan(1));
+    // RTL: العنصر الأول في الشبكة على اليمين، فالثاني يسار أول.
+    expect(secondRow.left, lessThan(firstRow.left));
+    expect((firstRow.width - secondRow.width).abs(), lessThan(1));
+    _expectNoException(tester);
+  });
+
+  testWidgets('all azkar mine tab lists only custom categories',
+      (tester) async {
+    await _setTallSurface(tester);
+    final harness = await _createHarness(
+      assetAzkar: const [
+        ZekrEntity(
+          category: _morning,
+          zekr: 'ذكر الصباح',
+          count: '1',
+          description: '',
+          reference: '',
+        ),
+      ],
+      customAzkar: const [
+        ZekrEntity(
+          category: _custom,
+          zekr: 'ذكر مخصص',
+          count: '2',
+          description: '',
+          reference: '',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _testApp(
+        home: const AllAzkarPage(selectedFilter: 'أذكاري'),
+        providers: _harnessProviders(harness),
+      ),
+    );
+    await _settle(tester);
+
+    expect(find.text(_custom), findsOneWidget);
+    // موضوع البيانات المدمجة لا يظهر في تبويب أذكاري.
+    expect(find.byType(AzkarGridItem), findsOneWidget);
+    _expectNoException(tester);
+  });
+
+  testWidgets('grid card keeps the favorite star off the icon', (tester) async {
+    await _setNarrowSurface(tester);
+    final harness = await _createHarness(
+      assetAzkar: const [
+        ZekrEntity(
+          category: _morning,
+          zekr: 'ذكر الصباح',
+          count: '1',
+          description: '',
+          reference: '',
+        ),
+      ],
+      extraPreferences: {
+        PrefsKeys.favoriteCategories: [_morning],
+      },
+    );
+
+    await tester.pumpWidget(
+      _testApp(
+        home: const AllAzkarPage(),
+        providers: _harnessProviders(harness),
+        textScaler: const TextScaler.linear(2),
+      ),
+    );
+    await _settle(tester);
+
+    final cardFinder = find.byType(AzkarGridItem);
+    final card = tester.getRect(cardFinder);
+    // النجمة نفسها في تبويب المفضلة، فنقصر البحث على داخل البطاقة.
+    final icon = tester.getRect(
+      find.descendant(
+          of: cardFinder, matching: find.byIcon(Icons.wb_sunny_rounded)),
+    );
+    final star = tester.getRect(
+      find.descendant(
+          of: cardFinder, matching: find.byIcon(Icons.star_rounded)),
+    );
+
+    // النجمة في طرف البطاقة المقابل للأيقونة (يسار في العربية) لا فوقها.
+    expect(icon.overlaps(star), isFalse);
+    expect(star.left, lessThan(icon.left));
+    expect(card.left, lessThanOrEqualTo(star.left));
+    _expectNoException(tester);
+  });
+
+  testWidgets('azkar topic without a keyword takes the prayer icon',
+      (tester) async {
+    await _setTallSurface(tester);
+    const plain = 'أذكار المناسبات';
+    final harness = await _createHarness(
+      assetAzkar: const [
+        ZekrEntity(
+          category: plain,
+          zekr: 'ذكر المناسبة',
+          count: '1',
+          description: '',
+          reference: '',
+        ),
+        ZekrEntity(
+          category: _morning,
+          zekr: 'ذكر الصباح',
+          count: '1',
+          description: '',
+          reference: '',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _testApp(
+        home: const AllAzkarPage(),
+        providers: _harnessProviders(harness),
+      ),
+    );
+    await _settle(tester);
+
+    // موضوع بلا كلمة مميّزة يأخذ أيقونة الصلاة، وموضوع الصباح يحتفظ بشمسه.
+    final prayerCards = find.ancestor(
+      of: find.byIcon(FlutterIslamicIcons.prayingPerson),
+      matching: find.byType(AzkarGridItem),
+    );
+    expect(prayerCards, findsOneWidget);
+    expect(find.byIcon(Icons.wb_sunny_rounded), findsOneWidget);
+    _expectNoException(tester);
+  });
+
+  testWidgets('all azkar favorites tab ignores dua favorites', (tester) async {
+    await _setTallSurface(tester);
+    final harness = await _createHarness(
+      assetAzkar: const [
+        ZekrEntity(
+          category: _morning,
+          zekr: 'ذكر الصباح',
+          count: '1',
+          description: '',
+          reference: '',
+        ),
+        ZekrEntity(
+          category: 'دعاء الكرب',
+          zekr: 'دعاء الكرب',
+          count: '4',
+          description: '',
+          reference: '',
+        ),
+      ],
+      extraPreferences: {
+        PrefsKeys.favoriteCategories: [_morning, 'دعاء الكرب'],
+      },
+    );
+
+    await tester.pumpWidget(
+      _testApp(
+        home: const AllAzkarPage(selectedFilter: 'المفضلة'),
+        providers: _harnessProviders(harness),
+      ),
+    );
+    await _settle(tester);
+
+    expect(find.text(_morning), findsOneWidget);
+    expect(find.text('دعاء الكرب'), findsNothing);
+    _expectNoException(tester);
+  });
+
   testWidgets('all azkar layout survives 320x600 at 2x text', (tester) async {
     await _setNarrowSurface(tester);
     final harness = await _createHarness(
@@ -855,78 +1118,7 @@ void main() {
     _expectNoException(tester);
   });
 
-  testWidgets('day zekr refreshes and uses Arabic digits', (tester) async {
-    await _setWideSurface(tester);
-    final harness = await _createHarness(
-      assetAzkar: const [
-        ZekrEntity(
-          category: _morning,
-          zekr: _longZekr,
-          count: '1',
-          description: '',
-          reference: '',
-        ),
-      ],
-    );
-
-    await tester.pumpWidget(
-      _testApp(
-        home: const Scaffold(
-          body: SingleChildScrollView(child: DayZekrWidget()),
-        ),
-        providers: _harnessProviders(harness),
-      ),
-    );
-    await _settle(tester);
-    final dateFinder = find.descendant(
-      of: find.byType(DayZekrWidget),
-      matching: find.byWidgetPredicate(
-        (widget) =>
-            widget is Text &&
-            (widget.data?.contains('،') ?? false) &&
-            (widget.data?.length ?? 0) < 60,
-      ),
-    );
-    expect(dateFinder, findsOneWidget);
-    expect(tester.widget<Text>(dateFinder).data, isNot(matches(RegExp(r'\d'))));
-
-    await tester.tap(find.byIcon(CupertinoIcons.refresh));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text(_longZekr), findsOneWidget);
-    _expectNoException(tester);
-  });
-
-  testWidgets('day zekr layout survives 320x600 at 2x text', (tester) async {
-    await _setNarrowSurface(tester);
-    final harness = await _createHarness(
-      assetAzkar: const [
-        ZekrEntity(
-          category: _morning,
-          zekr: _longZekr,
-          count: '1',
-          description: '',
-          reference: '',
-        ),
-      ],
-    );
-
-    await tester.pumpWidget(
-      _testApp(
-        home: const Scaffold(
-          body: SingleChildScrollView(child: DayZekrWidget()),
-        ),
-        providers: _harnessProviders(harness),
-        textScaler: const TextScaler.linear(2),
-      ),
-    );
-    await _settle(tester);
-
-    expect(find.byType(DayZekrWidget), findsOneWidget);
-    _expectNoException(tester);
-  });
-
-  testWidgets('long AzkarItem and custom field survive 320x600 at 2x text',
+  testWidgets('long AzkarGridItem and custom field survive 320x600 at 2x text',
       (tester) async {
     await _setNarrowSurface(tester);
     final controller = TextEditingController(text: _longZekr);
@@ -937,13 +1129,18 @@ void main() {
           body: SingleChildScrollView(
             child: Column(
               children: [
-                AzkarItem(
-                  title: 'فئة ذات اسم طويل جدا يتجاوز عرض البطاقة',
-                  count: 1000000,
-                  isFavorite: false,
-                  onTap: () {},
-                  onFavoriteTap: () {},
-                  isDark: false,
+                // الشبكة تعطي البطاقة ارتفاعاً محدداً (childAspectRatio)،
+                // فنمنحه هنا نفس المعاملة بدل ارتفاعٍ غير مقيد.
+                SizedBox(
+                  height: 176,
+                  child: AzkarGridItem(
+                    title: 'فئة ذات اسم طويل جدا يتجاوز عرض البطاقة',
+                    count: 1000000,
+                    isFavorite: false,
+                    onTap: () {},
+                    onFavoriteTap: () {},
+                    isDark: false,
+                  ),
                 ),
                 CustomTextField(
                   controller: controller,
@@ -961,7 +1158,7 @@ void main() {
       ),
     );
     await _settle(tester);
-    expect(find.byType(AzkarItem), findsOneWidget);
+    expect(find.byType(AzkarGridItem), findsOneWidget);
     expect(find.byType(CustomTextField), findsOneWidget);
     _expectNoException(tester);
 
@@ -1062,7 +1259,7 @@ void main() {
     await _settle(tester);
     await tester.tap(find.text('open add'));
     await _settle(tester);
-    expect(find.byType(AddAzkarBottomSheet), findsOneWidget);
+    expect(find.byType(AzkarFormSheet), findsOneWidget);
     expect(find.text('إضافة أذكار جديدة'), findsOneWidget);
     _expectNoException(tester);
   });
@@ -1162,7 +1359,7 @@ void main() {
     await _settle(tester);
     await tester.tap(find.text('open edit'));
     await _settle(tester);
-    expect(find.byType(EditAzkarBottomSheet), findsOneWidget);
+    expect(find.byType(AzkarFormSheet), findsOneWidget);
     expect(find.text('تعديل الأذكار المخصصة'), findsOneWidget);
     _expectNoException(tester);
   });
@@ -1334,6 +1531,119 @@ void main() {
     _expectNoException(tester);
     expect(harness.repository.customAzkar, hasLength(1));
     expect(harness.azkar.customCategories, contains(_custom));
+  });
+
+  testWidgets('day zekr card shadow is neutral, not a colored glow',
+      (tester) async {
+    await _setSurface(tester, const Size(430, 932));
+    final harness = await _createHarness(
+      assetAzkar: const [
+        ZekrEntity(
+          category: _morning,
+          zekr: 'ذكر الصباح',
+          count: '1',
+          description: '',
+          reference: '',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _testApp(
+        home: const HomePage(),
+        providers: _harnessProviders(harness),
+      ),
+    );
+    await _settle(tester);
+
+    final Finder cardContainer = find
+        .descendant(
+          of: find.byType(DayZekrWidget),
+          matching: find.byType(Container),
+        )
+        .first;
+    final BoxDecoration decoration =
+        tester.widget<Container>(cardContainer).decoration! as BoxDecoration;
+    final List<BoxShadow> shadows = decoration.boxShadow!;
+
+    // Was mainColor @25% with offset (0,10); now a neutral black shadow.
+    expect(shadows.length, 1);
+    expect(shadows.single.color,
+        AppPalette.cardShadow(Brightness.light).single.color);
+    expect(shadows.single.offset, const Offset(0, 6));
+
+    _expectNoException(tester);
+  });
+
+  testWidgets('day zekr refreshes and uses Arabic digits', (tester) async {
+    await _setWideSurface(tester);
+    final harness = await _createHarness(
+      assetAzkar: const [
+        ZekrEntity(
+          category: _morning,
+          zekr: _longZekr,
+          count: '1',
+          description: '',
+          reference: '',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _testApp(
+        home: const Scaffold(
+          body: SingleChildScrollView(child: DayZekrWidget()),
+        ),
+        providers: _harnessProviders(harness),
+      ),
+    );
+    await _settle(tester);
+    final dateFinder = find.descendant(
+      of: find.byType(DayZekrWidget),
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            (widget.data?.contains('،') ?? false) &&
+            (widget.data?.length ?? 0) < 60,
+      ),
+    );
+    expect(dateFinder, findsOneWidget);
+    expect(tester.widget<Text>(dateFinder).data, isNot(matches(RegExp(r'\d'))));
+
+    await tester.tap(find.byIcon(CupertinoIcons.refresh));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(_longZekr), findsOneWidget);
+    _expectNoException(tester);
+  });
+
+  testWidgets('day zekr layout survives 320x600 at 2x text', (tester) async {
+    await _setNarrowSurface(tester);
+    final harness = await _createHarness(
+      assetAzkar: const [
+        ZekrEntity(
+          category: _morning,
+          zekr: _longZekr,
+          count: '1',
+          description: '',
+          reference: '',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _testApp(
+        home: const Scaffold(
+          body: SingleChildScrollView(child: DayZekrWidget()),
+        ),
+        providers: _harnessProviders(harness),
+        textScaler: const TextScaler.linear(2),
+      ),
+    );
+    await _settle(tester);
+
+    expect(find.byType(DayZekrWidget), findsOneWidget);
+    _expectNoException(tester);
   });
 
   testWidgets('two rapid favorite taps apply add then remove', (tester) async {

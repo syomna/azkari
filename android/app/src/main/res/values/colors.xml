@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Palette for the home-screen widget. Mirrors the in-app prayer-times card's
+  brand green, but is fixed rather than theme-following: the widget is always
+  the dark forest-green container, so there is nothing to switch.
+-->
+<resources>
+    <!-- Rich dark forest green, the widget container. -->
+    <color name="widget_background">#164B34</color>
+    <!-- Translucent white so the tiles read as slots in the container. -->
+    <color name="widget_cell">#1FFFFFFF</color>
+    <color name="widget_cell_border">#1AFFFFFF</color>
+    <!-- Soft pastel mint for the expanded active-prayer card. -->
+    <color name="widget_cell_active">#DDF1E4</color>
+    <color name="widget_text">#FFFFFFFF</color>
+    <color name="widget_text_muted">#B8FFFFFF</color>
+    <!-- Dark green for text and icons inside the mint card. -->
+    <color name="widget_accent">#146B3C</color>
+    <color name="widget_accent_muted">#99146B3C</color>
+    <color name="widget_divider">#33146B3C</color>
+</resources>

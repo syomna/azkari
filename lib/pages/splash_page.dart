@@ -137,8 +137,14 @@ class _SplashPageState extends State<SplashPage> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: isDark
-                ? [const Color(0xFF1A1A1A), const Color(0xFF0F0F0F)]
-                : [const Color(0xFFFFFFFF), const Color(0xFFF2F7F5)],
+                ? [
+                    AppPalette.splashGradientDarkFrom,
+                    AppPalette.splashGradientDarkTo
+                  ]
+                : [
+                    AppPalette.splashGradientLightFrom,
+                    AppPalette.splashGradientLightTo
+                  ],
           ),
         ),
         child: AnimatedOpacity(
@@ -189,7 +195,9 @@ class _SplashPageState extends State<SplashPage> {
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w400,
-                      color: isDark ? Colors.white54 : Colors.grey.shade500,
+                      color: isDark
+                          ? AppPalette.darkMutedText
+                          : AppPalette.lightMutedText,
                       letterSpacing: 10,
                     ),
                   ),
@@ -219,7 +227,9 @@ class _SplashPageState extends State<SplashPage> {
                       'ألا بذكر الله تطمئن القلوب',
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: isDark ? Colors.white38 : Colors.grey.shade400,
+                        color: isDark
+                            ? AppPalette.darkMutedText
+                            : AppPalette.lightMutedText,
                         fontStyle: FontStyle.italic,
                       ),
                     )

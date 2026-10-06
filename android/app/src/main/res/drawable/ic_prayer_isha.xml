@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Crescent moon plus a small star for night prayer time (Isha). The crescent
+     is bounded by two arcs that meet exactly on the intersection points of the
+     two circles, so both arcs stay on the circle they name. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M17.435,15.236A7.4,7.4 0 1,1 9.128,5.148A6.6,6.6 0 0,0 17.435,15.236Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M19.4,2.9L19.96,3.656L21.4,5.6L20.84,6.356L19.4,8.3L18.84,7.544L17.4,5.6L17.96,4.844L19.4,2.9Z" />
+</vector>

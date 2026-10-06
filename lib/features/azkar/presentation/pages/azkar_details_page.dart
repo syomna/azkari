@@ -1,5 +1,6 @@
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
+import 'package:azkar_app/widgets/confirm_dialog.dart';
 import 'package:azkar_app/features/azkar/domain/entities/zekr_entity.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/favorites_provider.dart';
@@ -303,7 +304,7 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
       context: context,
       barrierDismissible: true,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        backgroundColor: isDark ? AppPalette.darkElevatedSurface : Colors.white,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
         contentPadding: EdgeInsets.fromLTRB(24.w, 28.h, 24.w, 20.h),
@@ -330,7 +331,7 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
               style: TextStyle(
                 fontSize: 22.sp,
                 fontWeight: FontWeight.w900,
-                color: isDark ? Colors.white : const Color(0xFF162019),
+                color: isDark ? Colors.white : AppPalette.lightText,
                 fontFamilyFallback: AppPalette.emojiFallback,
               ),
             ),
@@ -367,48 +368,14 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
   }
 
   Future<void> _confirmReset(BuildContext context) async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-        title: Text(
-          'إعادة تعيين العد؟',
-          textAlign: TextAlign.right,
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16.sp),
-        ),
-        content: Text(
-          'سيتم مسح تقدم العد في هذه المجموعة.',
-          textAlign: TextAlign.right,
-          style: TextStyle(fontSize: 14.sp, height: 1.5),
-        ),
-        actionsAlignment: MainAxisAlignment.spaceBetween,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('إلغاء',
-                style: TextStyle(color: Colors.grey, fontSize: 13.sp)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppPalette.mainColor,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r)),
-            ),
-            child: Text('إعادة التعيين',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'إعادة تعيين العد؟',
+      message: 'سيتم مسح تقدم العد في هذه المجموعة.',
+      confirmLabel: 'إعادة التعيين',
+      confirmColor: AppPalette.mainColor,
     );
-    if (!(confirmed ?? false)) return;
-    if (!context.mounted) return;
+    if (!confirmed || !context.mounted) return;
     context.read<AzkarProvider>().resetCategoryCounts(widget.categoryName);
     AppHelpers.showToast('تمت إعادة تعيين العد');
   }

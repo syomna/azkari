@@ -1,3 +1,4 @@
+import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/names_of_allah/domain/entities/names_of_allah_entity.dart';
@@ -57,6 +58,22 @@ class NamesOfAllahCard extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        // عنوان البطاقة محفور في سطحها قبل الاسم، وغير ظاهر
+                        // تماماً حتى لا ينافس الاسم الذي هو موضوع البطاقة.
+                        Text(
+                          AppConstants.namesOfAllah,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppPalette.engravedInk(
+                              Theme.of(context).brightness,
+                            ),
+                            shadows: AppPalette.engravedTextShadows(
+                              Theme.of(context).brightness,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 6.h),
                         Text(
                           item.name,
                           style: TextStyle(
@@ -83,7 +100,9 @@ class NamesOfAllahCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13.sp,
                             height: 1.4, // Improved line spacing for Arabic
-                            color: isDark ? Colors.white70 : Colors.grey[700],
+                            color: isDark
+                                ? AppPalette.darkMutedText
+                                : AppPalette.lightMutedText,
                           ),
                         ),
                       ],

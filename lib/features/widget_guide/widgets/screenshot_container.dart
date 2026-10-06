@@ -21,7 +21,7 @@ class ScreenshotContainer extends StatelessWidget {
 
     final imageBackgroundColor = isDarkMode
         ? colorScheme.surfaceContainerHighest
-        : const Color(0xFFF0F8F3);
+        : AppPalette.guideCanvasLight;
 
     final borderColor = isDarkMode
         ? colorScheme.outline.withValues(alpha: 0.45)
@@ -29,7 +29,7 @@ class ScreenshotContainer extends StatelessWidget {
 
     final primaryShadowColor = isDarkMode
         ? Colors.black.withValues(alpha: 0.30)
-        : const Color(0xFF0E5E38).withValues(alpha: 0.08);
+        : AppPalette.guideAccent.withValues(alpha: 0.08);
 
     final secondaryShadowColor = Colors.black.withValues(
       alpha: isDarkMode ? 0.18 : 0.03,

@@ -101,7 +101,6 @@ class NotificationService {
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
-      requestCriticalPermission: true,
     );
 
     const InitializationSettings initializationSettings =
@@ -134,7 +133,6 @@ class NotificationService {
           alert: true,
           badge: true,
           sound: true,
-          critical: true,
         );
       } else if (Platform.isAndroid) {
         final androidPlugin = flutterLocalNotificationsPlugin
@@ -217,7 +215,6 @@ class NotificationService {
       sound: RawResourceAndroidNotificationSound('adhan_chime'),
       playSound: true,
       audioAttributesUsage: AudioAttributesUsage.alarm,
-      fullScreenIntent: true,
     ),
     iOS: DarwinNotificationDetails(
       sound: 'adhan.wav',
@@ -333,8 +330,8 @@ class NotificationService {
   /// simply moves to tomorrow, but an event whose date is behind us must be
   /// dropped: pushing it forward would report the wrong occasion on the wrong
   /// day.
-  tz.TZDateTime? _deviceDateForOccurrence(
-      DateTime date, TimeOfDay timeOfDay, {DateTime? notBefore}) {
+  tz.TZDateTime? _deviceDateForOccurrence(DateTime date, TimeOfDay timeOfDay,
+      {DateTime? notBefore}) {
     final deviceNow = tz.TZDateTime.now(tz.local);
     final cityTz = _cityTimezone;
 
@@ -358,8 +355,9 @@ class NotificationService {
     // rejects any one-off schedule set in its own past.
     final deviceCutoff = deviceNow.toUtc();
     final requested = notBefore?.toUtc();
-    final cutoff =
-        (requested != null && requested.isAfter(deviceCutoff)) ? requested : deviceCutoff;
+    final cutoff = (requested != null && requested.isAfter(deviceCutoff))
+        ? requested
+        : deviceCutoff;
     return scheduled.toUtc().isAfter(cutoff) ? scheduled : null;
   }
 
@@ -368,8 +366,9 @@ class NotificationService {
   TimeOfDay _eventNotifyTimeOfDay() {
     final fajr = prayerService.getEffectiveTimes(prefs)['fajr'];
     if (fajr == null) return IslamicEventsService.fallbackNotifyTime;
-    final minutes =
-        fajr.hour * 60 + fajr.minute + IslamicEventsService.eventNotifyMinutesAfterFajr;
+    final minutes = fajr.hour * 60 +
+        fajr.minute +
+        IslamicEventsService.eventNotifyMinutesAfterFajr;
     final clamped = minutes.clamp(0, 23 * 60 + 59);
     return TimeOfDay(hour: clamped ~/ 60, minute: clamped % 60);
   }
@@ -430,7 +429,8 @@ class NotificationService {
       final error = await _scheduleExact(
         id: id,
         title: occurrence.title,
-        body: 'تذكير بالمناسبة الإسلامية — ${_formatOccurrenceDate(occurrence)}',
+        body:
+            'تذكير بالمناسبة الإسلامية — ${_formatOccurrenceDate(occurrence)}',
         payload: 'islamic_event_${occurrence.type.name}',
         scheduledDate: scheduledDate,
         notificationDetails: islamicEventDetails,
@@ -786,27 +786,8 @@ class NotificationService {
     return firstError;
   }
 
-  /// Debug-only: prints all currently pending notification requests.
-  Future<void> debugPrintPendingNotifications() async {
-    assert(() {
-      final pending =
-          flutterLocalNotificationsPlugin.pendingNotificationRequests();
-      pending.then((list) {
-        log('[Notification] Pending notifications (${list.length}):');
-        for (final n in list) {
-          log('  id=${n.id} title=${n.title} body=${n.body}');
-        }
-      });
-      return true;
-    }());
-  }
-
   Future<void> cancelAllNotifications() async {
     await flutterLocalNotificationsPlugin.cancelAll();
-  }
-
-  Future<void> cancelNotificationById(int id) async {
-    await flutterLocalNotificationsPlugin.cancel(id: id);
   }
 
   Future<bool> requestNotificationPermission() async {

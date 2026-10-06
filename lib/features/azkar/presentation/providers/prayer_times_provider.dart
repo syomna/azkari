@@ -5,6 +5,7 @@ import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:azkar_app/core/services/prayer_times_widget_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 /// Handles prayer times + manual time overrides for a user's location.
 ///
@@ -35,6 +36,19 @@ class PrayerTimesProvider extends ChangeNotifier {
   String? get cityTimezone =>
       sharedPreferences.getString(PrefsKeys.cityTimezone);
 
+  /// "Today" on the calendar the stored times are expressed in. With a city
+  /// picked in another timezone, the day must roll at the city's midnight, not
+  /// the device's: stamping the device date near a city's midnight would mark
+  /// the freshly-recalculated times stale an hour too early (or late) and doom
+  /// them until the next rollover. Falls back to the device calendar when no
+  /// timezone is available. Uses the service's own location resolution (lazy
+  /// tz-data load + unknown-zone fallback) so this never throws.
+  static String _todayString(String? timezone) {
+    final now =
+        tz.TZDateTime.now(PrayerTimeService().displayLocation(timezone));
+    return now.toIso8601String().substring(0, 10);
+  }
+
   /// Switches the app to a fixed city's coordinates and recalculates today's
   /// prayer times (and the home-screen widget) right away.
   Future<void> setCity(AppCity city) async {
@@ -48,7 +62,7 @@ class PrayerTimesProvider extends ChangeNotifier {
         method: city.method, timezone: city.timezone);
     await sharedPreferences.setString(
       PrefsKeys.prayerTimeDate,
-      DateTime.now().toIso8601String().substring(0, 10),
+      _todayString(city.timezone),
     );
 
     _prayerTimes = prayerTimeService.getTimes(city.latitude, city.longitude,
@@ -78,7 +92,7 @@ class PrayerTimesProvider extends ChangeNotifier {
         timezone: deviceTz);
     await sharedPreferences.setString(
       PrefsKeys.prayerTimeDate,
-      DateTime.now().toIso8601String().substring(0, 10),
+      _todayString(deviceTz),
     );
 
     _prayerTimes = prayerTimeService
@@ -103,6 +117,27 @@ class PrayerTimesProvider extends ChangeNotifier {
     }
   }
 
+  /// Re-pins the stored display timezone to the device's current one while the
+  /// user relies on automatic (GPS) location, returning whether it changed.
+  ///
+  /// The coordinates come from the device, so the times have to be shown in the
+  /// device's timezone. That value was only ever written when the location was
+  /// first resolved, so a timezone change (travelling, DST, or the system
+  /// timezone being changed while the app kept its old coordinates) left the
+  /// stored zone describing a different place than the coordinates — shifting
+  /// every prayer by the whole offset between the two, for as long as the
+  /// mismatched pair stayed stored.
+  ///
+  /// A change has to force a recompute: the day-stale check would otherwise
+  /// keep today's already-stored (wrong) times until tomorrow.
+  Future<bool> _syncDeviceTimezone() async {
+    final stored = sharedPreferences.getString(PrefsKeys.cityTimezone);
+    final device = await prayerTimeService.getDeviceTimezone();
+    if (device == null || device == stored) return false;
+    await sharedPreferences.setString(PrefsKeys.cityTimezone, device);
+    return true;
+  }
+
   Future<void> loadPrayerTimes() async {
     double? lat = sharedPreferences.getDouble(PrefsKeys.latitude);
     double? lng = sharedPreferences.getDouble(PrefsKeys.longitude);
@@ -123,15 +158,21 @@ class PrayerTimesProvider extends ChangeNotifier {
 
     if (lat != null && lng != null) {
       final city = _cityFromPrefs();
-      var timezone =
-          city?.timezone ?? sharedPreferences.getString(PrefsKeys.cityTimezone);
-      if (timezone == null) {
-        // GPS mode without a stored timezone (e.g. a store written by an older
-        // build): resolve and persist the device timezone before computing.
-        await _storeDeviceTimezone();
+      var timezone = city?.timezone;
+      var timezoneChanged = false;
+      if (city == null) {
+        // Automatic location: the coordinates are the device's, so the times
+        // must be expressed in the device's timezone.
+        timezoneChanged = await _syncDeviceTimezone();
         timezone = sharedPreferences.getString(PrefsKeys.cityTimezone);
+        if (timezone == null) {
+          // GPS mode without a stored timezone (e.g. a store written by an
+          // older build): resolve it before computing.
+          await _storeDeviceTimezone();
+          timezone = sharedPreferences.getString(PrefsKeys.cityTimezone);
+        }
       }
-      await _refresh(lat, lng, city, timezone);
+      await _refresh(lat, lng, city, timezone, forceRecompute: timezoneChanged);
     }
   }
 
@@ -148,13 +189,17 @@ class PrayerTimesProvider extends ChangeNotifier {
     if (lat == null || lng == null) return false;
 
     final city = _cityFromPrefs();
-    var timezone =
-        city?.timezone ?? sharedPreferences.getString(PrefsKeys.cityTimezone);
-    if (timezone == null) {
-      await _storeDeviceTimezone();
+    var timezone = city?.timezone;
+    var timezoneChanged = false;
+    if (city == null) {
+      timezoneChanged = await _syncDeviceTimezone();
       timezone = sharedPreferences.getString(PrefsKeys.cityTimezone);
+      if (timezone == null) {
+        await _storeDeviceTimezone();
+        timezone = sharedPreferences.getString(PrefsKeys.cityTimezone);
+      }
     }
-    return _refresh(lat, lng, city, timezone);
+    return _refresh(lat, lng, city, timezone, forceRecompute: timezoneChanged);
   }
 
   /// Recover the fixed city's calculation method + timezone so that
@@ -170,12 +215,14 @@ class PrayerTimesProvider extends ChangeNotifier {
     return null;
   }
 
-  Future<bool> _refresh(
-      double lat, double lng, AppCity? city, String? timezone) async {
+  Future<bool> _refresh(double lat, double lng, AppCity? city, String? timezone,
+      {bool forceRecompute = false}) async {
     final storedDate = sharedPreferences.getString(PrefsKeys.prayerTimeDate);
-    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final today = _todayString(timezone);
     final wasUnset = _prayerTimes == null;
-    final changed = wasUnset || storedDate != today;
+    // `forceRecompute` is how the caller says the inputs themselves changed
+    // (e.g. the display timezone) rather than only the calendar day.
+    final changed = forceRecompute || wasUnset || storedDate != today;
 
     // Same date and we already hold this session's times: nothing to recompute.
     // The 60s day-change timer calls this constantly, and the calculation is

@@ -2,65 +2,141 @@ import WidgetKit
 import SwiftUI
 
 struct PrayerTimesEntry: TimelineEntry {
+    /// One prayer slot. A named struct rather than a tuple so the view can
+    /// carry the prayer key through to its icon lookup.
+    struct Prayer {
+        let key: String
+        let name: String
+        let time: String
+        let isActive: Bool
+    }
+
     let date: Date
-    let prayerTimes: [(name: String, time: String, isActive: Bool)]
+    /// Hijri and gregorian labels for [date], pre-formatted by the app because
+    /// neither platform can derive a hijri date on its own.
+    ///
+    /// Read from the same snapshot day entry as [prayerTimes], so the header
+    /// and the grid always describe the same day.
+    let hijriText: String
+    let gregorianText: String
+    let prayerTimes: [Prayer]
     let nextPrayerName: String
-    let hijriDate: String
-    let gregorianDate: String
+    /// Remaining time until the next adhan, pre-formatted for display.
+    ///
+    /// WidgetKit renders a widget as a static snapshot and reloads it on a
+    /// system-controlled budget, so this value cannot tick between refreshes.
+    /// It is correct as of the last reload, and `remainingMinutes` drives the
+    /// refresh policy to keep it close to current. Android achieves a live
+    /// countdown with a Chronometer, which has no iOS equivalent here.
+    let countdownText: String
+    /// Minutes left until the next prayer, or `nil` when undeterminable. Used
+    /// only to schedule the next timeline refresh.
+    let remainingMinutes: Int?
+
+    /// Display order for the grid: the prayer the countdown refers to leads in
+    /// the wide card, then the remaining prayers follow in canonical order.
+    ///
+    /// Deriving this once keeps the wide card and the compact slots describing
+    /// the same six prayers. Indexing the raw array instead would show the
+    /// active prayer twice, and leave whichever slot it vacated empty, whenever
+    /// the next prayer is not the first of the day.
+    var orderedPrayers: [Prayer] {
+        guard let active = prayerTimes.first(where: { $0.isActive }),
+              let activeIndex = prayerTimes.firstIndex(where: { $0.key == active.key })
+        else { return prayerTimes }
+        var ordered = prayerTimes
+        ordered.remove(at: activeIndex)
+        ordered.insert(active, at: 0)
+        return ordered
+    }
 }
 
 struct PrayerTimesProvider: TimelineProvider {
     static let suiteName = "group.com.yomna.azkarApp"
     static let timesJsonKey = "widget_times_json"
 
+    /// Upper bound on how long the countdown may go unrefreshed. Matches the
+    /// Android widget's refresh cap; WidgetKit will usually be lazier than this.
+    private static let maxRefreshMinutes = 15
+
+    private static let prayerKeys = ["fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha"]
+
+    private static let arabicNames = [
+        "fajr": "الفجر", "sunrise": "الشروق", "dhuhr": "الظهر",
+        "asr": "العصر", "maghrib": "المغرب", "isha": "العشاء"
+    ]
+
     func placeholder(in context: Context) -> PrayerTimesEntry {
         PrayerTimesEntry(
             date: Date(),
-            prayerTimes: [
-                (name: "الفجر", time: "4:30 ص", isActive: false),
-                (name: "الشروق", time: "6:00 ص", isActive: false),
-                (name: "الظهر", time: "12:15 م", isActive: true),
-                (name: "العصر", time: "3:45 م", isActive: false),
-                (name: "المغرب", time: "6:30 م", isActive: false),
-                (name: "العشاء", time: "8:00 م", isActive: false)
-            ],
-            nextPrayerName: "الظهر",
-            hijriDate: "15 رمضان 1447",
-            gregorianDate: "الجمعة 21 يوليو 2025"
+            hijriText: "5 ربيع الآخر 1447 هـ",
+            gregorianText: "الثلاثاء 5 يناير 2026",
+            prayerTimes: Self.placeholderPrayers,
+            nextPrayerName: "الفجر",
+            countdownText: "3:35",
+            remainingMinutes: 215
         )
     }
 
+    private static let placeholderPrayers: [PrayerTimesEntry.Prayer] = [
+        .init(key: "fajr", name: "الفجر", time: "5:24 ص", isActive: true),
+        .init(key: "sunrise", name: "الشروق", time: "6:51 ص", isActive: false),
+        .init(key: "dhuhr", name: "الظهر", time: "12:45 م", isActive: false),
+        .init(key: "asr", name: "العصر", time: "4:05 م", isActive: false),
+        .init(key: "maghrib", name: "المغرب", time: "6:36 م", isActive: false),
+        .init(key: "isha", name: "العشاء", time: "7:53 م", isActive: false)
+    ]
+
     func getSnapshot(in context: Context, completion: @escaping (PrayerTimesEntry) -> Void) {
-        let entry = buildEntry(at: Date())
-        completion(entry)
+        completion(buildEntry(at: Date()))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<PrayerTimesEntry>) -> Void) {
         let now = Date()
-        let calendar = Calendar.current
+        let calendar = Self.displayCalendar()
 
+        var entries: [PrayerTimesEntry] = []
         if let blob = Self.loadTimesBlob() {
             let todayKey = Self.dayKey(for: now, calendar: calendar)
             let dayKeys = blob.keys.filter { $0 >= todayKey }.sorted()
-            let entries = dayKeys.compactMap { key -> PrayerTimesEntry? in
+            entries = dayKeys.compactMap { key -> PrayerTimesEntry? in
                 guard let dayStart = Self.dayStart(fromKey: key, calendar: calendar),
                       let times = blob[key] else { return nil }
                 return buildEntry(at: dayStart, times: times)
             }
-
-            if !entries.isEmpty, let lastDate = entries.last?.date,
-               let refresh = calendar.date(byAdding: .day, value: 1,
-                                           to: calendar.startOfDay(for: lastDate)) {
-                completion(Timeline(entries: entries, policy: .after(refresh)))
-                return
-            }
         }
 
-        // No usable snapshot (app never ran or the stored days all passed):
-        // fall back to a single entry refreshed on the usual cadence.
-        let entry = buildEntry(at: now)
-        let nextUpdate = calendar.date(byAdding: .minute, value: 15, to: now)!
-        completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
+        if entries.isEmpty {
+            // No usable snapshot (app never ran or the stored days all passed).
+            entries = [buildEntry(at: now)]
+        }
+
+        completion(Timeline(entries: entries, policy: .after(Self.nextRefreshDate(entries, now: now))))
+    }
+
+    /// When WidgetKit should ask again.
+    ///
+    /// Today's entry schedules its own follow-up so the countdown is not left
+    /// stale for the rest of the day, capped by `maxRefreshMinutes` and never
+    /// past midnight (where the next day's entry takes over).
+    private static func nextRefreshDate(
+        _ entries: [PrayerTimesEntry],
+        now: Date
+    ) -> Date {
+        let calendar = Self.displayCalendar()
+        let midnight = calendar.date(byAdding: .day, value: 1,
+                                     to: calendar.startOfDay(for: now)) ?? now
+
+        guard let today = entries.first,
+              Self.dayKey(for: today.date, calendar: calendar)
+                  == Self.dayKey(for: now, calendar: calendar),
+              let remaining = today.remainingMinutes, remaining > 0 else {
+            return min(now.addingTimeInterval(Double(maxRefreshMinutes) * 60), midnight)
+        }
+
+        let untilCountdownChanges = now.addingTimeInterval(Double(remaining) * 60)
+        let capped = now.addingTimeInterval(Double(maxRefreshMinutes) * 60)
+        return min(untilCountdownChanges, capped, midnight)
     }
 
     /// Reads and decodes the rolling multi-day times snapshot written by the
@@ -69,6 +145,24 @@ struct PrayerTimesProvider: TimelineProvider {
         guard let json = UserDefaults(suiteName: suiteName)?.string(forKey: timesJsonKey),
               let data = json.data(using: .utf8) else { return nil }
         return (try? JSONSerialization.jsonObject(with: data)) as? [String: [String: String]]
+    }
+
+    /// The IANA timezone the app computed the prayer times in (its display
+    /// timezone): the picked city's zone, or the device's zone on auto.
+    ///
+    /// WidgetKit has no way to infer it from the wall-clock strings alone, and
+    /// judging "now" with the device clock would shift the next-prayer decision
+    /// and countdown by the whole offset when the phone is in another timezone
+    /// (picked city while traveling, or a mismatched device). When the key is
+    /// absent or unknown, falls back to the device calendar.
+    private static func displayCalendar() -> Calendar {
+        guard let zoneName = UserDefaults(suiteName: suiteName)?
+            .string(forKey: "widget_timezone"),
+            !zoneName.isEmpty,
+            let zone = TimeZone(identifier: zoneName) else { return .current }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = zone
+        return calendar
     }
 
     static func dayKey(for date: Date, calendar: Calendar = .current) -> String {
@@ -87,60 +181,89 @@ struct PrayerTimesProvider: TimelineProvider {
 
     private func buildEntry(at date: Date, times: [String: String]? = nil) -> PrayerTimesEntry {
         let defaults = UserDefaults(suiteName: Self.suiteName)
+        let calendar = Self.displayCalendar()
+        let isToday = Self.dayKey(for: date, calendar: calendar)
+            == Self.dayKey(for: Date(), calendar: calendar)
+        let nowMinutes = isToday ? Self.currentMinutesSinceMidnight(calendar) : -1
 
-        let keys = ["fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha"]
-        let arabicNames = ["fajr": "الفجر", "sunrise": "الشروق", "dhuhr": "الظهر",
-                          "asr": "العصر", "maghrib": "المغرب", "isha": "العشاء"]
-
-        let clock = Calendar.current
-        let isToday = clock.isDateInToday(date)
-        let nowMinutes = isToday ? currentMinutesSinceMidnight() : -1
         var nextPrayerName = ""
-        var prayerTimes: [(name: String, time: String, isActive: Bool)] = []
+        var bestDiff = Int.max
+        var prayers: [PrayerTimesEntry.Prayer] = []
 
-        for key in keys {
-            let time = times?[key] ?? defaults?.string(forKey: "prayer_\(key)") ?? "--:--"
-            let name = arabicNames[key] ?? key
-            var isActive = false
+        for key in Self.prayerKeys {
+            let raw = times?[key] ?? defaults?.string(forKey: "prayer_\(key)") ?? ""
+            let displayTime = raw.isEmpty ? "--:--" : raw
+            let name = Self.arabicNames[key] ?? key
 
-            if isToday && !time.isEmpty && time != "--:--" {
-                let prayerMinutes = parseTimeToMinutes(time)
-                if let pm = prayerMinutes, pm > nowMinutes, nextPrayerName.isEmpty {
-                    nextPrayerName = name
-                    isActive = true
+            if isToday && displayTime != "--:--" {
+                // The next prayer is the SMALLEST positive minutes-from-now.
+                // Scanning the canonical order for the first future time only
+                // works while times stay chronologically sorted; a manual
+                // override (e.g. maghrib moved earlier than asr) reorders the
+                // day, so the first future entry is not necessarily the soonest
+                // adhan.
+                if let pm = parseTimeToMinutes(raw) {
+                    var diff = pm - nowMinutes
+                    if diff <= 0 { diff += 24 * 60 } // wrapped to tomorrow
+                    if diff < bestDiff {
+                        bestDiff = diff
+                        nextPrayerName = name
+                    }
                 }
             }
 
-            prayerTimes.append((name: name, time: time.isEmpty ? "--:--" : time, isActive: isActive))
+            // isActive == the countdown leader, which is only known once the
+            // loop has run, so evaluate it now that the winner may have updated.
+            let isActive = isToday && !nextPrayerName.isEmpty && nextPrayerName == name
+            prayers.append(.init(key: key, name: name, time: displayTime, isActive: isActive))
+        }
+
+        // Minutes left until the next prayer. `bestDiff` already wraps past
+        // midnight, so the countdown never turns negative.
+        var remaining: Int?
+        if isToday {
+            if bestDiff != Int.max { remaining = bestDiff }
+            if let value = remaining, value <= 0 { remaining = nil }
         }
 
         if nextPrayerName.isEmpty {
             // With no prayer left today, wrap to fajr; future-day entries show
             // the first prayer with no active highlight.
-            nextPrayerName = arabicNames[keys[0]] ?? ""
+            nextPrayerName = Self.arabicNames[Self.prayerKeys[0]] ?? ""
         }
 
-        let fallbackHijri = defaults?.string(forKey: "hijri_date") ?? ""
-        let fallbackGregorian = defaults?.string(forKey: "gregorian_date") ?? ""
-        // Compute the dates fresh on every timeline refresh instead of showing
-        // strings saved on the last app run (which go stale after a day).
-        let hijriDate = UmmAlQura.hijriDateString(for: date)
-        let gregorianDate = UmmAlQura.gregorianDateString(for: date)
+        let hijri = times?["hijri"] ?? defaults?.string(forKey: "hijri_date") ?? ""
+        let gregorian = times?["gregorian"] ?? defaults?.string(forKey: "gregorian_date") ?? ""
 
         return PrayerTimesEntry(
             date: date,
-            prayerTimes: prayerTimes,
+            // The app formats these with Latin digits; convert them the same way
+            // as the prayer times so the header matches the rest of the widget.
+            hijriText: PrayerTimesWidgetView.arabicDigits(hijri),
+            gregorianText: PrayerTimesWidgetView.arabicDigits(gregorian),
+            prayerTimes: prayers,
             nextPrayerName: nextPrayerName,
-            // Only fall back to the stored strings when the date is outside the
-            // Umm al-Qura table span (1356-1500 AH).
-            hijriDate: hijriDate.isEmpty ? fallbackHijri : hijriDate,
-            gregorianDate: gregorianDate.isEmpty ? fallbackGregorian : gregorianDate
+            countdownText: formatCountdown(remaining),
+            remainingMinutes: remaining
         )
     }
 
-    private func currentMinutesSinceMidnight() -> Int {
-        let cal = Calendar.current
-        return cal.component(.hour, from: Date()) * 60 + cal.component(.minute, from: Date())
+    /// Matches the in-app card with Eastern Arabic numerals.
+    ///
+    /// Deliberately omits seconds even though the reference design shows
+    /// `3:35:47`: a seconds field can only ever read `:00` here, so displaying
+    /// one would advertise a precision this platform cannot deliver.
+    private func formatCountdown(_ minutes: Int?) -> String {
+        guard let minutes, minutes > 0 else { return "--:--" }
+        let hours = minutes / 60
+        let mins = minutes % 60
+        let text = hours > 0 ? String(format: "%d:%02d", hours, mins) : String(format: "%d", mins)
+        return PrayerTimesWidgetView.arabicDigits(text)
+    }
+
+    private static func currentMinutesSinceMidnight(_ calendar: Calendar) -> Int {
+        let components = calendar.dateComponents([.hour, .minute], from: Date())
+        return components.hour! * 60 + components.minute!
     }
 
     private func parseTimeToMinutes(_ time: String) -> Int? {

@@ -33,7 +33,6 @@ import 'package:azkar_app/features/quran/presentation/providers/quran_provider.d
 import 'package:azkar_app/features/surah/domain/usecases/get_surah_usecase.dart';
 import 'package:azkar_app/features/surah/presentation/providers/surah_provider.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
-import 'package:azkar_app/pages/adhan_page.dart';
 import 'package:azkar_app/pages/islamic_events_page.dart';
 import 'package:azkar_app/pages/splash_page.dart';
 import 'dart:async';
@@ -58,8 +57,9 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 String? _lastTapPayload;
 DateTime? _lastTapTime;
 
-/// Handles notification taps — navigates to AdhanPage with the prayer key for
-/// prayer notifications, and to the relevant azkar/quran screen otherwise.
+/// Handles notification taps — opens the azkar/quran screen for azkar and
+/// related reminders; prayer adhan notifications have nothing to show and
+/// simply surface the app.
 void _handleNotificationTap(String payload) {
   final now = DateTime.now();
   if (payload == _lastTapPayload &&
@@ -82,13 +82,10 @@ void _handleNotificationTap(String payload) {
   if (navigator == null) return;
 
   // payload format: "prayer_fajr", "prayer_dhuhr", etc.
+  // The adhan is delivered entirely by the notification itself (banner + call
+  // to prayer on both platforms); tapping it has nothing to show, so just
+  // surface the app as-is.
   if (payload.startsWith('prayer_')) {
-    final prayerKey = payload.replaceFirst('prayer_', '');
-    navigator.push(
-      MaterialPageRoute(
-        builder: (_) => AdhanPage(prayerKey: prayerKey),
-      ),
-    );
     return;
   }
 
@@ -318,9 +315,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           splitScreenMode: true,
           builder: (ctx, screenUtilChild) {
             ScreenUtil.init(ctx);
+            // مقياس التطبيق يضرب مقياس نظام التشغيل (تسهيلات الوصول) بدل أن
+            // يستبدله: من يضبط خط الهاتف إلى 2.0 لا يُجبَر على 1.5، والمتوسط
+            // المحسوب هنا يُقرأ من السياق فوق هذه MediaQuery فلا يتضاعف.
+            final platformScaler = MediaQuery.textScalerOf(ctx);
             return MediaQuery(
               data: MediaQuery.of(ctx).copyWith(
-                textScaler: TextScaler.linear(themeProvider.textScaleFactor),
+                textScaler: TextScaler.linear(
+                  platformScaler.scale(themeProvider.textScaleFactor),
+                ),
               ),
               child: MaterialApp(
                 navigatorKey: navigatorKey,
@@ -348,7 +351,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   Widget _buildHome() {
     if (_checkedInitialPayload && _initialPayload != null) {
-      // App launched from notification tap — go to AdhanPage after splash
+      // App launched from notification tap — apply the navigation after splash.
       return SplashPage(
         onReady: () {
           _handleNotificationTap(_initialPayload!);

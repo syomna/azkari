@@ -2,18 +2,21 @@ import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+/// بطاقة وجهة في شبكة التنقل. الأيقونة من طقم الأيقونات الإسلامية (خط
+/// IslamicIcons) بلون واحد وبنمط solid واحد، بعد أن كانت صوراً ملونة لكل
+/// بطاقة: الصور كانت مرسومة لأسماء مختلفة (منها "أسماء الله الحسنى" وقد
+/// ورثت أيقونة أذكار المساء) ولا تعطي الشبكة وحدة بصرية.
 class Component extends StatelessWidget {
-  const Component(
-      {super.key,
-      required this.text,
-      required this.img,
-      required this.page,
-      this.isColumn = true});
+  const Component({
+    super.key,
+    required this.text,
+    required this.icon,
+    required this.page,
+  });
 
   final String text;
-  final String img;
+  final IconData icon;
   final Widget page;
-  final bool isColumn;
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +53,7 @@ class Component extends StatelessWidget {
                     color: AppPalette.mainColor.withValues(alpha: 0.05),
                     shape: BoxShape.circle,
                   ),
-                  child: Image.asset('assets/images/$img.png',
-                      height: 32.h, width: 32.h),
+                  child: Icon(icon, size: 22.h, color: AppPalette.mainColor),
                 ),
                 SizedBox(height: 10.h),
                 Flexible(
@@ -61,7 +63,9 @@ class Component extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style:
                         TextStyle(fontSize: 11.sp, fontWeight: FontWeight.bold),
-                    maxLines: 1,
+                    // سطران: أطول عنوان في الشبكة هو "أسماء الله الحسنى" وكان
+                    // يظهر مبتوراً "أسماء الله..." في عرض العمود الثالث.
+                    maxLines: 2,
                   ),
                 ),
               ],

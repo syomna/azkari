@@ -11,7 +11,6 @@ import 'package:azkar_app/features/azkar/presentation/providers/prayer_times_pro
 import 'package:azkar_app/features/azkar/presentation/widgets/city_dropdown_button.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
-import 'package:azkar_app/pages/adhan_page.dart';
 import 'package:azkar_app/pages/contact_us_page.dart';
 import 'package:azkar_app/pages/notifications_screen.dart';
 import 'package:azkar_app/pages/prayer_times_settings_page.dart';
@@ -196,6 +195,13 @@ class _FakeAudioPlayerPlatform extends AudioPlayerPlatform {
 }
 
 String _today() => DateTime.now().toIso8601String().substring(0, 10);
+
+/// "Today" on the Cairo calendar — the provider stamps the stored times with
+/// the display timezone's date, which can differ from the machine's own date
+/// near Cairo midnight on a machine in another timezone.
+String _todayCairo() => tz.TZDateTime.now(tz.getLocation('Africa/Cairo'))
+    .toIso8601String()
+    .substring(0, 10);
 
 Map<String, Object> _cairoPreferences(
     {Map<String, Object> overrides = const {}}) {
@@ -432,7 +438,7 @@ void main() {
     await provider.loadPrayerTimes();
 
     expect(provider.prayerTimes, isNotNull);
-    expect(preferences.getString(PrefsKeys.prayerTimeDate), _today());
+    expect(preferences.getString(PrefsKeys.prayerTimeDate), _todayCairo());
   });
 
   test('malformed stored time is ignored safely', () async {
@@ -889,48 +895,5 @@ void main() {
     expect(uri.queryParameters['subject'], '[AZKARI-SUPPORT] مشكلة');
     expect(uri.queryParameters['body'], contains('تفاصيل المشكلة'));
     expect(uri.queryParameters['body'], contains('App: Azkari'));
-  });
-
-  testWidgets('adhan page opens and dismisses without errors', (tester) async {
-    await _pumpApp(
-      tester,
-      home: Builder(
-        builder: (context) => Scaffold(
-          body: Center(
-            child: ElevatedButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (context) => const AdhanPage(prayerKey: 'fajr'),
-                ),
-              ),
-              child: const Text('فتح الأذان'),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('فتح الأذان'));
-    await _pumpRoute(tester);
-    expect(find.text('صلاة الفجر'), findsOneWidget);
-    await tester.tap(find.text('إغلاق'));
-    for (var i = 0; i < 10; i++) {
-      await _pumpChecked(tester);
-    }
-
-    expect(find.text('فتح الأذان'), findsOneWidget);
-    expect(find.text('صلاة الفجر'), findsNothing);
-  });
-
-  testWidgets('adhan page fits 320px at 2x text', (tester) async {
-    await _pumpApp(
-      tester,
-      size: const Size(320, 640),
-      textScale: 2,
-      home: const AdhanPage(prayerKey: 'maghrib'),
-    );
-
-    expect(find.text('صلاة المغرب'), findsOneWidget);
-    expect(find.text('إغلاق'), findsOneWidget);
   });
 }

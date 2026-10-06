@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Two four-point sparkles for dawn prayer time (Fajr), large one low-left and
+     small one high-right, sized to keep clear padding inside the 24dp box. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10.6,6.6L12.94,9.57L15.8,13.2L13.46,16.17L10.6,19.8L8.26,16.83L5.4,13.2L7.74,10.23L10.6,6.6Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M18.6,3.3L19.524,4.518L20.8,6.2L19.876,7.418L18.6,9.1L17.676,7.882L16.4,6.2L17.324,4.982L18.6,3.3Z" />
+</vector>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sun with eight rays (Duhr, Asr). The rays are one ray duplicated inside
+     three rotated groups, which keeps the path data simple and exact. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,7.2a4.8,4.8 0 1,0 0,9.6 4.8,4.8 0 1,0 0,-9.6z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M11,2.4h2v2.8h-2z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M11,18.8h2v2.8h-2z" />
+    <group
+        android:pivotX="12"
+        android:pivotY="12"
+        android:rotation="45">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M11,2.4h2v2.8h-2z" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M11,18.8h2v2.8h-2z" />
+    </group>
+    <group
+        android:pivotX="12"
+        android:pivotY="12"
+        android:rotation="90">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M11,2.4h2v2.8h-2z" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M11,18.8h2v2.8h-2z" />
+    </group>
+    <group
+        android:pivotX="12"
+        android:pivotY="12"
+        android:rotation="135">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M11,2.4h2v2.8h-2z" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M11,18.8h2v2.8h-2z" />
+    </group>
+</vector>

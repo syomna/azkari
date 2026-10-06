@@ -1,5 +1,6 @@
-import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
+import 'package:azkar_app/core/utils/app_helpers.dart';
+import 'package:azkar_app/features/azkar/domain/dua_categories.dart';
 import 'package:azkar_app/features/azkar/domain/entities/zekr_entity.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/favorites_provider.dart';
@@ -7,32 +8,57 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-class EditAzkarBottomSheet extends StatefulWidget {
-  final String category;
-  final List<ZekrEntity> currentAzkar;
-  const EditAzkarBottomSheet(
-      {super.key, required this.category, required this.currentAzkar});
+/// ورقة إضافة وتعديل موضوع مخصص (ذكر أو دعاء) في واجهة واحدة.
+///
+/// وضع الإضافة عندما يكون [initialCategory] فارغاً، ووضع التعديل عندما يكون
+/// معبّأً مع [currentAzkar]. الفرق بين الوضعين في تسميات الحقول، وفي التحقق من
+/// العنوان (الإضافة فقط تمنع خلط موضوعات الأدعية بالأذكار)، وفي تدفق الحفظ:
+/// الإضافة تنشئ موضوعاً جديداً ثم تنتقل إلى تبويب "أذكاري"، والتعديل يستبدل
+/// الفئة ويرحّل المحفوظات والمفضلة.
+class AzkarFormSheet extends StatefulWidget {
+  const AzkarFormSheet({
+    super.key,
+    this.onChangeFilter,
+    this.kind = AzkarLibrary.azkar,
+    this.initialCategory,
+    this.currentAzkar,
+  }) : assert((initialCategory == null) == (currentAzkar == null));
+
+  /// يُستدعى بعد نجاح الإضافة لتحويل التبويب إلى "أذكاري" حيث يظهر الموضوع.
+  /// لاغٍ في وضع التعديل.
+  final VoidCallback? onChangeFilter;
+
+  /// المكتبة التي يُضاف إليها الموضوع (تغيّر التسميات وتحقّق العنوان).
+  final AzkarLibrary kind;
+
+  /// عنوان الفئة في وضع التعديل. فارغ = وضع الإضافة.
+  final String? initialCategory;
+
+  /// القائمة الحالية في وضع التعديل، وتبقى فارغة في وضع الإضافة.
+  final List<ZekrEntity>? currentAzkar;
 
   @override
-  State<EditAzkarBottomSheet> createState() => _EditAzkarBottomSheetState();
+  State<AzkarFormSheet> createState() => _AzkarFormSheetState();
 }
 
-class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
-  TextEditingController titleController = TextEditingController();
-  List<TextEditingController> zikrControllers = [];
-  List<TextEditingController> countControllers = [];
+class _AzkarFormSheetState extends State<AzkarFormSheet> {
+  late final TextEditingController titleController;
+  late List<TextEditingController> zikrControllers;
+  late List<TextEditingController> countControllers;
+
+  bool get _isDua => widget.kind == AzkarLibrary.dua;
+  bool get _isEdit => widget.initialCategory != null;
 
   @override
   void initState() {
     super.initState();
-    titleController = TextEditingController(text: widget.category);
-    zikrControllers = widget.currentAzkar.isNotEmpty
-        ? widget.currentAzkar
-            .map((e) => TextEditingController(text: e.zekr))
-            .toList()
+    final current = widget.currentAzkar;
+    titleController = TextEditingController(text: widget.initialCategory ?? '');
+    zikrControllers = (current != null && current.isNotEmpty)
+        ? current.map((e) => TextEditingController(text: e.zekr)).toList()
         : [TextEditingController()];
-    countControllers = widget.currentAzkar.isNotEmpty
-        ? widget.currentAzkar
+    countControllers = (current != null && current.isNotEmpty)
+        ? current
             .map((e) => TextEditingController(text: e.count.toString()))
             .toList()
         : [TextEditingController(text: '1')];
@@ -52,8 +78,8 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<AzkarProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return StatefulBuilder(
       builder: (context, setModalState) {
         return Padding(
@@ -80,7 +106,11 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
                 ),
                 SizedBox(height: 16.h),
                 Text(
-                  'تعديل الأذكار المخصصة',
+                  _isEdit
+                      ? 'تعديل الأذكار المخصصة'
+                      : _isDua
+                          ? 'إضافة أدعية جديدة'
+                          : 'إضافة أذكار جديدة',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16.sp,
@@ -93,7 +123,11 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
                   controller: titleController,
                   textAlign: TextAlign.right,
                   decoration: InputDecoration(
-                    hintText: 'عنوان الأذكار',
+                    hintText: _isEdit
+                        ? 'عنوان الأذكار'
+                        : _isDua
+                            ? 'عنوان الأدعية (مثال: دعاء السفر)'
+                            : 'عنوان الأذكار (مثال: أذكار السفر)',
                     hintStyle: TextStyle(fontSize: 13.sp, color: Colors.grey),
                     filled: true,
                     fillColor: isDark ? Colors.black12 : Colors.grey[100],
@@ -109,7 +143,7 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
                   children: [
                     Expanded(
                       child: Text(
-                        'النصوص والأدعية',
+                        !_isEdit && _isDua ? 'نصوص الأدعية' : 'النصوص والأدعية',
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 13.sp,
@@ -140,7 +174,7 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
                     itemCount: zikrControllers.length,
                     itemBuilder: (context, index) {
                       return Padding(
-                        padding: EdgeInsets.only(top: 4.h, bottom: 12.h),
+                        padding: EdgeInsets.only(bottom: 12.h),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -157,7 +191,7 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
                                     });
                                   },
                                   icon: const Icon(Icons.delete_outline,
-                                      color: Colors.redAccent),
+                                      color: AppPalette.errorColor),
                                 ),
                               ),
                             SizedBox(
@@ -196,7 +230,9 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
                                 textAlign: TextAlign.right,
                                 style: TextStyle(fontSize: 13.sp),
                                 decoration: InputDecoration(
-                                  hintText: 'نص الذكر رقم ${index + 1}...',
+                                  hintText: !_isEdit && _isDua
+                                      ? 'نص الدعاء رقم ${index + 1}...'
+                                      : 'نص الذكر رقم ${index + 1}...',
                                   hintStyle: TextStyle(
                                       fontSize: 12.sp, color: Colors.grey),
                                   contentPadding: EdgeInsets.symmetric(
@@ -221,9 +257,10 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
                 SizedBox(height: 20.h),
                 ElevatedButton(
                   onPressed: () async {
-                    final newTitle = titleController.text.trim();
-                    final List<Map<String, dynamic>> structuredAzkar = [];
+                    final title = titleController.text.trim();
 
+                    // تجميع النصوص مع عدد التكرار لكل صف.
+                    final List<Map<String, dynamic>> structuredAzkar = [];
                     for (int i = 0; i < zikrControllers.length; i++) {
                       final text = zikrControllers[i].text.trim();
                       final countVal = int.tryParse(
@@ -244,67 +281,21 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
                       }
                     }
 
-                    if (newTitle.isNotEmpty && structuredAzkar.isNotEmpty) {
-                      final favorites = context.read<FavoritesProvider>();
-                      // 1️⃣ معرفة ما إذا كان الاسم القديم موجود في المفضلة قبل التعديل
-                      final bool isOriginallyFavorited =
-                          favorites.isCategoryFav(widget.category);
-
-                      // 2️⃣ استبدال الفئة القديمة بالجديدة في معاملة واحدة
-                      // (حتى لا تُفقد البيانات لو فشل الحفظ)
-                      final success = await provider.updateCustomAzkarCategory(
-                        oldCategoryTitle: widget.category,
-                        newCategoryTitle: newTitle,
-                        azkarItems: structuredAzkar,
-                      );
-
-                      if (!success) {
-                        if (context.mounted) {
-                          AppHelpers.showToast('فشل حفظ التعديل، حاول مرة أخرى',
-                              status: ToastStatus.error);
-                        }
-                        return;
-                      }
-
-                      // 3️⃣ ترحيل المحفوظات (النصوص والفئة) عند تغيير الاسم
-                      if (widget.category != newTitle) {
-                        await favorites.renameCategoryItemFavorites(
-                            widget.category, newTitle);
-                        if (isOriginallyFavorited) {
-                          await favorites.renameCategoryFavorite(
-                              widget.category, newTitle);
-                        }
-                      }
-
-                      // 4️⃣ ترحيل مفضلة الذكر الفردي عندما يتغير نص الذكر نفسه
-                      // (مع تطابق عدد الصفوف فقط لتجنب الالتباس عند إضافة/حذف)
-                      if (widget.currentAzkar.length ==
-                          structuredAzkar.length) {
-                        for (int i = 0; i < structuredAzkar.length; i++) {
-                          final oldZekr = widget.currentAzkar[i].zekr;
-                          final newZekr = structuredAzkar[i]['text'] as String;
-                          if (oldZekr != newZekr) {
-                            await favorites.renameItemFavorite(
-                                newTitle, oldZekr, newZekr);
-                          }
-                        }
-                      }
-
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        AppHelpers.showToast('تم تعديل وحفظ الأذكار بنجاح',
-                            status: ToastStatus.success);
-                      }
+                    if (_isEdit) {
+                      await _saveEdit(title, structuredAzkar);
+                    } else {
+                      await _saveNew(title, structuredAzkar);
                     }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppPalette.mainColor,
                     padding: EdgeInsets.symmetric(vertical: 12.h),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r)),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
                   ),
                   child: Text(
-                    'تعديل وحفظ',
+                    _isEdit ? 'تعديل وحفظ' : 'حفظ الكل',
                     style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.bold,
@@ -318,5 +309,109 @@ class _EditAzkarBottomSheetState extends State<EditAzkarBottomSheet> {
         );
       },
     );
+  }
+
+  /// إنشاء موضوع جديد. العنوان هو ما يميّز موضوع الدعاء من موضوع الذكر،
+  /// فنمنع حفظه في المكتبة الخطأ: عنوان بلا كلمة "دعاء" في ورقة الأدعية، أو
+  /// عنوان فيها في ورقة الأذكار.
+  Future<void> _saveNew(
+      String title, List<Map<String, dynamic>> structuredAzkar) async {
+    if (_isDua && title.isNotEmpty && !isDuaCategory(title)) {
+      AppHelpers.showToast('العنوان يجب أن يحتوي على كلمة "دعاء" أو "أدعية"',
+          status: ToastStatus.error);
+      return;
+    }
+    if (!_isDua && isDuaCategory(title)) {
+      AppHelpers.showToast('موضوعات الأدعية تُضاف من صفحة الأدعية',
+          status: ToastStatus.error);
+      return;
+    }
+
+    if (title.isEmpty || structuredAzkar.isEmpty) {
+      AppHelpers.showToast('اكتب عنوانًا وذكرًا واحدًا على الأقل قبل الحفظ',
+          status: ToastStatus.error);
+      return;
+    }
+
+    final success = await context.read<AzkarProvider>().saveCustomAzkarCategory(
+          categoryTitle: title,
+          azkarItems: structuredAzkar,
+        );
+
+    if (!success) {
+      if (context.mounted) {
+        AppHelpers.showToast(
+            _isDua
+                ? 'فشل حفظ الأدعية، حاول مرة أخرى'
+                : 'فشل حفظ الأذكار، حاول مرة أخرى',
+            status: ToastStatus.error);
+      }
+      return;
+    }
+
+    if (mounted) {
+      Navigator.pop(context);
+      widget.onChangeFilter?.call();
+      AppHelpers.showToast(
+          _isDua ? 'تم حفظ الأدعية بنجاح' : 'تم حفظ الأذكار بنجاح',
+          status: ToastStatus.success);
+    }
+  }
+
+  /// استبدال الفئة القديمة بالجديدة في معاملة واحدة، ثم ترحيل المحفوظات
+  /// والمفضلة عند تغيير الاسم أو نص الذكر الفردي — حتى لا تُفقد البيانات لو
+  /// فشل الحفظ.
+  Future<void> _saveEdit(
+      String title, List<Map<String, dynamic>> structuredAzkar) async {
+    if (title.isEmpty || structuredAzkar.isEmpty) {
+      AppHelpers.showToast('اكتب عنوانًا وذكرًا واحدًا على الأقل لحفظ التعديل',
+          status: ToastStatus.error);
+      return;
+    }
+
+    final favorites = context.read<FavoritesProvider>();
+    final isOriginallyFavorited =
+        favorites.isCategoryFav(widget.initialCategory!);
+
+    final success =
+        await context.read<AzkarProvider>().updateCustomAzkarCategory(
+              oldCategoryTitle: widget.initialCategory!,
+              newCategoryTitle: title,
+              azkarItems: structuredAzkar,
+            );
+
+    if (!success) {
+      if (context.mounted) {
+        AppHelpers.showToast('فشل حفظ التعديل، حاول مرة أخرى',
+            status: ToastStatus.error);
+      }
+      return;
+    }
+
+    if (widget.initialCategory != title) {
+      await favorites.renameCategoryItemFavorites(
+          widget.initialCategory!, title);
+      if (isOriginallyFavorited) {
+        await favorites.renameCategoryFavorite(widget.initialCategory!, title);
+      }
+    }
+
+    // ترحيل مفضلة الذكر الفردي عند تغيير النص نفسه (مع تطابق عدد الصفوف فقط
+    // لتجنّب الالتباس عند إضافة أو حذف صفوف).
+    if (widget.currentAzkar!.length == structuredAzkar.length) {
+      for (int i = 0; i < structuredAzkar.length; i++) {
+        final oldZekr = widget.currentAzkar![i].zekr;
+        final newZekr = structuredAzkar[i]['text'] as String;
+        if (oldZekr != newZekr) {
+          await favorites.renameItemFavorite(title, oldZekr, newZekr);
+        }
+      }
+    }
+
+    if (mounted) {
+      Navigator.pop(context);
+      AppHelpers.showToast('تم تعديل وحفظ الأذكار بنجاح',
+          status: ToastStatus.success);
+    }
   }
 }

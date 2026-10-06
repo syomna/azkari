@@ -1,4 +1,5 @@
 import 'package:azkar_app/core/theme/app_palette.dart';
+import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/quran/presentation/utils/quran_audio_source.dart';
 import 'package:flutter/cupertino.dart';
@@ -89,7 +90,7 @@ class _AudioPlayerCardState extends State<AudioPlayerCard> {
       padding: EdgeInsets.only(left: 12.w, right: 6.w),
       decoration: BoxDecoration(
         color: isDark
-            ? const Color(0xFF1E1E1E).withValues(alpha: 0.96)
+            ? AppPalette.darkCardSurface.withValues(alpha: 0.96)
             : Colors.white.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(24.r),
         border: Border.all(
@@ -286,8 +287,9 @@ class _AudioPlayerCardState extends State<AudioPlayerCard> {
     final int minutes = duration.inMinutes % 60;
     final int seconds = duration.inSeconds % 60;
     String two(int value) => value.toString().padLeft(2, '0');
-    return hours > 0
+    final body = hours > 0
         ? '$hours:${two(minutes)}:${two(seconds)}'
         : '$minutes:${two(seconds)}';
+    return AppHelpers.arabicDigits(body);
   }
 }

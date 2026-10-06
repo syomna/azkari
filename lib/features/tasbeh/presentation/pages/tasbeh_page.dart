@@ -1,6 +1,7 @@
 import 'package:azkar_app/core/constants/app_constants.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
+import 'package:azkar_app/widgets/confirm_dialog.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
 import 'package:azkar_app/features/tasbeh/presentation/widgets/mesbaha_image.dart';
 import 'package:flutter/material.dart';
@@ -78,52 +79,14 @@ class TasbehPage extends StatelessWidget {
 
   Future<void> _confirmReset(
       BuildContext context, TasbehProvider provider) async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.r)),
-            title: Text(
-              'تصفير جلسة التسبيح؟',
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16.sp,
-                  color: isDark ? Colors.white : Colors.black),
-            ),
-            content: Text(
-              'سيتم تصفير عداد هذه الجلسة فقط، مع بقاء الإجمالي كما هو.',
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                  fontSize: 14.sp,
-                  color: isDark ? Colors.white70 : Colors.black87),
-            ),
-            actionsAlignment: MainAxisAlignment.spaceBetween,
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text('إلغاء',
-                    style: TextStyle(color: Colors.grey, fontSize: 13.sp)),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppPalette.mainColor,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r)),
-                ),
-                child: Text('تصفير',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        ) ??
-        false;
-    if (confirmed) await provider.reset();
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'تصفير جلسة التسبيح؟',
+      message: 'سيتم تصفير عداد هذه الجلسة فقط، مع بقاء الإجمالي كما هو.',
+      confirmLabel: 'تصفير',
+      confirmColor: AppPalette.mainColor,
+    );
+    if (!confirmed || !context.mounted) return;
+    await provider.reset();
   }
 }

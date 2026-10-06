@@ -100,7 +100,8 @@ void main() {
           IslamicEventsService.upcoming(fromDate: DateTime(2026, 2, 10));
       for (var i = 1; i < occurrences.length; i++) {
         expect(
-          occurrences[i - 1].gregorianDate
+          occurrences[i - 1]
+              .gregorianDate
               .isAfter(occurrences[i].gregorianDate),
           isFalse,
           reason: 'occurrence $i is out of order',
@@ -114,18 +115,20 @@ void main() {
       final occurrences =
           IslamicEventsService.upcoming(fromDate: DateTime(2026, 2, 10));
       final days = occurrences
-          .map((o) => DateTime(o.gregorianDate.year, o.gregorianDate.month,
-              o.gregorianDate.day))
+          .map((o) => DateTime(
+              o.gregorianDate.year, o.gregorianDate.month, o.gregorianDate.day))
           .toList();
       expect(days.toSet().length, days.length);
     });
 
     test('both Eids are hedged as expected dates, other events are not', () {
       // Each Eid is looked up in a window that actually contains it.
-      final fitr = IslamicEventsService.upcoming(
-          fromDate: DateTime(2026, 3, 15)).where((o) => o.isDateEstimate);
-      final adha = IslamicEventsService.upcoming(
-          fromDate: DateTime(2026, 5, 22)).where((o) => o.isDateEstimate);
+      final fitr =
+          IslamicEventsService.upcoming(fromDate: DateTime(2026, 3, 15))
+              .where((o) => o.isDateEstimate);
+      final adha =
+          IslamicEventsService.upcoming(fromDate: DateTime(2026, 5, 22))
+              .where((o) => o.isDateEstimate);
 
       expect(fitr.map((o) => o.type.name), contains('eidAlFitr'));
       expect(adha.map((o) => o.type.name), contains('eidAlAdha'));
@@ -133,9 +136,9 @@ void main() {
         expect(eid.title, contains('مُتوقَّع'));
       }
       // A non-Eid event in the same table must stay unhedged.
-      for (final o in IslamicEventsService.upcoming(
-          fromDate: DateTime(2026, 3, 15))
-          .where((o) => !o.isDateEstimate)) {
+      for (final o
+          in IslamicEventsService.upcoming(fromDate: DateTime(2026, 3, 15))
+              .where((o) => !o.isDateEstimate)) {
         expect(o.title, isNot(contains('مُتوقَّع')));
       }
     });
@@ -148,17 +151,45 @@ void main() {
       expect(occurrences.length, lessThanOrEqualTo(3));
     });
 
+    test('page horizon spans a year, notification window stays at 30 days', () {
+      // Late Rabi' al-Thani 1448 (Oct 2026) sits inside the long empty
+      // stretch: the 30-day notification window finds nothing, but the page's
+      // year horizon still surfaces the upcoming رمضان.
+      final empty = IslamicEventsService.upcoming(fromDate: DateTime(2026, 10, 6));
+      expect(empty, isEmpty);
+
+      final page = IslamicEventsService.upcoming(
+        fromDate: DateTime(2026, 10, 6),
+        lookaheadDays: IslamicEventsService.pageLookaheadDays,
+        limit: IslamicEventsService.pageLookaheadDays,
+      );
+      expect(page, isNotEmpty);
+      expect(
+        page.first.type.name,
+        anyOf('ramadan', 'laylatAlQadr', 'eidAlFitr', 'sixOfShawwal'),
+      );
+      final last = page.last.gregorianDate;
+      expect(
+        last.difference(DateTime(2026, 10, 6)).inDays,
+        lessThanOrEqualTo(IslamicEventsService.pageLookaheadDays),
+        reason: 'no occurrence may land beyond the page horizon',
+      );
+    });
+
     test('notification ids are unique and outside every existing range', () {
       final occurrences =
           IslamicEventsService.upcoming(fromDate: DateTime(2026, 2, 10));
       final ids = occurrences
-          .map((o) => IslamicEventsService.notificationIdFor(
-              o.eventId, o.hijriDay))
+          .map((o) =>
+              IslamicEventsService.notificationIdFor(o.eventId, o.hijriDay))
           .toList();
-      expect(ids.toSet().length, ids.length, reason: 'duplicate notification id');
+      expect(ids.toSet().length, ids.length,
+          reason: 'duplicate notification id');
       for (final id in ids) {
-        expect(id, greaterThanOrEqualTo(
-            NotificationService.notificationIds['islamic_event']!));
+        expect(
+            id,
+            greaterThanOrEqualTo(
+                NotificationService.notificationIds['islamic_event']!));
         // Existing ids top out at 403.
         expect(id, greaterThan(403));
       }
@@ -200,8 +231,8 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       final service = await _service(prefs);
 
-      final error = await service
-          .scheduleIslamicEventNotifications(referenceDate: futureReference());
+      final error = await service.scheduleIslamicEventNotifications(
+          referenceDate: futureReference());
       expect(error, isNull);
       expect(_zoned, isNotEmpty);
 
@@ -221,8 +252,8 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       final service = await _service(prefs);
 
-      await service
-          .scheduleIslamicEventNotifications(referenceDate: futureReference());
+      await service.scheduleIslamicEventNotifications(
+          referenceDate: futureReference());
       expect(_zoned, isNotEmpty);
       for (final call in _zoned) {
         expect((call.arguments as Map).containsKey('matchDateTimeComponents'),
@@ -240,16 +271,13 @@ void main() {
       final service = await _service(prefs);
 
       final reference = futureReference();
-      await service
-          .scheduleIslamicEventNotifications(referenceDate: reference);
+      await service.scheduleIslamicEventNotifications(referenceDate: reference);
 
       final cairo = tz.getLocation('Africa/Cairo');
-      final dates = _zoned
-          .map((c) {
-            final local = _instantOf(c, cairo);
-            return DateTime(local.year, local.month, local.day);
-          })
-          .toSet();
+      final dates = _zoned.map((c) {
+        final local = _instantOf(c, cairo);
+        return DateTime(local.year, local.month, local.day);
+      }).toSet();
       expect(dates.length, greaterThan(1),
           reason: 'all occurrences collapsed onto one date');
       for (final day in dates) {
@@ -264,8 +292,8 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       final service = await _service(prefs);
 
-      await service
-          .scheduleIslamicEventNotifications(referenceDate: futureReference());
+      await service.scheduleIslamicEventNotifications(
+          referenceDate: futureReference());
       expect(_zoned, isNotEmpty);
       final cairo = tz.getLocation('Africa/Cairo');
       for (final call in _zoned) {
@@ -281,8 +309,8 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       final service = await _service(prefs);
 
-      final error = await service
-          .scheduleIslamicEventNotifications(referenceDate: futureReference());
+      final error = await service.scheduleIslamicEventNotifications(
+          referenceDate: futureReference());
       expect(error, isNull);
       expect(_zoned, isNotEmpty);
       final deviceNow = tz.TZDateTime.now(tz.local);
@@ -294,7 +322,8 @@ void main() {
       }
     });
 
-    test('falls back to a fixed morning time before prayer times exist', () async {
+    test('falls back to a fixed morning time before prayer times exist',
+        () async {
       _mockChannels();
       SharedPreferences.setMockInitialValues({
         PrefsKeys.latitude: 30.0444,
@@ -304,8 +333,8 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       final service = await _service(prefs);
 
-      final error = await service
-          .scheduleIslamicEventNotifications(referenceDate: futureReference());
+      final error = await service.scheduleIslamicEventNotifications(
+          referenceDate: futureReference());
       expect(error, isNull);
       expect(_zoned, isNotEmpty);
       final cairo = tz.getLocation('Africa/Cairo');

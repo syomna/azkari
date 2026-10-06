@@ -1,4 +1,5 @@
 import 'package:azkar_app/core/constants/app_constants.dart';
+import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/di/injection_container.dart';
 import 'package:azkar_app/features/qibla/presentation/providers/qibla_provider.dart';
 import 'package:azkar_app/features/qibla/presentation/widgets/qibla_body.dart';
@@ -36,7 +37,8 @@ class QiblaScreen extends StatelessWidget {
                   Text(
                     provider.errorMessage!,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16.sp, color: Colors.red),
+                    style: TextStyle(
+                        fontSize: 16.sp, color: AppPalette.errorColor),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

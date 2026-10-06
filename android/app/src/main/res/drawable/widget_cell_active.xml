@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Expanded card for the prayer whose adhan is next: pastel mint, carrying
+     the live countdown alongside the prayer time. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/widget_cell_active" />
+    <corners android:radius="16dp" />
+</shape>

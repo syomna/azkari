@@ -32,7 +32,7 @@ class NotificationProvider extends ChangeNotifier {
       _prefs.getBool(quranAfterSalahKey) ?? true;
   bool get isProphetBlessingsEnabled =>
       _prefs.getBool(prophetBlessingsKey) ?? true;
-bool get isIslamicEventsEnabled => _prefs.getBool(islamicEventsKey) ?? true;
+  bool get isIslamicEventsEnabled => _prefs.getBool(islamicEventsKey) ?? true;
 
   final NotificationService _notificationService;
   final PrayerTimeService _prayerTimeService;
@@ -273,7 +273,8 @@ bool get isIslamicEventsEnabled => _prefs.getBool(islamicEventsKey) ?? true;
       // here rather than behind the latitude/longitude guard: a user who has
       // not granted location should still be told about Ashura or Laylatul Qadr.
       if (isIslamicEventsEnabled) {
-        final e = await _notificationService.scheduleIslamicEventNotifications();
+        final e =
+            await _notificationService.scheduleIslamicEventNotifications();
         error ??= e;
       }
     } catch (e) {

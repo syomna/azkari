@@ -5,13 +5,18 @@ import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:timezone/timezone.dart' as tz;
 
 enum ToastStatus { success, warning, error }
 
 class AppHelpers {
-  static String getArabicNumber(int number) {
-    return number.toString().replaceAllMapped(
+  static String getArabicNumber(int number) => arabicDigits(number.toString());
+
+  /// Converts every Latin digit in [input] to Arabic-Indic, leaving separators
+  /// alone. Needed for composed strings such as a zero-padded timer ("05:07")
+  /// where [getArabicNumber] cannot be used because it only accepts an `int`
+  /// and would drop the leading zero.
+  static String arabicDigits(String input) {
+    return input.replaceAllMapped(
       RegExp(r'(\d)'),
       (match) {
         const map = {
@@ -32,31 +37,6 @@ class AppHelpers {
     );
   }
 
-  /// Computes the **device-local** wall-clock equivalent of a city-local
-  /// [cityTime] by re-interpreting it in the selected city's timezone and
-  /// converting to device local. Mirrors `notifications_service`
-  /// `_deviceDateForPrayer` so the azkar picker prefill and the scheduler
-  /// always agree (prevents the city↔device +3h drift on confirm).
-  static DateTime deviceLocalFromCity(DateTime cityTime, String cityTimezone) {
-    return tz.TZDateTime.from(
-      tz.TZDateTime(
-        cityTimezone == '' ? tz.local : tz.getLocation(cityTimezone),
-        cityTime.year,
-        cityTime.month,
-        cityTime.day,
-        cityTime.hour,
-        cityTime.minute,
-      ),
-      tz.local,
-    );
-  }
-
-  /// Composite favourite-key: `` `<category>\u0000<zekr>` `` so the same zekr
-  /// text (e.g. 'استغفرالله' in both morning and evening) toggles
-  /// independently per category and survives category renames/deletes.
-  static String favoriteItemIdentifier(String categoryName, String zekr) =>
-      '$categoryName\u0000$zekr';
-
   /// Converts Arabic-Indic digits (٠-٩) to Latin digits (0-9). Used before
   /// parsing user-typed counts so '٣' doesn't silently become 1.
   static String normalizeArabicIndicDigits(String input) {
@@ -73,14 +53,6 @@ class AppHelpers {
       '٩': '9',
     };
     return input.split('').map((ch) => map[ch] ?? ch).join();
-  }
-
-  /// Strips the composite category prefix ('category\u0000') from a stored
-  /// favorite item identifier, returning the zekr text alone. No-op for
-  /// legacy bare-text favorites.
-  static String zekrFromFavId(String favId) {
-    final idx = favId.indexOf('\u0000');
-    return idx == -1 ? favId : favId.substring(idx + 1);
   }
 
   static void copyText(String text) {
@@ -104,7 +76,7 @@ class AppHelpers {
         backgroundColor = Colors.amber.shade700;
         break;
       case ToastStatus.error:
-        backgroundColor = const Color(0xFFD32F2F); // A softer, premium red
+        backgroundColor = AppPalette.errorColor; // A softer, premium red
         break;
     }
 

@@ -21,6 +21,58 @@ class AppPalette {
 
   static const Color favoriteColor = Color(0xFFF59E0B);
 
+  /// لون الخطأ الموحد في التنبيهات.
+  static const Color errorColor = Color(0xFFD32F2F);
+
+  /// تدرّج بطاقة ذكر اليوم، وهو الأخضر المرجعي في الشاشة الرئيسية. كل مساحات
+  /// خضراء أخرى في التطبيق تأخذ من هذا التدرج بدل أن تختار أخضر مستقلاً.
+  static const Color greenGradientStart = mainColor;
+  static const Color greenGradientEnd = Color(0xFF3ABB7A);
+
+  /// طرفا تدرج الوضع الداكن لبطاقة ذكر اليوم.
+  static const Color darkCardSurface = Color(0xFF1E1E1E);
+  static const Color darkCardSurfaceAlt = Color(0xFF121E1E);
+
+  /// خلفية قسم المواقيت. لون فاتح مشتق من الأخضر المرجعي ليبقى القسم من
+  /// العائلة نفسها، والبطاقات البيضاء فوقه تعطي التباين.
+  static const Color prayerPanelLight = Color(0xFFDDF1E4);
+  static const Color prayerPanelDark = Color(0xFF14281B);
+
+  /// أخضر داكن للنصوص والأيقونات. الأخضر الأساسي وحده يعطي نسبة تباين تقارب
+  /// 3.3 مع الأبيض، وهي لا تكفي لاسم صلاة بحجم عشرة، فتأخذ النصوص هذه الدرجة
+  /// ويبقى الأخضر الأساسي للتعبئة والحدود.
+  static const Color deepGreenLight = Color(0xFF146B3C);
+  static const Color deepGreenDark = Color(0xFF7FD8A0);
+
+  /// أسطح مرتفعة تتكرر في عدة شاشات: الأوراق المنبثقة والحوارات وبطاقات
+  /// القوائم في الوضع الداكن.
+  static const Color darkElevatedSurface = Color(0xFF1E293B);
+
+  /// تدرجات الشاشات.
+  static const Color homeGradientLightFrom = Color(0xFFFDFDFD);
+  static const Color homeGradientLightTo = Color(0xFFF5F5F5);
+  static const Color homeGradientDarkFrom = Color(0xFF1A1A1A);
+  static const Color homeGradientDarkTo = Color(0xFF121212);
+
+  static const Color splashGradientLightFrom = Colors.white;
+  static const Color splashGradientLightTo = Color(0xFFF2F7F5);
+  static const Color splashGradientDarkFrom = Color(0xFF1A1A1A);
+  static const Color splashGradientDarkTo = Color(0xFF0F0F0F);
+
+  /// ألوان صفحات القرآن والأذان والرسوم.
+  static const Color quranPageLight = Color(0xFFEFF3F9);
+  static const Color quranPageDark = Color(0xFF232B36);
+
+  static const Color adhanGreenDark = Color(0xFF0D3B1E);
+  static const Color adhanGreenMid = Color(0xFF145A32);
+  static const Color adhanGreenLight = Color(0xFF1A6B3C);
+
+  static const Color mesbahInk = Color(0xFF2D3436);
+  static const Color mesbahHighlight = Color(0xFFBDC3C7);
+
+  static const Color guideCanvasLight = Color(0xFFF0F8F3);
+  static const Color guideAccent = Color(0xFF0E5E38);
+
   static const String tajawalFontFamily = 'Tajawal';
   static const String amiriFontFamily = 'Amiri';
   static const String emojiFontFamily = 'NotoColorEmoji';
@@ -38,6 +90,27 @@ class AppPalette {
           blurRadius: 16,
           spreadRadius: 0,
           offset: const Offset(0, 6),
+        ),
+      ];
+
+  /// حبر النص المحفور داخل بطاقة. الشفافية منخفضة عمداً، فلا يظهر العنوان
+  /// واضحاً تماماً: حضوره محسوس أكثر مما هو مقروء.
+  static Color engravedInk(Brightness brightness) =>
+      mainColor.withValues(alpha: brightness == Brightness.dark ? 0.85 : 0.5);
+
+  /// ظلال النص المحفور. الحافة العليا من الحرف داخل البئر لا يصلها الضوء،
+  /// والحافة السفلية تلتقطه. ظل فوق الحرف وظل تحته يجعلان النص يبدو منحوتاً
+  /// في البطاقة لا مطبوعاً فوقها.
+  static List<Shadow> engravedTextShadows(Brightness brightness) => [
+        Shadow(
+          color: Colors.black
+              .withValues(alpha: brightness == Brightness.dark ? 0.45 : 0.18),
+          offset: const Offset(0, -1),
+        ),
+        Shadow(
+          color: Colors.white
+              .withValues(alpha: brightness == Brightness.dark ? 0.14 : 0.85),
+          offset: const Offset(0, 1),
         ),
       ];
 

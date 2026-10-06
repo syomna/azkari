@@ -3,6 +3,7 @@ import 'package:azkar_app/core/providers/notification_provider.dart';
 import 'package:azkar_app/core/services/prayer_times_service.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
+import 'package:azkar_app/widgets/confirm_dialog.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/prayer_times_provider.dart';
 import 'package:azkar_app/widgets/prayer_time_tile.dart';
 import 'package:azkar_app/widgets/time_adjustment_sheet.dart';
@@ -41,7 +42,7 @@ class PrayerTimesSettingsScreen extends StatelessWidget {
                   child: Text(
                     'إعادة ضبط الكل',
                     style: TextStyle(
-                      color: Colors.redAccent,
+                      color: AppPalette.errorColor,
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -164,41 +165,17 @@ class PrayerTimesSettingsScreen extends StatelessWidget {
     }
   }
 
-  void _confirmResetAll(BuildContext context, PrayerTimesProvider provider) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
-        title: Text(
-          'إعادة ضبط جميع الأوقات؟',
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16.sp),
-        ),
-        content: Text(
-          'سيتم حذف جميع الأوقات المعدّلة والرجوع للأوقات المحسوبة.',
-          style: TextStyle(fontSize: 14.sp, height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('إلغاء'),
-          ),
-          TextButton(
-            onPressed: () async {
-              provider.clearAllOverrides();
-              Navigator.pop(ctx);
-              await context
-                  .read<NotificationProvider>()
-                  .applyNotificationStates();
-            },
-            child: const Text(
-              'إعادة ضبط',
-              style: TextStyle(color: Colors.redAccent),
-            ),
-          ),
-        ],
-      ),
+  Future<void> _confirmResetAll(
+      BuildContext context, PrayerTimesProvider provider) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'إعادة ضبط جميع الأوقات؟',
+      message: 'سيتم حذف جميع الأوقات المعدّلة والرجوع للأوقات المحسوبة.',
+      confirmLabel: 'إعادة ضبط',
     );
+    if (!confirmed || !context.mounted) return;
+    provider.clearAllOverrides();
+    await context.read<NotificationProvider>().applyNotificationStates();
   }
 
   Widget _buildPrayerTile(

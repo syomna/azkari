@@ -32,8 +32,8 @@ class IslamicEventOccurrence {
   /// Whole days from [from] until this occurrence; 0 means "today".
   int daysUntil(DateTime from) {
     final a = DateTime(from.year, from.month, from.day);
-    final b = DateTime(
-        gregorianDate.year, gregorianDate.month, gregorianDate.day);
+    final b =
+        DateTime(gregorianDate.year, gregorianDate.month, gregorianDate.day);
     return b.difference(a).inDays;
   }
 
@@ -66,6 +66,11 @@ class IslamicEventsService {
   /// rule), so this window bounds how far ahead a notification is committed
   /// to the OS before the app re-arms it.
   static const int lookaheadDays = 30;
+
+  /// Horizon for the events *page*: the full upcoming Islamic year, so the
+  /// list stays useful in the long empty stretch between occasions.
+  /// Notifications deliberately keep the tighter [lookaheadDays].
+  static const int pageLookaheadDays = 365;
 
   /// Hard ceiling on how many occurrences are ever scheduled at once, so the
   /// total pending count stays well clear of iOS's 64-notification limit.
@@ -192,8 +197,7 @@ class IslamicEventsService {
     resolved.sort((a, b) {
       final byDate = a.gregorianDate.compareTo(b.gregorianDate);
       if (byDate != 0) return byDate;
-      return _priority[b.type]!
-          .compareTo(_priority[a.type]!);
+      return _priority[b.type]!.compareTo(_priority[a.type]!);
     });
 
     final deduped = <IslamicEventOccurrence>[];

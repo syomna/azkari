@@ -109,7 +109,7 @@ void main() {
     await tester.pump();
 
     // قبل التحميل: لا مدة ولا موضع
-    expect(find.text('0:00 / 0:00'), findsOneWidget);
+    expect(find.text('٠:٠٠ / ٠:٠٠'), findsOneWidget);
 
     // المدة تصل وحدها: لا يوجد أي حدث موضع بعد، ومع ذلك يجب أن تتحدّث
     // خانة الوقت (كانت تبقى "0:00 / 0:00" في الكود القديم).
@@ -117,17 +117,16 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(tester.takeException(), isNull);
-    expect(find.text('0:00 / 3:04'), findsOneWidget);
+    expect(find.text('٠:٠٠ / ٣:٠٤'), findsOneWidget);
 
     // ثم يصل الموضع ويتقدّم العدّاد
     controllable.emitPosition(const Duration(seconds: 12));
     await tester.pump();
     await tester.pump();
-    expect(find.text('0:12 / 3:04'), findsOneWidget);
+    expect(find.text('٠:١٢ / ٣:٠٤'), findsOneWidget);
   });
 
-  testWidgets(
-      'downloaded surah shows its full duration before any playback',
+  testWidgets('downloaded surah shows its full duration before any playback',
       (tester) async {
     tester.view.physicalSize = const Size(1290, 2796);
     tester.view.devicePixelRatio = 3.0;
@@ -144,7 +143,7 @@ void main() {
     // لم يُلمس زر التشغيل إطلاقاً: المدة معروفة من ملف السورة المنزّلة
     // فتظهر "0:00 / 3:00" بدل "0:00 / 0:00".
     expect(tester.takeException(), isNull);
-    expect(find.text('0:00 / 3:00'), findsOneWidget);
+    expect(find.text('٠:٠٠ / ٣:٠٠'), findsOneWidget);
   });
 
   testWidgets('download status updates when the surah changes', (tester) async {

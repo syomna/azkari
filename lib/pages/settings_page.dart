@@ -5,6 +5,7 @@ import 'package:azkar_app/core/providers/theme_provider.dart';
 import 'package:azkar_app/core/services/app_review_service.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
+import 'package:azkar_app/widgets/confirm_dialog.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
 import 'package:azkar_app/features/widget_guide/presentation/widget_guide_page.dart';
@@ -47,53 +48,13 @@ class _SettingsPageState extends State<SettingsPage> {
     required String confirmLabel,
     required Future<void> Function() onConfirm,
   }) async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.r)),
-            title: Text(
-              title,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16.sp,
-                  color: isDark ? Colors.white : Colors.black),
-            ),
-            content: Text(
-              message,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                  fontSize: 14.sp,
-                  color: isDark ? Colors.white70 : Colors.black87),
-            ),
-            actionsAlignment: MainAxisAlignment.spaceBetween,
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text('إلغاء',
-                    style: TextStyle(color: Colors.grey, fontSize: 13.sp)),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r)),
-                ),
-                child: Text(confirmLabel,
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        ) ??
-        false;
-    if (!confirmed) return;
+    final confirmed = await showConfirmDialog(
+      context,
+      title: title,
+      message: message,
+      confirmLabel: confirmLabel,
+    );
+    if (!confirmed || !context.mounted) return;
     await onConfirm();
   }
 
@@ -288,7 +249,7 @@ Widget _buildSettingsCard(List<Widget> children) {
     builder: (context) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
       return Material(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? AppPalette.darkElevatedSurface : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20.r),
           side: BorderSide(color: AppPalette.mainColor.withValues(alpha: 0.1)),

@@ -90,7 +90,7 @@ class _CityPickerSheetState extends State<_CityPickerSheet> {
       padding:
           EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? AppPalette.darkElevatedSurface : Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       // Transparent Material below the decorated container gives the ListTiles

@@ -20,9 +20,8 @@ import 'package:azkar_app/features/azkar/presentation/pages/favorite_items_page.
 import 'package:azkar_app/features/azkar/presentation/providers/azkar_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/favorites_provider.dart';
 import 'package:azkar_app/features/azkar/presentation/providers/prayer_times_provider.dart';
-import 'package:azkar_app/features/azkar/presentation/widgets/add_azkar_bottom_sheet.dart';
+import 'package:azkar_app/features/azkar/presentation/widgets/azkar_form_sheet.dart';
 import 'package:azkar_app/features/azkar/presentation/widgets/city_picker_sheet.dart';
-import 'package:azkar_app/features/azkar/presentation/widgets/edit_azkar_bottom_sheet.dart';
 import 'package:azkar_app/features/names_of_allah/domain/entities/names_of_allah_entity.dart';
 import 'package:azkar_app/features/names_of_allah/domain/repositories/names_of_allah_repository.dart';
 import 'package:azkar_app/features/names_of_allah/domain/usecases/get_names_of_allah_usecase.dart';
@@ -46,14 +45,12 @@ import 'package:azkar_app/features/surah/presentation/providers/surah_provider.d
 import 'package:azkar_app/features/tasbeh/presentation/pages/tasbeh_page.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
 import 'package:azkar_app/features/widget_guide/presentation/widget_guide_page.dart';
-import 'package:azkar_app/pages/adhan_page.dart';
 import 'package:azkar_app/pages/contact_us_page.dart';
 import 'package:azkar_app/pages/home_page.dart';
 import 'package:azkar_app/pages/notifications_screen.dart';
 import 'package:azkar_app/pages/prayer_times_settings_page.dart';
 import 'package:azkar_app/pages/settings_page.dart';
 import 'package:azkar_app/pages/splash_page.dart';
-import 'package:azkar_app/widgets/arabic_time_picker_sheet.dart';
 import 'package:azkar_app/widgets/time_adjustment_sheet.dart';
 import 'package:dartz/dartz.dart' show Either, Right, Unit, unit;
 import 'package:flutter/material.dart';
@@ -436,11 +433,6 @@ final Map<String, void Function(BuildContext)> _sheets =
           ),
         ),
       ),
-  'Sheet:ArabicTimePicker': (BuildContext context) => showArabicTimePicker(
-        context: context,
-        initialTime: const TimeOfDay(hour: 5, minute: 20),
-        title: 'وقت أذان الفجر',
-      ),
   'Sheet:TimeAdjustment': (BuildContext context) => showTimeAdjustmentSheet(
         context: context,
         prayerName: 'الفجر',
@@ -451,13 +443,13 @@ final Map<String, void Function(BuildContext)> _sheets =
   'Sheet:AddAzkar': (BuildContext context) => showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,
-        builder: (_) => AddAzkarBottomSheet(onChangeFilter: () {}),
+        builder: (_) => AzkarFormSheet(onChangeFilter: () {}),
       ),
   'Sheet:EditAzkar': (BuildContext context) => showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,
-        builder: (_) => EditAzkarBottomSheet(
-          category: _morning,
+        builder: (_) => AzkarFormSheet(
+          initialCategory: _morning,
           currentAzkar: _useRealData ? _realAzkar.take(8).toList() : _azkarList,
         ),
       ),
@@ -596,7 +588,6 @@ void main() {
     'NotificationsScreen': () => const NotificationsScreen(),
     'PrayerTimesSettingsScreen': () => const PrayerTimesSettingsScreen(),
     'ContactUsPage': () => const ContactUsPage(),
-    'AdhanPage': () => const AdhanPage(prayerKey: 'fajr'),
     'SplashPage': () => const SplashPage(),
   };
 

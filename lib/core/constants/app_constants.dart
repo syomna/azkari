@@ -2,14 +2,18 @@ class AppConstants {
   static const String morningAzkarCategory = 'أذكار الصباح';
   static const String eveningAzkarCategory = 'أذكار المساء';
   static const String favoriteCategory = 'المفضلة';
+  static const String azkarCategory = 'الأذكار';
+  static const String ad3yaCategory = 'الأدعية';
   static const String allAzkarCategory = 'جميع الأذكار';
   static const String holyQuran = 'القرآن الكريم';
 
   static const String shortSurahsTitle = 'سور قصيرة للصلاة';
   static const String surahs = 'السور الكريمة';
 
-  static const String allAzkarPageTitle = 'أذكار و أدعية';
-  static const String dayOfZikr = 'ذكر اليوم';
+  /// عنوانا صفحتَي المكتبة. كان عنوان صفحة الأذكار "أذكار وأدعية" قبل فصل
+  /// موضوعات الأدعية عنها، فصار لكل مكتبة عنوانها.
+  static const String allAzkarPageTitle = 'مكتبة الأذكار';
+  static const String ad3yaPageTitle = 'مكتبة الأدعية';
   static const String tasbeh = 'تسبيح';
   static const String mesbaha = 'المسبحة الإلكترونية';
   static const String namesOfAllah = 'أسماء الله الحسنى';

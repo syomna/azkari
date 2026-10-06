@@ -200,7 +200,8 @@ class _QuranListState extends State<QuranList> {
                                       fontSize: 12.sp, color: Colors.grey),
                                 ),
                                 Text(
-                                  '${quran.getPlaceOfRevelation(surahNumber) == 'Makkah' ? 'مكية' : 'مدنية'} • ${AppHelpers.getArabicNumber(quran.getVerseCount(surahNumber))} آية',
+                                  '${quran.getPlaceOfRevelation(surahNumber) == 'Makkah' ? 'مكية' : 'مدنية'}'
+                                  ' • ${AppHelpers.getArabicNumber(quran.getVerseCount(surahNumber))} آية',
                                   style: TextStyle(
                                       fontSize: 12.sp, color: Colors.grey),
                                 ),

@@ -21,7 +21,9 @@ class PrayerTimesUpdateReceiver : BroadcastReceiver() {
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
             }
             context.sendBroadcast(updateIntent)
-            scheduleNextUpdate(context)
+            // No fixed refresh here: the provider schedules its own next update
+            // from the countdown it just rendered, so overwriting it with the
+            // periodic interval would desync the "minutes left" label.
         }
     }
 
@@ -29,13 +31,24 @@ class PrayerTimesUpdateReceiver : BroadcastReceiver() {
         private const val REQUEST_CODE = 7777
         const val INTERVAL_MS = 900_000L
 
-        fun scheduleNextUpdate(context: Context) {
+        fun scheduleNextUpdate(context: Context) =
+            scheduleUpdateIn(context, INTERVAL_MS / 60_000L)
+
+        /**
+         * Schedules the next repaint [delayMinutes] from now.
+         *
+         * Used for both the periodic retry and the countdown's own refresh, so a
+         * single PendingIntent is reused and each call replaces the last one
+         * instead of stacking alarms.
+         */
+        fun scheduleUpdateIn(context: Context, delayMinutes: Long) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             val intent = Intent(context, PrayerTimesUpdateReceiver::class.java)
             val pendingIntent = PendingIntent.getBroadcast(
                 context, REQUEST_CODE, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
+            val delayMs = delayMinutes.coerceAtLeast(1) * 60_000L
             // Android 12+ denies exact alarms by default (SCHEDULE_EXACT_ALARM
             // is off unless the user grants "Alarms & reminders"). Guard the
             // exact call so the widget refresh degrades to an inexact alarm
@@ -46,22 +59,26 @@ class PrayerTimesUpdateReceiver : BroadcastReceiver() {
                 if (canExact) {
                     alarmManager.setExactAndAllowWhileIdle(
                         AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                        SystemClock.elapsedRealtime() + INTERVAL_MS,
+                        SystemClock.elapsedRealtime() + delayMs,
                         pendingIntent
                     )
                 } else {
-                    setInexact(alarmManager, pendingIntent)
+                    setInexact(alarmManager, pendingIntent, delayMs)
                 }
             } catch (_: SecurityException) {
                 // Some OEMs throw even after canScheduleExactAlarms() — fall back.
-                setInexact(alarmManager, pendingIntent)
+                setInexact(alarmManager, pendingIntent, delayMs)
             }
         }
 
-        private fun setInexact(alarmManager: AlarmManager, pendingIntent: PendingIntent) {
+        private fun setInexact(
+            alarmManager: AlarmManager,
+            pendingIntent: PendingIntent,
+            delayMs: Long
+        ) {
             alarmManager.setAndAllowWhileIdle(
                 AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                SystemClock.elapsedRealtime() + INTERVAL_MS,
+                SystemClock.elapsedRealtime() + delayMs,
                 pendingIntent
             )
         }

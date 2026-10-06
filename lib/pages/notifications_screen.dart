@@ -105,7 +105,7 @@ class NotificationsScreen extends StatelessWidget {
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Material(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? AppPalette.darkElevatedSurface : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.r),
             side:

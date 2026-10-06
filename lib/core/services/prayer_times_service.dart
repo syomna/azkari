@@ -297,6 +297,4 @@ class PrayerTimeService {
   bool hasOverride(String key, SharedPreferences prefs) {
     return prefs.containsKey('$_overridePrefix$key');
   }
-
-  String getNextPrayerName(PrayerTimes times) => times.nextPrayer().name;
 }

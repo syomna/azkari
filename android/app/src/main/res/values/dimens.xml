@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Metrics that more than one place in the widget depends on.
+
+  The date header lines its outer edges up with the text inside the outermost
+  cards, so the active card's and the compact card's horizontal insets are
+  referenced by the header as well as by the cards themselves. Keeping them in
+  one place is what stops the two from drifting apart.
+-->
+<resources>
+    <!-- Horizontal inset of a compact prayer card's content. -->
+    <dimen name="widget_card_padding_compact">7dp</dimen>
+    <!-- Horizontal inset of the wide active card's content. -->
+    <dimen name="widget_card_padding_active">9dp</dimen>
+</resources>
