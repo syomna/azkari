@@ -49,26 +49,7 @@ class PrayerTimesUpdateReceiver : BroadcastReceiver() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             val delayMs = delayMinutes.coerceAtLeast(1) * 60_000L
-            // Android 12+ denies exact alarms by default (SCHEDULE_EXACT_ALARM
-            // is off unless the user grants "Alarms & reminders"). Guard the
-            // exact call so the widget refresh degrades to an inexact alarm
-            // instead of throwing a SecurityException and crashing the app.
-            val canExact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
-                alarmManager.canScheduleExactAlarms()
-            try {
-                if (canExact) {
-                    alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                        SystemClock.elapsedRealtime() + delayMs,
-                        pendingIntent
-                    )
-                } else {
-                    setInexact(alarmManager, pendingIntent, delayMs)
-                }
-            } catch (_: SecurityException) {
-                // Some OEMs throw even after canScheduleExactAlarms() — fall back.
-                setInexact(alarmManager, pendingIntent, delayMs)
-            }
+            setInexact(alarmManager, pendingIntent, delayMs)
         }
 
         private fun setInexact(
