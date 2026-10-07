@@ -330,10 +330,11 @@
             android:ellipsize="end"
             android:textColor="@color/widget_text_muted" />
 
-        <Space
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="1dp"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:orientation="horizontal" />
 
         <Chronometer
             android:id="@+id/widget_countdown_time"
