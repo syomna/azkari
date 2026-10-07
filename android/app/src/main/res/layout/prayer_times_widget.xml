@@ -79,6 +79,34 @@
             android:paddingHorizontal="@dimen/widget_card_padding_compact"
             android:background="@drawable/widget_cell">
 
+            <ImageView
+                android:id="@+id/prayer_1_icon"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_prayer_fajr"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/prayer_1_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:textSize="8.5sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="@color/widget_text_muted" />
+
+            <TextView
+                android:id="@+id/prayer_1_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:textColor="@color/widget_text" />
+
+        </LinearLayout>
+
         <LinearLayout
             android:id="@+id/prayer_2"
             android:layout_width="0dp"
