@@ -57,6 +57,7 @@ class _AudioPlayerCardState extends State<AudioPlayerCard> {
     setState(() {
       _isDownloadedFuture = _checkDownloaded();
     });
+    _loadKnownDuration();
   }
 
   @override
