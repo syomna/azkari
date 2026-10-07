@@ -38,6 +38,7 @@ import 'package:azkar_app/pages/splash_page.dart';
 import 'dart:async';
 
 import 'package:audio_session/audio_session.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -161,6 +162,16 @@ void main() async {
     await session.configure(const AudioSessionConfiguration.music());
   } catch (e) {
     debugPrint('Failed to configure audio session: $e');
+  }
+
+  try {
+    await JustAudioBackground.init(
+      androidNotificationChannelId: 'azkar_app.quran_audio',
+      androidNotificationChannelName: 'Quran Audio',
+      androidNotificationOngoing: true,
+    );
+  } catch (e) {
+    debugPrint('Failed to init audio background: $e');
   }
 
   runApp(
