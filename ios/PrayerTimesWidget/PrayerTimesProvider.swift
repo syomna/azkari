@@ -23,15 +23,15 @@ struct PrayerTimesEntry: TimelineEntry {
     let nextPrayerName: String
     /// Remaining time until the next adhan, pre-formatted for display.
     ///
-    /// WidgetKit renders a widget as a static snapshot and reloads it on a
-    /// system-controlled budget, so this value cannot tick between refreshes.
-    /// It is correct as of the last reload, and `remainingMinutes` drives the
-    /// refresh policy to keep it close to current. Android achieves a live
-    /// countdown with a Chronometer, which has no iOS equivalent here.
+    /// Used for placeholders, previews and future-day entries; today's
+    /// live countdown is computed from [countdownTargets].
     let countdownText: String
     /// Minutes left until the next prayer, or `nil` when undeterminable. Used
     /// only to schedule the next timeline refresh.
     let remainingMinutes: Int?
+    /// Absolute instants of each prayer's next occurrence (keyed by prayer key).
+    /// Only today's entry typically populates these so the view can tick by seconds.
+    let countdownTargets: [String: Date]
 
     /// Display order for the grid: the prayer the countdown refers to leads in
     /// the wide card, then the remaining prayers follow in canonical order.
@@ -74,7 +74,8 @@ struct PrayerTimesProvider: TimelineProvider {
             prayerTimes: Self.placeholderPrayers,
             nextPrayerName: "الفجر",
             countdownText: "3:35",
-            remainingMinutes: 215
+            remainingMinutes: 215,
+            countdownTargets: [:]
         )
     }
 
@@ -189,6 +190,7 @@ struct PrayerTimesProvider: TimelineProvider {
         var nextPrayerName = ""
         var bestDiff = Int.max
         var prayers: [PrayerTimesEntry.Prayer] = []
+        var countdownTargets: [String: Date] = [:]
 
         for key in Self.prayerKeys {
             let raw = times?[key] ?? defaults?.string(forKey: "prayer_\(key)") ?? ""
@@ -208,6 +210,17 @@ struct PrayerTimesProvider: TimelineProvider {
                     if diff < bestDiff {
                         bestDiff = diff
                         nextPrayerName = name
+                    }
+                    if let h24 = timeToH24(raw) {
+                        var comps = calendar.dateComponents([.year, .month, .day], from: date)
+                        comps.hour = h24.hour
+                        comps.minute = h24.minute
+                        comps.second = 0
+                        var target = calendar.date(from: comps) ?? date
+                        if target <= Date() {
+                            target = calendar.date(byAdding: .day, value: 1, to: target) ?? target
+                        }
+                        countdownTargets[key] = target
                     }
                 }
             }
@@ -239,12 +252,13 @@ struct PrayerTimesProvider: TimelineProvider {
             date: date,
             // The app formats these with Latin digits; convert them the same way
             // as the prayer times so the header matches the rest of the widget.
-            hijriText: PrayerTimesWidgetView.arabicDigits(hijri),
-            gregorianText: PrayerTimesWidgetView.arabicDigits(gregorian),
+            hijriText: arabicDigits(hijri),
+            gregorianText: arabicDigits(gregorian),
             prayerTimes: prayers,
             nextPrayerName: nextPrayerName,
             countdownText: formatCountdown(remaining),
-            remainingMinutes: remaining
+            remainingMinutes: remaining,
+            countdownTargets: countdownTargets
         )
     }
 
@@ -258,7 +272,7 @@ struct PrayerTimesProvider: TimelineProvider {
         let hours = minutes / 60
         let mins = minutes % 60
         let text = hours > 0 ? String(format: "%d:%02d", hours, mins) : String(format: "%d", mins)
-        return PrayerTimesWidgetView.arabicDigits(text)
+        return arabicDigits(text)
     }
 
     private static func currentMinutesSinceMidnight(_ calendar: Calendar) -> Int {
@@ -266,7 +280,7 @@ struct PrayerTimesProvider: TimelineProvider {
         return components.hour! * 60 + components.minute!
     }
 
-    private func parseTimeToMinutes(_ time: String) -> Int? {
+    private func timeToH24(_ time: String) -> (hour: Int, minute: Int)? {
         let cleaned = time.trimmingCharacters(in: .whitespaces)
         if cleaned.isEmpty { return nil }
 
@@ -281,6 +295,21 @@ struct PrayerTimesProvider: TimelineProvider {
         if isPM && hour != 12 { h24 += 12 }
         if !isPM && hour == 12 { h24 = 0 }
 
-        return h24 * 60 + minute
+        return (h24, minute)
+    }
+
+    private func parseTimeToMinutes(_ time: String) -> Int? {
+        guard let h24 = timeToH24(time) else { return nil }
+        return h24.hour * 60 + h24.minute
+    }
+
+    private func arabicDigits(_ value: String) -> String {
+        let digits: [Character] = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"]
+        return String(value.map { ch in
+            if ch.isASCII, let digit = ch.wholeNumberValue, digit < digits.count {
+                return digits[digit]
+            }
+            return ch
+        })
     }
 }

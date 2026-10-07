@@ -159,11 +159,13 @@ struct ActivePrayerCard: View {
                     .foregroundColor(WidgetTheme.accentMuted)
                     .lineLimit(1)
 
-                Text(entry.countdownText)
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(WidgetTheme.accent)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
+                TimelineView(.periodic(from: Date(), by: 1)) { context in
+                    Text(PrayerTimesWidgetView.liveCountdown(entry: entry, reference: context.date))
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(WidgetTheme.accent)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
@@ -222,6 +224,28 @@ struct CompactPrayerCard: View {
 }
 
 extension PrayerTimesWidgetView {
+    static func liveCountdown(entry: PrayerTimesEntry, reference: Date) -> String {
+        var bestTarget: Date?
+        for (_, t) in entry.countdownTargets {
+            if t > reference {
+                if let b = bestTarget {
+                    if t < b { bestTarget = t }
+                } else {
+                    bestTarget = t
+                }
+            }
+        }
+        guard let target = bestTarget else { return entry.countdownText }
+        let diff = max(0, Int(target.timeIntervalSince(reference)))
+        let hours = diff / 3600
+        let mins = (diff / 60) % 60
+        let secs = diff % 60
+        let s: String = hours > 0
+            ? String(format: "%d:%02d:%02d", hours, mins, secs)
+            : String(format: "%d:%02d", mins, secs)
+        return arabicDigits(s)
+    }
+
     /// Matches the app, which formats times and countdowns with Eastern Arabic
     /// numerals.
     static func arabicDigits(_ value: String) -> String {
@@ -250,7 +274,8 @@ struct PrayerTimesWidgetView_Previews: PreviewProvider {
         ],
         nextPrayerName: "الفجر",
         countdownText: "3:35",
-        remainingMinutes: 215
+        remainingMinutes: 215,
+        countdownTargets: [:]
     )
 
     static var previews: some View {
