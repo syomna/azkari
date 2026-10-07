@@ -43,35 +43,45 @@ struct PrayerTimesWidgetView: View {
     var body: some View {
         GeometryReader { geo in
             let usable = geo.size.width - padding * 2
-            // Top row mirrors a four-column grid: the active card spans two
-            // columns, the two compact slots take one each.
-            let topCompact = (usable - gap * 2) / 4
-            let topWide = topCompact * 2
-            // The bottom row's three slots share the full width.
-            let bottomSlot = (usable - gap * 2) / 3
+            let slotWidth = (usable - gap * 2) / 3
 
             VStack(spacing: gap) {
                 PrayerTimesHeader(entry: entry)
 
                 HStack(spacing: gap) {
-                    ActivePrayerCard(entry: entry)
-                        .frame(width: topWide)
-
-                    CompactPrayerCard(entry: entry, index: 1)
-                        .frame(width: topCompact)
-
-                    CompactPrayerCard(entry: entry, index: 2)
-                        .frame(width: topCompact)
+                    ForEach(0..<3, id: \.self) { i in
+                        CompactPrayerCard(entry: entry, index: i)
+                            .frame(width: slotWidth)
+                    }
                 }
                 .frame(maxHeight: .infinity)
 
                 HStack(spacing: gap) {
                     ForEach(3..<6, id: \.self) { i in
                         CompactPrayerCard(entry: entry, index: i)
-                            .frame(width: bottomSlot)
+                            .frame(width: slotWidth)
                     }
                 }
                 .frame(maxHeight: .infinity)
+
+                HStack(spacing: gap) {
+                    Text("باقي حتى \(entry.nextPrayerName)")
+                        .font(.system(size: 8.5, weight: .medium))
+                        .foregroundColor(WidgetTheme.textMuted)
+                        .lineLimit(1)
+
+                    Spacer(minLength: 0)
+
+                    TimelineView(.periodic(from: Date(), by: 1)) { context in
+                        Text(PrayerTimesWidgetView.liveCountdown(entry: entry, reference: context.date))
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(WidgetTheme.text)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                    }
+                }
+                .padding(.horizontal, WidgetMetrics.compactPadding)
+                .padding(.vertical, 4)
             }
             .padding(padding)
         }
