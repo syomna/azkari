@@ -271,7 +271,7 @@ struct PrayerTimesProvider: TimelineProvider {
         guard let minutes, minutes > 0 else { return "--:--" }
         let hours = minutes / 60
         let mins = minutes % 60
-        let text = hours > 0 ? String(format: "%d:%02d", hours, mins) : String(format: "%d", mins)
+        let text = hours > 0 ? String(format: "%d:%02d", hours, mins) : String(format: "%d:%02d", mins, 0)
         return arabicDigits(text)
     }
 
