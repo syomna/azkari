@@ -205,17 +205,17 @@ struct CompactPrayerCard: View {
         VStack(alignment: .leading, spacing: 0) {
             Image(systemName: WidgetTheme.icon(for: prayer.key))
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(WidgetTheme.text)
+                .foregroundColor(prayer.isActive ? WidgetTheme.accent : WidgetTheme.text)
 
             Text(prayer.name)
                 .font(.system(size: 8.5, weight: .medium))
-                .foregroundColor(WidgetTheme.textMuted)
+                .foregroundColor(prayer.isActive ? WidgetTheme.accent : WidgetTheme.textMuted)
                 .lineLimit(1)
                 .padding(.top, 3)
 
             Text(PrayerTimesWidgetView.arabicDigits(prayer.time))
                 .font(.system(size: 12, weight: .bold))
-                .foregroundColor(WidgetTheme.text)
+                .foregroundColor(prayer.isActive ? WidgetTheme.accent : WidgetTheme.text)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
         }
@@ -224,11 +224,11 @@ struct CompactPrayerCard: View {
         .padding(.vertical, 6)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(WidgetTheme.cell)
+                .fill(prayer.isActive ? WidgetTheme.activeCard : WidgetTheme.cell)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(WidgetTheme.cellBorder, lineWidth: 1)
+                .stroke(prayer.isActive ? WidgetTheme.accent.opacity(0.4) : WidgetTheme.cellBorder, lineWidth: 1)
         )
     }
 }
