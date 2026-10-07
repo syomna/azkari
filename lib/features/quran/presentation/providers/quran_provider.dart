@@ -14,6 +14,7 @@ import 'package:azkar_app/features/quran/domain/usecases/save_quran_bookmark_use
 import 'package:azkar_app/features/quran/domain/usecases/save_quran_page_number_usecase.dart';
 import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 
 class QuranProvider with ChangeNotifier {
   final GetSavedQuranPageNumberUsecase getQuranPageNumberUseCase;
@@ -204,7 +205,16 @@ class QuranProvider with ChangeNotifier {
       );
 
       _isDownloading = false;
-      await _player.setFilePath(path);
+      await _player.setAudioSource(
+        AudioSource.file(
+          path,
+          tag: const MediaItem(
+            id: 'quran',
+            album: 'Quran',
+            title: 'Surah',
+          ),
+        ),
+      );
       // Preload duration so UI shows correct total time
       try {
         // Try via probe for reliability
