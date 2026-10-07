@@ -205,6 +205,11 @@ class QuranProvider with ChangeNotifier {
 
       _isDownloading = false;
       await _player.setFilePath(path);
+      // Preload duration so UI shows correct total time
+      try {
+        final d = await _player.durationStream.firstWhere((d) => d != null).timeout(const Duration(seconds: 2), onTimeout: () => null);
+        if (d != null) _surahDurationCache[surahNumber] = d;
+      } catch (_) {}
       await _player.play();
     } catch (e) {
       _isDownloading = false;
