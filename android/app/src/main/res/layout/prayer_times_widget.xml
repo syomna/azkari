@@ -61,7 +61,7 @@
             tools:text="الثلاثاء 5 يناير 2026" />
     </LinearLayout>
 
-    <!-- Row 1: expanded active card + two compact slots -->
+    <!-- Row 1 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -72,88 +72,12 @@
             android:id="@+id/prayer_1"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="2"
-            android:orientation="horizontal"
+            android:layout_weight="1"
+            android:layout_marginStart="0dp"
+            android:orientation="vertical"
             android:gravity="center_vertical"
-            android:paddingHorizontal="@dimen/widget_card_padding_active"
-            android:background="@drawable/widget_cell_active">
-
-            <ImageView
-                android:id="@+id/prayer_1_icon"
-                android:layout_width="15dp"
-                android:layout_height="15dp"
-                android:src="@drawable/ic_prayer_fajr"
-                android:contentDescription="@null" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginStart="6dp">
-
-                <TextView
-                    android:id="@+id/prayer_1_name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="9sp"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:textColor="@color/widget_accent" />
-
-                <TextView
-                    android:id="@+id/prayer_1_time"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="1dp"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:maxLines="1"
-                    android:textColor="@color/widget_accent" />
-
-            </LinearLayout>
-
-            <!-- RemoteViews only inflates a whitelist of classes, and a bare
-                 <View> is not one of them: it aborts the whole widget with
-                 "Class not allowed to be inflated". An empty LinearLayout is
-                 on the list and renders identically as a hairline. -->
-            <LinearLayout
-                android:layout_width="1dp"
-                android:layout_height="26dp"
-                android:layout_marginHorizontal="7dp"
-                android:background="@color/widget_divider" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="end">
-
-                <TextView
-                    android:id="@+id/widget_countdown_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:textSize="7.5sp"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:textColor="@color/widget_accent_muted" />
-
-                <Chronometer
-                    android:id="@+id/widget_countdown_time"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_marginTop="1dp"
-                    android:format="%s"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:maxLines="1"
-                    android:textColor="@color/widget_accent" />
-
-            </LinearLayout>
-
-        </LinearLayout>
+            android:paddingHorizontal="@dimen/widget_card_padding_compact"
+            android:background="@drawable/widget_cell">
 
         <LinearLayout
             android:id="@+id/prayer_2"
@@ -359,6 +283,39 @@
 
         </LinearLayout>
 
+    </LinearLayout>
+    <!-- Countdown row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="@dimen/widget_card_padding_compact"
+        android:paddingVertical="4dp"
+        android:layout_marginTop="4dp">
+
+        <TextView
+            android:id="@+id/widget_countdown_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="8.5sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="@color/widget_text_muted" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <Chronometer
+            android:id="@+id/widget_countdown_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:format="%s"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:textColor="@color/widget_text" />
     </LinearLayout>
 
 </LinearLayout>
