@@ -32,23 +32,6 @@ struct PrayerTimesEntry: TimelineEntry {
     /// Absolute instants of each prayer's next occurrence (keyed by prayer key).
     /// Only today's entry typically populates these so the view can tick by seconds.
     let countdownTargets: [String: Date]
-
-    /// Display order for the grid: the prayer the countdown refers to leads in
-    /// the wide card, then the remaining prayers follow in canonical order.
-    ///
-    /// Deriving this once keeps the wide card and the compact slots describing
-    /// the same six prayers. Indexing the raw array instead would show the
-    /// active prayer twice, and leave whichever slot it vacated empty, whenever
-    /// the next prayer is not the first of the day.
-    var orderedPrayers: [Prayer] {
-        guard let active = prayerTimes.first(where: { $0.isActive }),
-              let activeIndex = prayerTimes.firstIndex(where: { $0.key == active.key })
-        else { return prayerTimes }
-        var ordered = prayerTimes
-        ordered.remove(at: activeIndex)
-        ordered.insert(active, at: 0)
-        return ordered
-    }
 }
 
 struct PrayerTimesProvider: TimelineProvider {

@@ -134,7 +134,7 @@ struct ActivePrayerCard: View {
     let entry: PrayerTimesEntry
 
     private var prayer: PrayerTimesEntry.Prayer {
-        entry.orderedPrayers.first ?? PrayerTimesEntry.Prayer(
+        entry.prayerTimes.first(where: { $0.isActive }) ?? PrayerTimesEntry.Prayer(
             key: "fajr", name: "", time: "", isActive: true)
     }
 
@@ -194,10 +194,10 @@ struct CompactPrayerCard: View {
     let index: Int
 
     private var prayer: PrayerTimesEntry.Prayer {
-        // `index` counts into the display order, so slot 1 is the first prayer
-        // after the wide active card rather than the second prayer of the day.
-        entry.orderedPrayers.indices.contains(index)
-            ? entry.orderedPrayers[index]
+        // Slots follow the canonical order of the day; the next prayer is
+        // highlighted in place rather than moved to the front.
+        entry.prayerTimes.indices.contains(index)
+            ? entry.prayerTimes[index]
             : PrayerTimesEntry.Prayer(key: "", name: "", time: "", isActive: false)
     }
 
