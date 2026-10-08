@@ -142,41 +142,30 @@ class PrayerTimesWidgetProvider : AppWidgetProvider() {
         // order. Keeping the raw index here would put the countdown inside a
         // card for a different prayer as soon as it was not the first of the
         // day, and would mint-highlight a slot the countdown is not attached to.
-        val displayOrder = buildList {
-            add(nextPrayerIndex)
-            for (i in rawTimes.indices) if (i != nextPrayerIndex) add(i)
-        }
-
         val remaining = remainingMinutes(rawTimes[nextPrayerIndex], nowMinutes)
 
+        // Keep original positions - no reordering
         for (slot in prayerKeys.indices) {
-            val i = displayOrder[slot]
+            val i = slot
             views.setImageViewResource(prayerIconIds[slot], prayerIconRes[i])
             views.setTextViewText(prayerNameIds[slot], names[i])
-            // Render with Eastern Arabic numerals to match the in-app card, which
-            // formats times with the `ar` locale. The *stored* value stays
-            // Latin-digit on purpose: `parseTimeToMinutes` below relies on it,
-            // and `toIntOrNull()` would reject Arabic-Indic digits.
             views.setTextViewText(
                 prayerTimeIds[slot],
                 toArabicDigits(rawTimes[i].ifEmpty { "--:--" })
             )
         }
 
-        // Only the leading slot is the active one, because the ordering above
-        // already moved the next prayer into it.
+        // Only highlight the next prayer in its original position
         for (slot in prayerKeys.indices) {
-            val active = slot == 0
+            val active = slot == nextPrayerIndex
             views.setInt(
                 prayerContainerIds[slot],
                 "setBackgroundResource",
                 if (active) R.drawable.widget_cell_active else R.drawable.widget_cell
             )
-            // The mint card needs dark green text; the dark slots need white.
             val textColor = if (active) COLOR_ACCENT else COLOR_WHITE
             views.setTextColor(prayerNameIds[slot], textColor)
             views.setTextColor(prayerTimeIds[slot], textColor)
-            // The icons are white vectors, so tint them to match their slot.
             views.setInt(prayerIconIds[slot], "setColorFilter", textColor)
         }
 
