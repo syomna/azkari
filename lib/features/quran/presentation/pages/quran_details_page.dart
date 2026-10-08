@@ -40,13 +40,13 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
   bool _isAudioVisible = false;
   late QuranProvider _provider;
 
-  // الآية المختارة: تُمتلئ بالنقر عليها، ويُظلَّل معناها في المصحف طوال
-  // فترة فتح تفسيرها حتى يتضح أي آية يشير إليه النص المعروض.
+  // الآية المختارة: تُمتلئ بالضغط المطوّل عليها، ويُظلَّل معناها في المصحف
+  // طوال فترة فتح تفسيرها حتى يتضح أي آية يشير إليه النص المعروض.
   int? _selectedAyahSurah;
   int? _selectedAyahVerse;
 
-  // التفسير يُفتح بالنقر على الآية (وليس بالضغط المطوّل) لأنه الإجراء
-  // المتوقّع من أي قارئ. نعرض تلميحاً صغيراً مرة واحدة فقط (محفوظ في
+  // التفسير يُفتح بالضغط المطوّل على الآية (وليس بالنقر) حتى لا تعترض
+  // القراءة نقرة عارضة. نعرض تلميحاً صغيراً مرة واحدة فقط (محفوظ في
   // الإعدادات) ثم نخفيه بنقرة عليه أو بعد ثوانٍ معدودة حتى لا يعيق القراءة.
   static const String _tafseerHintSeenKey = 'quran_tafseer_hint_seen';
   bool _showTafseerHint = false;
@@ -135,10 +135,6 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
             onPageChanged: _onPageChanged,
             highlights: _highlightedVerses,
             highlightBorderRadius: BorderRadius.circular(6.r),
-            onTap: (surah, verse) {
-              HapticFeedback.selectionClick();
-              _openTafseer(surah, verse);
-            },
             onLongPressStart: (surah, verse, details) {
               HapticFeedback.mediumImpact();
               _openTafseer(surah, verse);
@@ -219,7 +215,7 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
                     SizedBox(width: 6.w),
                     Flexible(
                       child: Text(
-                        'اضغط على أي آية لعرض تفسيرها، من التفسير الميسّر',
+                        'اضغط مطولاً على أي آية لعرض تفسيرها، من التفسير الميسّر',
                         style: TextStyle(
                           fontFamily: AppPalette.amiriFontFamily,
                           fontSize: 12.sp,
@@ -493,7 +489,7 @@ class _QuranDetailPageState extends State<QuranDetailPage> {
     ];
   }
 
-  /// نقر/ضغط على آية: نظلّلها ثم نفتح تفسيرها، ونزيل التظليل بانتظار الورقة.
+  /// ضغط مطوّل على آية: نظلّلها ثم نفتح تفسيرها، ونزيل التظليل بانتظار الورقة.
   /// إذا فتح المستخدم تفسيراً آخر قبل إغلاق الأول، نحتفظ بتظليل الجديد:
   /// المقارنة تمنع إغلاق الورقة الأولى من مسح تظليل الثانية.
   Future<void> _openTafseer(int surahNumber, int verseNumber) async {

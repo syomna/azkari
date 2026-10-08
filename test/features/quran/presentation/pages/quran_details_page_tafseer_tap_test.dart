@@ -38,9 +38,9 @@ Finder get highlightedAyah {
 }
 
 /// المصحف يعرض كل سطر في FittedBox، وداخله آية واحدة على الأقل داخل
-/// GestureDetector خاص بها (WidgetSpan)، فنقر أول آية في أول سطر كما يفعل
-/// المستخدم. لا نبحث عن أول RichText في الشجرة لأن أول واحد منها نص شريط
-/// الأدوات لا نص المصحف.
+/// GestureDetector خاص بها (WidgetSpan)، فنضغط مطوّلاً على أول آية في أول
+/// سطر كما يفعل المستخدم. لا نبحث عن أول RichText في الشجرة لأن أول واحد
+/// منها نص شريط الأدوات لا نص المصحف.
 Finder get firstAyah => find
     .descendant(
       of: find.byType(FittedBox).first,
@@ -55,7 +55,8 @@ void main() {
     JustAudioPlatform.instance = FakeJustAudioPlatform();
   });
 
-  testWidgets('tapping an ayah opens its tafseer and highlights that ayah',
+  testWidgets(
+      'long-pressing an ayah opens its tafseer and highlights it; a plain tap does nothing',
       (tester) async {
     tester.view.physicalSize = const Size(1290, 2796);
     tester.view.devicePixelRatio = 3.0;
@@ -69,13 +70,20 @@ void main() {
 
     expect(highlightedAyah, findsNothing);
 
+    // النقرة العادية لا تفتح شيئاً: التفسير صار بالضغط المطوّل فقط.
     await tester.tap(firstAyah, warnIfMissed: false);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(TafseerSheet), findsNothing);
+    expect(highlightedAyah, findsNothing);
+
+    await tester.longPress(firstAyah);
     // لا نستخدم pumpAndSettle هنا: الورقة تعرض CircularProgressIndicator
     // أثناء جلب التفسير، وهي حركة لا تهدأ أبداً فلا يستقر الإطار.
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    // النقر يفتح ورقة التفسير مبيّنةً رقم السورة والآية المضغوطة.
+    // الضغط المطوّل يفتح ورقة التفسير مبيّنةً رقم السورة والآية المضغوطة.
     expect(find.byType(TafseerSheet), findsOneWidget);
     expect(find.textContaining('تفسير الآية'), findsOneWidget);
 
