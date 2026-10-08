@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:azkar_app/features/quran/presentation/providers/quran_provider.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/audio_player_card.dart';
 import 'package:azkar_app/features/quran/presentation/widgets/quran_list.dart';
@@ -13,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:qcf_quran_lite/qcf_quran_lite.dart' as quran;
+import 'package:shared_preferences/shared_preferences.dart';
 
 // وصف صفحة المصحف الواحدة: رقمها (1-604) مع شرائح السور التي تبدأ عليها
 class QuranPageItem {
