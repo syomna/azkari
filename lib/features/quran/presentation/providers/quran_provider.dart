@@ -222,7 +222,9 @@ class QuranProvider with ChangeNotifier {
         if (dProbe != null) _surahDurationCache[surahNumber] = dProbe;
       } catch (_) {}
       try {
-        final d = await _player.durationStream.firstWhere((d) => d != null).timeout(const Duration(seconds: 2), onTimeout: () => null);
+        final d = await _player.durationStream
+            .firstWhere((d) => d != null)
+            .timeout(const Duration(seconds: 2), onTimeout: () => null);
         if (d != null) _surahDurationCache[surahNumber] = d;
       } catch (_) {}
       await _player.play();
