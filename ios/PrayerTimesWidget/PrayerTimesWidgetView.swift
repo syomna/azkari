@@ -72,13 +72,11 @@ struct PrayerTimesWidgetView: View {
 
                     Spacer(minLength: 0)
 
-                    TimelineView(.periodic(from: Date(), by: 1)) { context in
-                        Text(PrayerTimesWidgetView.liveCountdown(entry: entry, reference: context.date))
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(WidgetTheme.text)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.75)
-                    }
+                    countdownLabel
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(WidgetTheme.text)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                 }
                 .padding(.horizontal, WidgetMetrics.compactPadding)
                 .padding(.vertical, 4)
@@ -87,6 +85,32 @@ struct PrayerTimesWidgetView: View {
         }
         .environment(\.layoutDirection, .rightToLeft)
         .containerBackground(for: .widget) { WidgetTheme.background }
+    }
+
+    /// The footer countdown.
+    ///
+    /// A system-managed timer text rather than a plain string inside a
+    /// `TimelineView`: WidgetKit keeps date/timer text ticking per second on
+    /// the home screen on its own, while a plain `Text` is only re-rendered
+    /// when the system grants the extension a redraw window (roughly once a
+    /// minute in practice).
+    @ViewBuilder
+    private var countdownLabel: some View {
+        if let target = PrayerTimesWidgetView.nextTarget(entry: entry) {
+            Text(timerInterval: Date()...target, countsDown: true)
+                // The timer text is locale-formatted, and the app's own
+                // Arabic-Indic intent cannot be expressed here: pinning
+                // `ar-u-nu-arab` renders each component as a decimal
+                // ("9.0:50.0:2.0"), and plain locales leave the hours
+                // unpadded ("9:50:02"). Lithuanian is the locale whose
+                // duration pattern is exactly zero-padded "09:50:02",
+                // the integer format the countdown is meant to show.
+                .environment(\.locale, Locale(identifier: "lt"))
+        } else {
+            // Placeholder, preview, or an entry without any usable prayer
+            // time: a static pre-formatted string is all there is to show.
+            Text(entry.countdownText)
+        }
     }
 }
 
@@ -234,18 +258,14 @@ struct CompactPrayerCard: View {
 }
 
 extension PrayerTimesWidgetView {
+    /// The soonest prayer still ahead of `reference`: the one instant the
+    /// footer countdown renders.
+    static func nextTarget(entry: PrayerTimesEntry, reference: Date = Date()) -> Date? {
+        entry.countdownTargets.values.filter { $0 > reference }.min()
+    }
+
     static func liveCountdown(entry: PrayerTimesEntry, reference: Date) -> String {
-        var bestTarget: Date?
-        for (_, t) in entry.countdownTargets {
-            if t > reference {
-                if let b = bestTarget {
-                    if t < b { bestTarget = t }
-                } else {
-                    bestTarget = t
-                }
-            }
-        }
-        guard let target = bestTarget else { return entry.countdownText }
+        guard let target = nextTarget(entry: entry, reference: reference) else { return entry.countdownText }
         let diff = max(0, Int(target.timeIntervalSince(reference)))
         let hours = diff / 3600
         let mins = (diff / 60) % 60

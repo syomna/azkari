@@ -23,14 +23,16 @@ struct PrayerTimesEntry: TimelineEntry {
     let nextPrayerName: String
     /// Remaining time until the next adhan, pre-formatted for display.
     ///
-    /// Used for placeholders, previews and future-day entries; today's
-    /// live countdown is computed from [countdownTargets].
+    /// Used for placeholders, previews and entries without any usable prayer
+    /// time; the footer countdown is computed from [countdownTargets] whenever
+    /// one exists.
     let countdownText: String
     /// Minutes left until the next prayer, or `nil` when undeterminable. Used
     /// only to schedule the next timeline refresh.
     let remainingMinutes: Int?
     /// Absolute instants of each prayer's next occurrence (keyed by prayer key).
-    /// Only today's entry typically populates these so the view can tick by seconds.
+    /// Populated for every day so even a pre-built future-day entry keeps a
+    /// live seconds countdown from the first render after midnight.
     let countdownTargets: [String: Date]
 }
 
@@ -171,6 +173,7 @@ struct PrayerTimesProvider: TimelineProvider {
         let nowMinutes = isToday ? Self.currentMinutesSinceMidnight(calendar) : -1
 
         var nextPrayerName = ""
+        var bestKey: String?
         var bestDiff = Int.max
         var prayers: [PrayerTimesEntry.Prayer] = []
         var countdownTargets: [String: Date] = [:]
@@ -180,38 +183,53 @@ struct PrayerTimesProvider: TimelineProvider {
             let displayTime = raw.isEmpty ? "--:--" : raw
             let name = Self.arabicNames[key] ?? key
 
-            if isToday && displayTime != "--:--" {
-                // The next prayer is the SMALLEST positive minutes-from-now.
-                // Scanning the canonical order for the first future time only
-                // works while times stay chronologically sorted; a manual
-                // override (e.g. maghrib moved earlier than asr) reorders the
-                // day, so the first future entry is not necessarily the soonest
-                // adhan.
-                if let pm = parseTimeToMinutes(raw) {
+            if displayTime != "--:--" {
+                // Absolute next occurrence of this prayer's time, computed for
+                // EVERY day (not only today) so a pre-built future-day entry
+                // still carries a live countdown from the first render after
+                // midnight, before WidgetKit asks for a reload.
+                if let h24 = timeToH24(raw) {
+                    var comps = calendar.dateComponents([.year, .month, .day], from: date)
+                    comps.hour = h24.hour
+                    comps.minute = h24.minute
+                    comps.second = 0
+                    var target = calendar.date(from: comps) ?? date
+                    if target <= Date() {
+                        target = calendar.date(byAdding: .day, value: 1, to: target) ?? target
+                    }
+                    countdownTargets[key] = target
+                }
+
+                if isToday, let pm = parseTimeToMinutes(raw) {
+                    // The next prayer is the SMALLEST positive minutes-from-now.
+                    // Scanning the canonical order for the first future time only
+                    // works while times stay chronologically sorted; a manual
+                    // override (e.g. maghrib moved earlier than asr) reorders the
+                    // day, so the first future entry is not necessarily the soonest
+                    // adhan.
                     var diff = pm - nowMinutes
                     if diff <= 0 { diff += 24 * 60 } // wrapped to tomorrow
                     if diff < bestDiff {
                         bestDiff = diff
                         nextPrayerName = name
-                    }
-                    if let h24 = timeToH24(raw) {
-                        var comps = calendar.dateComponents([.year, .month, .day], from: date)
-                        comps.hour = h24.hour
-                        comps.minute = h24.minute
-                        comps.second = 0
-                        var target = calendar.date(from: comps) ?? date
-                        if target <= Date() {
-                            target = calendar.date(byAdding: .day, value: 1, to: target) ?? target
-                        }
-                        countdownTargets[key] = target
+                        bestKey = key
                     }
                 }
             }
 
-            // isActive == the countdown leader, which is only known once the
-            // loop has run, so evaluate it now that the winner may have updated.
-            let isActive = isToday && !nextPrayerName.isEmpty && nextPrayerName == name
-            prayers.append(.init(key: key, name: name, time: displayTime, isActive: isActive))
+            prayers.append(.init(key: key, name: name, time: displayTime, isActive: false))
+        }
+
+        // The mint highlight marks exactly one card: the final countdown
+        // leader. Deciding it inside the loop stamped every prayer that ever
+        // held the running lead — Fajr most of all, since as the first
+        // candidate it always takes the initial lead — leaving Fajr and the
+        // real next prayer highlighted together for most of the day.
+        if isToday, let activeKey = bestKey,
+           let activeIndex = prayers.firstIndex(where: { $0.key == activeKey }) {
+            let prayer = prayers[activeIndex]
+            prayers[activeIndex] = .init(key: prayer.key, name: prayer.name,
+                                         time: prayer.time, isActive: true)
         }
 
         // Minutes left until the next prayer. `bestDiff` already wraps past
