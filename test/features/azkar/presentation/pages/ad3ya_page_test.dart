@@ -166,6 +166,9 @@ void main() {
     expect(find.text('دعاء السفر'), findsOneWidget);
     expect(find.text('أدعية طلب العلم'), findsOneWidget);
 
+    // بطاقة السور القصيرة مثبّتة في صفحة الأذكار فقط، فلا تظهر هنا.
+    expect(find.text(AppConstants.shortSurahsTitle), findsNothing);
+
     // أذكار الصباح والنوم موضوعان في البيانات لكنهما ليسا أدعية.
     expect(find.text('أذكار الصباح'), findsNothing);
     expect(find.text('أذكار النوم'), findsNothing);

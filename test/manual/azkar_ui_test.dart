@@ -33,6 +33,7 @@ import 'package:azkar_app/features/names_of_allah/presentation/widgets/names_of_
 import 'package:azkar_app/features/surah/domain/entities/surah_entity.dart';
 import 'package:azkar_app/features/surah/domain/repositories/surah_repository.dart';
 import 'package:azkar_app/features/surah/domain/usecases/get_surah_usecase.dart';
+import 'package:azkar_app/features/surah/presentation/pages/surah_list_page.dart';
 import 'package:azkar_app/features/surah/presentation/providers/surah_provider.dart';
 import 'package:azkar_app/features/tasbeh/presentation/providers/tasbeh_provider.dart';
 import 'package:azkar_app/features/widget_guide/presentation/widget_guide_page.dart';
@@ -889,15 +890,57 @@ void main() {
     // موضوعات الأدعية لصفحتها هي، فلا تظهر هنا.
     expect(find.text('دعاء الكرب'), findsNothing);
 
-    // شبكة بعمودين لموضوعَي أذكار، فالصفّ الأول عمودان.
+    // شبكة بعمودين: بطاقة السور المثبّتة وموضوعا الأذكار، فالصف الأول
+    // بطاقة السور يمين وموضوع الصباح يساره.
     final gridTiles = find.byType(AzkarGridItem);
-    expect(gridTiles, findsNWidgets(2));
+    expect(gridTiles, findsNWidgets(3));
     final firstRow = tester.getRect(gridTiles.at(0));
     final secondRow = tester.getRect(gridTiles.at(1));
     expect((firstRow.top - secondRow.top).abs(), lessThan(1));
     // RTL: العنصر الأول في الشبكة على اليمين، فالثاني يسار أول.
     expect(secondRow.left, lessThan(firstRow.left));
     expect((firstRow.width - secondRow.width).abs(), lessThan(1));
+    _expectNoException(tester);
+  });
+
+  testWidgets('all azkar pins the short surah card and opens its list',
+      (tester) async {
+    await _setTallSurface(tester);
+    final harness = await _createHarness(
+      assetAzkar: const [
+        ZekrEntity(
+          category: _morning,
+          zekr: 'ذكر الصباح',
+          count: '1',
+          description: '',
+          reference: '',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _testApp(
+          home: const AllAzkarPage(), providers: _harnessProviders(harness)),
+    );
+    await _settle(tester);
+
+    final pinned = find.widgetWithText(
+      AzkarGridItem,
+      AppConstants.shortSurahsTitle,
+    );
+    expect(pinned, findsOneWidget);
+    // بطاقة السور أول الشبكة قبل موضوع الصباح.
+    expect(
+      tester.getTopLeft(pinned).dy,
+      lessThanOrEqualTo(tester.getTopLeft(find.text(_morning)).dy),
+    );
+    _expectNoException(tester);
+
+    await tester.tap(pinned);
+    for (int i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.byType(SurahListPage), findsOneWidget);
     _expectNoException(tester);
   });
 
@@ -965,7 +1008,12 @@ void main() {
     );
     await _settle(tester);
 
-    final cardFinder = find.byType(AzkarGridItem);
+    // الشبكة تحمل أيضاً بطاقة السور المثبّتة، فنحصر البحث على بطاقة
+    // موضوع الصباح وحدها.
+    final cardFinder = find.ancestor(
+      of: find.byIcon(Icons.wb_sunny_rounded),
+      matching: find.byType(AzkarGridItem),
+    );
     final card = tester.getRect(cardFinder);
     // النجمة نفسها في تبويب المفضلة، فنقصر البحث على داخل البطاقة.
     final icon = tester.getRect(

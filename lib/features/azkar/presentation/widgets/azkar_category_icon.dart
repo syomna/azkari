@@ -20,6 +20,11 @@ import 'package:flutter_islamic_icons/flutter_islamic_icons.dart';
   if (title.contains('المساء') || title.contains('النوم')) {
     return (icon: Icons.nightlight_round, color: Colors.indigo);
   }
+  // عنوان السور القصيرة يقع في "للصلاة"، فيُفحص قبل فرع الصلاة لتأخذ
+  // أيقونة الكتاب بدل أيقونة المسجد.
+  if (title == AppConstants.shortSurahsTitle) {
+    return (icon: Icons.menu_book_rounded, color: Colors.teal);
+  }
   if (title.contains('صلاة') ||
       title.contains('الآذان') ||
       title.contains('المسجد')) {

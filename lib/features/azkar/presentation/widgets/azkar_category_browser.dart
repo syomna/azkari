@@ -1,4 +1,5 @@
 import 'package:azkar_app/core/constants/app_constants.dart';
+import 'package:azkar_app/core/enums/app_loading_status.dart';
 import 'package:azkar_app/core/theme/app_palette.dart';
 import 'package:azkar_app/core/utils/app_helpers.dart';
 import 'package:azkar_app/widgets/confirm_dialog.dart';
@@ -84,6 +85,12 @@ class _AzkarCategoryBrowserState extends State<AzkarCategoryBrowser>
       if (mounted) {
         context.read<FavoritesProvider>().loadFavorites();
         context.read<AzkarProvider>().loadCustomAzkar();
+        // السور تُحمَّل من شاشة البداية، لكن هذه الصفحة تُفتح من اختصار أو
+        // إشعار أيضاً، فتتأكد من التحميل ليبنى عدّاد بطاقة السور صحيحاً.
+        final surahProvider = context.read<SurahProvider>();
+        if (surahProvider.surahStatus == AppLoadingStatus.initial) {
+          surahProvider.loadSurah();
+        }
       }
     });
   }
@@ -176,14 +183,46 @@ class _AzkarCategoryBrowserState extends State<AzkarCategoryBrowser>
     return sorted;
   }
 
-  /// يبني شبكة من عمودين لموضوعات [categories].
+  /// بطاقة "سور قصيرة للصلاة" المشتركة: مثبّتة في أعلى شبكة عرض صفحة
+  /// الأذكار دائماً، وتظهر في شبكة المفضلة إن كانت مفضّلة. النجمة في الموضعين
+  /// تبدّل المفضلة نفسها، والفتح يذهب إلى قائمة السور القصيرة.
+  Widget _surahCard(
+    BuildContext context, {
+    required bool isDark,
+    required SurahProvider surahProvider,
+    required FavoritesProvider favorites,
+  }) {
+    final int count = surahProvider.surahList.length;
+    return AzkarGridItem(
+      title: AppConstants.shortSurahsTitle,
+      // العدّاد يظهر بعد التحميل فقط، فلا يعرض "٠ سورة" أثناء التحميل أو
+      // عند فشل القراءة.
+      count: count == 0 ? null : count,
+      itemLabel: 'سورة',
+      isFavorite: favorites.isCategoryFav(AppConstants.shortSurahsTitle),
+      onFavoriteTap: () =>
+          favorites.toggleCategoryFavorite(AppConstants.shortSurahsTitle),
+      onTap: () => Navigator.push(
+        context,
+        CupertinoPageRoute(builder: (_) => const SurahListPage()),
+      ),
+      isDark: isDark,
+    );
+  }
+
+  /// يبني شبكة من عمودين لموضوعات [categories]. وتمرّر [surahProvider] في
+  /// تبويب العرض فقط لتُثبَّت بطاقة السور القصيرة في أول الشبكة قبل
+  /// الموضوعات.
   Widget _buildGrid(
     BuildContext context,
     List<String> categories, {
     required bool isDark,
     required AzkarProvider azkarProvider,
     required FavoritesProvider favorites,
+    SurahProvider? surahProvider,
   }) {
+    // إزاحة فهرس الموضوعات حين تسبقها بطاقة السور المثبّتة.
+    final int offset = surahProvider == null ? 0 : 1;
     return GridView.builder(
       padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 100.h),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -194,9 +233,18 @@ class _AzkarCategoryBrowserState extends State<AzkarCategoryBrowser>
         // مع معامل النصّ حتى تبقى البطاقة تسع سطرين منه عند 2x.
         mainAxisExtent: _cardExtent(context),
       ),
-      itemCount: categories.length,
+      itemCount: categories.length + offset,
       itemBuilder: (context, index) {
-        final category = categories[index];
+        if (index == 0 && surahProvider != null) {
+          return _surahCard(
+            context,
+            isDark: isDark,
+            surahProvider: surahProvider,
+            favorites: favorites,
+          );
+        }
+
+        final category = categories[index - offset];
         final isCustom = azkarProvider.customCategories.contains(category);
 
         return _wrapSwipeIfCustom(
@@ -319,8 +367,9 @@ class _AzkarCategoryBrowserState extends State<AzkarCategoryBrowser>
     );
   }
 
-  /// تبويب المفضلة: قائمة موضوعات هذه المكتبة فقط. بطاقة "المحفوظات" والسور
-  /// القصيرة من مدخلات صفحة الأذكار، فتبقيان في تبويبها هي.
+  /// تبويب المفضلة: قائمة موضوعات هذه المكتبة فقط. بطاقة "المحفوظات" من
+  /// مدخلات صفحة الأذكار، وبطاقة السور القصيرة تظهر هنا إن كانت مفضّلة مع
+  /// بقاء نسختها المثبّتة في تبويب العرض.
   Widget _buildFavoritesTab(
     BuildContext context,
     List<String> favoriteCategories, {
@@ -380,18 +429,11 @@ class _AzkarCategoryBrowserState extends State<AzkarCategoryBrowser>
 
         if (showSurahs) {
           if (listIndex == 0) {
-            return AzkarGridItem(
-              title: AppConstants.shortSurahsTitle,
-              count: surahProvider.surahList.length,
-              itemLabel: 'سورة',
-              isFavorite: true,
-              onFavoriteTap: () => favorites
-                  .toggleCategoryFavorite(AppConstants.shortSurahsTitle),
-              onTap: () => Navigator.push(
-                context,
-                CupertinoPageRoute(builder: (_) => const SurahListPage()),
-              ),
+            return _surahCard(
+              context,
               isDark: isDark,
+              surahProvider: surahProvider,
+              favorites: favorites,
             );
           }
           listIndex--;
@@ -468,6 +510,12 @@ class _AzkarCategoryBrowserState extends State<AzkarCategoryBrowser>
         .where((cat) => cat.toLowerCase().contains(query))
         .toList();
 
+    /// بطاقة السور المثبّتة من صفحة الأذكار وحدها — الأدعية لا تخصّها —
+    /// وتخفى أثناء البحث إلا إذا وقع البحث في عنوانها، كبقية البطاقات.
+    final bool showPinnedSurahs = !_isDua &&
+        (query.isEmpty ||
+            AppConstants.shortSurahsTitle.toLowerCase().contains(query));
+
     final List<String> mineCategories = azkarProvider.customCategories
         .where((cat) =>
             _belongsToLibrary(cat) && cat.toLowerCase().contains(query))
@@ -494,7 +542,7 @@ class _AzkarCategoryBrowserState extends State<AzkarCategoryBrowser>
                           AppConstants.shortSurahsTitle.contains(query)
                       ? 1
                       : 0)),
-      _ => visibleCategories.length,
+      _ => visibleCategories.length + (showPinnedSurahs ? 1 : 0),
     };
 
     return Scaffold(
@@ -574,7 +622,7 @@ class _AzkarCategoryBrowserState extends State<AzkarCategoryBrowser>
             child: TabBarView(
               controller: _tabController,
               children: [
-                visibleCategories.isEmpty
+                visibleCategories.isEmpty && !showPinnedSurahs
                     ? _buildEmptyState(_emptyAll, isDark)
                     : _buildGrid(
                         context,
@@ -582,6 +630,7 @@ class _AzkarCategoryBrowserState extends State<AzkarCategoryBrowser>
                         isDark: isDark,
                         azkarProvider: azkarProvider,
                         favorites: favorites,
+                        surahProvider: showPinnedSurahs ? surahProvider : null,
                       ),
                 mineCategories.isEmpty
                     ? _buildEmptyState(_emptyMine, isDark)
