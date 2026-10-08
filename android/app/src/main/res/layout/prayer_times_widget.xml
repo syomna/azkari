@@ -23,7 +23,11 @@
 
     <!-- Header: Hijri date on the leading (right) edge, Gregorian trailing.
          Both come from the same day entry the prayer times are read from, so
-         the date always matches the times below it. -->
+         the date always matches the times below it. The fixed 6dp margin in
+         the middle (matching the card grid's gaps) keeps the two dates apart
+         at any widget width and system font size; without it the gap was
+         only leftover width inside each half and collapsed to zero as soon
+         as the text grew, leaving the dates touching. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -37,6 +41,7 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:gravity="start"
+            android:layout_marginEnd="6dp"
             android:paddingStart="@dimen/widget_card_padding_active"
             android:maxLines="1"
             android:ellipsize="end"
